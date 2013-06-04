@@ -1,0 +1,28 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+    <modelVersion>4.0.0</modelVersion>
+
+    <groupId>org.zenoss.zapp</groupId>
+    <artifactId>zapp-parent</artifactId>
+    <version>0.0.1-SNAPSHOT</version>
+    <packaging>pom</packaging>
+    <name>zapp-parent</name>
+    <description/>
+    <properties>
+        <maven.compiler.source>1.7</maven.compiler.source>
+        <maven.compiler.target>1.7</maven.compiler.target>
+        <!--<jersey.version>1.17.1</jersey.version>-->
+        <mockito.version>1.9.5</mockito.version>
+        <junit.version>4.11</junit.version>
+        <!--<guava.version>14.0.1</guava.version>-->
+        <spring.version>3.2.1.RELEASE</spring.version>
+        <dropwizard.version>0.6.2</dropwizard.version>
+        <!--<jackson.version>2.1.4</jackson.version>-->
+    </properties>
+    <modules>
+        <module>zenoss-app</module>
+        <module>dw-spring-bundle</module>
+    </modules>
+
+</project>
