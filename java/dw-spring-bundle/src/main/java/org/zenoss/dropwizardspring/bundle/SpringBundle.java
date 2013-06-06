@@ -8,6 +8,7 @@ import com.yammer.dropwizard.lifecycle.Managed;
 import com.yammer.dropwizard.tasks.Task;
 import com.yammer.metrics.core.HealthCheck;
 import org.springframework.beans.factory.config.ConfigurableListableBeanFactory;
+import org.springframework.context.ApplicationContext;
 import org.springframework.context.annotation.AnnotationConfigApplicationContext;
 import org.zenoss.dropwizardspring.annotations.Resource;
 
@@ -57,17 +58,19 @@ public final class SpringBundle implements ConfiguredBundle<Configuration> {
     }
 
     private void initializeSpring(Configuration configuration) {
-        applicationContext = new AnnotationConfigApplicationContext();
-        ConfigurableListableBeanFactory beanFactory = applicationContext.getBeanFactory();
+        if (applicationContext == null) {
+            applicationContext = new AnnotationConfigApplicationContext();
+            ConfigurableListableBeanFactory beanFactory = applicationContext.getBeanFactory();
 
-        // Register the dropwizard config as a bean
-        beanFactory.registerSingleton("dropwizard", configuration);
+            // Register the dropwizard config as a bean
+            beanFactory.registerSingleton("dropwizard", configuration);
 
-        // Look for annotated things
-        for (String base : basePackages) {
-            applicationContext.scan(base);
+            // Look for annotated things
+            for (String base : basePackages) {
+                applicationContext.scan(base);
+            }
+            applicationContext.refresh();
         }
-        applicationContext.refresh();
     }
 
 
