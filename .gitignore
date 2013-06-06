@@ -99,3 +99,6 @@ local.properties
 Session.vim
 .netrwhist
 *~
+
+#maven
+target/
