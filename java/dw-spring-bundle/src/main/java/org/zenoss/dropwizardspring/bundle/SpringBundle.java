@@ -8,7 +8,6 @@ import com.yammer.dropwizard.lifecycle.Managed;
 import com.yammer.dropwizard.tasks.Task;
 import com.yammer.metrics.core.HealthCheck;
 import org.springframework.beans.factory.config.ConfigurableListableBeanFactory;
-import org.springframework.context.ApplicationContext;
 import org.springframework.context.annotation.AnnotationConfigApplicationContext;
 import org.zenoss.dropwizardspring.annotations.Resource;
 

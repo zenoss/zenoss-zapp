@@ -3,7 +3,6 @@ package org.zenoss.app;
 import com.fasterxml.jackson.databind.SerializationFeature;
 import com.yammer.dropwizard.Service;
 import com.yammer.dropwizard.config.Bootstrap;
-import com.yammer.dropwizard.config.Configuration;
 import com.yammer.dropwizard.config.Environment;
 import com.yammer.metrics.reporting.HealthCheckServlet;
 import com.yammer.metrics.reporting.MetricsServlet;
