@@ -17,7 +17,7 @@ import com.yammer.dropwizard.config.Bootstrap;
 import com.yammer.dropwizard.config.Environment;
 import com.yammer.metrics.reporting.HealthCheckServlet;
 import com.yammer.metrics.reporting.MetricsServlet;
-import org.zenoss.dropwizardspring.bundle.SpringBundle;
+import org.zenoss.dropwizardspring.SpringBundle;
 
 import javax.servlet.Servlet;
 

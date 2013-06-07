@@ -9,18 +9,21 @@
  * ***************************************************************************
  */
 
-package org.zenoss.dropwizardspring.bundle.testclasses;
+package org.zenoss.app.autobundle;
 
-import com.yammer.dropwizard.lifecycle.Managed;
+import com.yammer.dropwizard.Bundle;
 
-@org.zenoss.dropwizardspring.annotations.Managed
-public class FakeManaged implements Managed {
+/**
+ * Created with IntelliJ IDEA.
+ * User: jplouis
+ * Date: 6/7/13
+ * Time: 11:08 AM
+ * To change this template use File | Settings | File Templates.
+ */
+public interface AutoBundle {
 
-    @Override
-    public void start() throws Exception {
-    }
+    Bundle getBundle();
 
-    @Override
-    public void stop() throws Exception {
-    }
+    Class getConfigImplements();
+
 }

@@ -9,7 +9,7 @@
  * ***************************************************************************
  */
 
-package org.zenoss.dropwizardspring.bundle;
+package org.zenoss.dropwizardspring;
 
 import com.yammer.dropwizard.config.Configuration;
 import com.yammer.dropwizard.config.Environment;
@@ -25,7 +25,7 @@ public class SpringBundleTest {
     @Test
     public void scanTest() throws Exception {
 
-        SpringBundle sb = new SpringBundle("org.zenoss.dropwizardspring.bundle.testclasses");
+        SpringBundle sb = new SpringBundle("org.zenoss.dropwizardspring.testclasses");
         Configuration config = mock(Configuration.class);
         Environment environment = mock(Environment.class);
         sb.run(config, environment);

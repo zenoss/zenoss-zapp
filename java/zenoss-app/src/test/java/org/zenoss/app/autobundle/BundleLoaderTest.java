@@ -9,10 +9,23 @@
  * ***************************************************************************
  */
 
-package org.zenoss.dropwizardspring.bundle.testclasses;
+package org.zenoss.app.autobundle;
 
-import org.zenoss.dropwizardspring.annotations.Resource;
+import org.scannotation.ClasspathUrlFinder;
 
-@Resource
-public class FakeResource {
+import java.net.URL;
+
+public class BundleLoaderTest {
+
+    @org.junit.Test
+    public void testLoadBundles() throws Exception {
+
+        ClasspathUrlFinder cuf = new ClasspathUrlFinder();
+        URL[] x = cuf.findClassPaths();
+
+        for (URL u: x){
+            System.out.println(u);
+        }
+
+    }
 }

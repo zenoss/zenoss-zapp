@@ -9,7 +9,7 @@
  * ***************************************************************************
  */
 
-package org.zenoss.dropwizardspring.bundle;
+package org.zenoss.dropwizardspring;
 
 import com.yammer.dropwizard.ConfiguredBundle;
 import com.yammer.dropwizard.config.Bootstrap;
@@ -44,6 +44,7 @@ public final class SpringBundle implements ConfiguredBundle<Configuration> {
     /**
      * Creates the SpringBundle that will scan the packages
      *
+     * @param bootstrap
      * @param packages java packages that will be scanned for Spring components
      */
     public SpringBundle(String... packages) {
@@ -52,6 +53,8 @@ public final class SpringBundle implements ConfiguredBundle<Configuration> {
 
     @Override
     public void initialize(Bootstrap<?> bootstrap) {
+//        this.initializeSpring();
+
     }
 
     @Override
@@ -76,9 +79,8 @@ public final class SpringBundle implements ConfiguredBundle<Configuration> {
             beanFactory.registerSingleton("dropwizard", configuration);
 
             // Look for annotated things
-            for (String base : basePackages) {
-                applicationContext.scan(base);
-            }
+            applicationContext.scan(basePackages);
+
             applicationContext.refresh();
         }
     }
