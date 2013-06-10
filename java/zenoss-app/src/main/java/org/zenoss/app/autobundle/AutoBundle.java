@@ -11,19 +11,28 @@
 
 package org.zenoss.app.autobundle;
 
+import com.google.common.base.Optional;
 import com.yammer.dropwizard.Bundle;
 
 /**
- * Created with IntelliJ IDEA.
- * User: jplouis
- * Date: 6/7/13
- * Time: 11:08 AM
- * To change this template use File | Settings | File Templates.
+ *
+ * Interface for configuring a drop wizard bundle that can be automatically loaded.
+ *
  */
 public interface AutoBundle {
 
+    /**
+     * Get the initialized bundle to be loaded.
+     *
+     * @return Bundle to be added
+     */
     Bundle getBundle();
 
-    Class getConfigImplements();
+    /**
+     * Asserts that the class returned should be the same, a superclass or a super interface of the App Configuration
+     *
+     * @return Class Configuration type expected by the bundle
+     */
+    Optional<Class> getRequiredConfig();
 
 }

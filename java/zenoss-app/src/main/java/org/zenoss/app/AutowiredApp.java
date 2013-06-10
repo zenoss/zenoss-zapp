@@ -17,6 +17,7 @@ import com.yammer.dropwizard.config.Bootstrap;
 import com.yammer.dropwizard.config.Environment;
 import com.yammer.metrics.reporting.HealthCheckServlet;
 import com.yammer.metrics.reporting.MetricsServlet;
+import org.zenoss.app.autobundle.BundleLoader;
 import org.zenoss.dropwizardspring.SpringBundle;
 
 import javax.servlet.Servlet;
@@ -42,9 +43,11 @@ public abstract class AutowiredApp<T extends AppConfiguration> extends Service<T
      *
      * @return String[] of packages to scan.
      */
-    protected String[] getScanPackages(){
+    protected String[] getScanPackages() {
         return new String[]{DEFAULT_SCAN};
     }
+
+    public final T _configType = null;
 
     /**
      * {@inheritDoc}
@@ -53,7 +56,19 @@ public abstract class AutowiredApp<T extends AppConfiguration> extends Service<T
     public final void initialize(Bootstrap<T> bootstrap) {
         bootstrap.setName(this.getAppName());
         bootstrap.addBundle(new SpringBundle(getScanPackages()));
+        Class configType = getConfigType();
+        try {
+            new BundleLoader().loadBundles(bootstrap, configType, getScanPackages());
+        } catch (Exception e) {
+            throw new RuntimeException(e);
+        }
     }
+
+    /**
+     * return the generic type of this class.
+     * @return Class of parametrized type
+     */
+    abstract Class<T> getConfigType();
 
     /**
      * {@inheritDoc}
