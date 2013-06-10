@@ -9,7 +9,7 @@
  * ***************************************************************************
  */
 
-package org.zenoss.dropwizardspring.bundle.testclasses;
+package org.zenoss.dropwizardspring.testclasses;
 
 import com.google.common.collect.ImmutableMultimap;
 import com.yammer.dropwizard.tasks.Task;

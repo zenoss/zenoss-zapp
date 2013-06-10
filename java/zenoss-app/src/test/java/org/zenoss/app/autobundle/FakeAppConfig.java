@@ -9,18 +9,13 @@
  * ***************************************************************************
  */
 
-package org.zenoss.dropwizardspring.bundle.testclasses;
+package org.zenoss.app.autobundle;
 
-import com.yammer.dropwizard.lifecycle.Managed;
+import org.zenoss.app.AppConfiguration;
 
-@org.zenoss.dropwizardspring.annotations.Managed
-public class FakeManaged implements Managed {
-
+public class FakeAppConfig extends AppConfiguration implements FakeConfig {
     @Override
-    public void start() throws Exception {
-    }
-
-    @Override
-    public void stop() throws Exception {
+    public String getBlam() {
+        return null;
     }
 }
