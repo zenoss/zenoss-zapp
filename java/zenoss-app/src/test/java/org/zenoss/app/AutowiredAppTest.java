@@ -27,7 +27,7 @@ public class AutowiredAppTest {
         }
 
         @Override
-        Class<FakeAppConfig> getConfigType() {
+        protected Class<FakeAppConfig> getConfigType() {
             return FakeAppConfig.class;
         }
 
