@@ -47,8 +47,6 @@ public abstract class AutowiredApp<T extends AppConfiguration> extends Service<T
         return new String[]{DEFAULT_SCAN};
     }
 
-    public final T _configType = null;
-
     /**
      * {@inheritDoc}
      */
@@ -68,7 +66,7 @@ public abstract class AutowiredApp<T extends AppConfiguration> extends Service<T
      * return the generic type of this class.
      * @return Class of parametrized type
      */
-    abstract Class<T> getConfigType();
+    protected abstract Class<T> getConfigType();
 
     /**
      * {@inheritDoc}

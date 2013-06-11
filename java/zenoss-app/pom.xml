@@ -8,7 +8,6 @@
         <version>0.0.1-SNAPSHOT</version>
     </parent>
     <artifactId>zenoss-app</artifactId>
-    <version>0.0.1-SNAPSHOT</version>
 
     <dependencies>
         <dependency>
@@ -19,12 +18,7 @@
         <dependency>
             <groupId>org.zenoss.zapp</groupId>
             <artifactId>dw-spring-bundle</artifactId>
-            <version>0.0.1-SNAPSHOT</version>
-        </dependency>
-        <dependency>
-            <groupId>net.sf.scannotation</groupId>
-            <artifactId>scannotation</artifactId>
-            <version>1.0.2</version>
+            <version>${project.version}</version>
         </dependency>
         <dependency>
            <groupId>eu.infomas</groupId>
