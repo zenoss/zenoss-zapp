@@ -27,7 +27,7 @@ public class ExampleApp extends AutowiredApp<ExampleAppConfiguration> {
 
     @Override
     protected Class<ExampleAppConfiguration> getConfigType() {
-        return ExampleAppConfiguration.class;
+        return ExampleAppConcfiguration.class;
     }
 
 }
