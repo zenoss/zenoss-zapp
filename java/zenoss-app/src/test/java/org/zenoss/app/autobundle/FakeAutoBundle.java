@@ -9,25 +9,20 @@
  * ***************************************************************************
  */
 
-package org.zenoss.app.example;
+package org.zenoss.app.autobundle;
 
+import com.google.common.base.Optional;
+import com.yammer.dropwizard.Bundle;
 
-import org.zenoss.app.AutowiredApp;
-
-public class ExampleApp extends AutowiredApp<ExampleAppConfiguration> {
-
-    public static void main(String[] args) throws Exception {
-        new ExampleApp().run(args);
+public class FakeAutoBundle implements AutoBundle {
+    @Override
+    public Bundle getBundle() {
+        return new FakeBundle();
     }
 
     @Override
-    public String getAppName() {
-        return "Example App";
-    }
-
-    @Override
-    protected Class<ExampleAppConfiguration> getConfigType() {
-        return ExampleAppConfiguration.class;
+    public Optional<Class> getRequiredConfig() {
+        return Optional.of((Class)FakeConfig.class);
     }
 
 }

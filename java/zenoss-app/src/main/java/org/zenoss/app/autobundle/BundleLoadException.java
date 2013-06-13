@@ -9,10 +9,10 @@
  * ***************************************************************************
  */
 
-package org.zenoss.dropwizardspring.bundle.testclasses;
+package org.zenoss.app.autobundle;
 
-import org.zenoss.dropwizardspring.annotations.Resource;
-
-@Resource
-public class FakeResource {
+public class BundleLoadException extends RuntimeException {
+    public BundleLoadException(String message) {
+        super(message);
+    }
 }

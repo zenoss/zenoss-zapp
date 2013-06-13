@@ -9,25 +9,18 @@
  * ***************************************************************************
  */
 
-package org.zenoss.app.example;
+package org.zenoss.dropwizardspring.testclasses;
 
+import com.yammer.dropwizard.lifecycle.Managed;
 
-import org.zenoss.app.AutowiredApp;
+@org.zenoss.dropwizardspring.annotations.Managed
+public class FakeManaged implements Managed {
 
-public class ExampleApp extends AutowiredApp<ExampleAppConfiguration> {
-
-    public static void main(String[] args) throws Exception {
-        new ExampleApp().run(args);
+    @Override
+    public void start() throws Exception {
     }
 
     @Override
-    public String getAppName() {
-        return "Example App";
+    public void stop() throws Exception {
     }
-
-    @Override
-    protected Class<ExampleAppConfiguration> getConfigType() {
-        return ExampleAppConfiguration.class;
-    }
-
 }
