@@ -32,6 +32,6 @@ public class SpringBundleTest {
         verify(environment,times(1)).addResource(sb.applicationContext.getBean("fakeResource"));
         verify(environment, times(1)).addHealthCheck(sb.applicationContext.getBean("fakeHealthCheck", HealthCheck.class));
         verify(environment, times(1)).addTask(sb.applicationContext.getBean("fakeTask", Task.class));
-        verify(environment, times(2)).manage(sb.applicationContext.getBean("fakeManaged", Managed.class));
+        verify(environment, times(1)).manage(sb.applicationContext.getBean("fakeManaged", Managed.class));
     }
 }
