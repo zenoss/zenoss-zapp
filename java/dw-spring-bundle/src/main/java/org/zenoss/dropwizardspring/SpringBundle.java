@@ -11,6 +11,7 @@
 
 package org.zenoss.dropwizardspring;
 
+import com.google.common.base.Strings;
 import com.yammer.dropwizard.ConfiguredBundle;
 import com.yammer.dropwizard.config.Bootstrap;
 import com.yammer.dropwizard.config.Configuration;
@@ -21,7 +22,9 @@ import com.yammer.metrics.core.HealthCheck;
 import org.springframework.beans.factory.config.ConfigurableListableBeanFactory;
 import org.springframework.context.annotation.AnnotationConfigApplicationContext;
 import org.zenoss.dropwizardspring.annotations.Resource;
+import org.zenoss.dropwizardspring.websockets.SpringWebSocketServlet;
 
+import javax.ws.rs.Path;
 import java.util.Map;
 
 
@@ -67,6 +70,7 @@ public final class SpringBundle implements ConfiguredBundle<Configuration> {
         addHealthChecks(environment);
         addTasks(environment);
         addManaged(environment);
+        addWebSockets(environment);
 
     }
 
@@ -112,6 +116,21 @@ public final class SpringBundle implements ConfiguredBundle<Configuration> {
         for (final Managed managed : manageds.values()) {
             environment.manage(managed);
         }
+    }
+
+    private void addWebSockets(Environment environment) {
+        final Map<String, Object> listeners = applicationContext.getBeansWithAnnotation(org.zenoss.dropwizardspring.websockets.annotations.WebSocketListener.class);
+        for (final Object listener : listeners.values()) {
+            SpringWebSocketServlet wss = new SpringWebSocketServlet(listener);
+            String path = listener.getClass().getAnnotation(Path.class).value();
+            if (Strings.isNullOrEmpty(path)){
+                throw new IllegalStateException("Path must be defined: "+listener.getClass());
+            }
+            environment.addServlet(wss, path);
+        }
+
+
+
     }
 
 }

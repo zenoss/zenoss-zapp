@@ -51,6 +51,32 @@ The first thing you will probably want to do is provide a REST resource. Here we
 
 Read the [Jersey][3] [documentation](https://jersey.java.net/nonav/documentation/2.0/index.html) to how to handle resource requests.
 
+Registering a websocket listener
+---
+Websocket listeners can be registered automatically using [Spring][2].  Any classe annotated with the `org.zenoss.dropwizardspring.websocket.annotations.WebSocketListener` will be registerd to listen on the path defined by the `@Path` annotation. Additionally the `org.zenoss.dropwizardsrping.annotations.OnMessage` annotations is needed to define the method that will handle websocket messages.
+
+    import com.fasterxml.jackson.databind.ObjectMapper;
+    import org.eclipse.jetty.websocket.WebSocket.Connection;
+    import org.springframework.beans.factory.annotation.Autowired;
+    import org.zenoss.dropwizardspring.websockets.annotations.OnMessage;
+    import org.zenoss.dropwizardspring.websockets.annotations.WebSocketListener;
+
+    import javax.ws.rs.Path;
+    import java.io.IOException;
+
+    @Path("/ws/example")
+    @WebSocketListener
+    public class ExampleWebSocket {
+
+        private ObjectMapper mapper = new ObjectMapper();
+
+        @OnMessage
+        public void echo(String data, Connection connection) throws IOException {
+            ArrayList<String> input = mapper.readValue(data, new TypeReference<ArrayList<String>>() {});
+            connection.sendMessage(mapper.writeValueAsString(input));
+        }
+    }
+
 Registring Dropwizard objects
 ---
 The `org.zenoss.dropwizardspring.annotations` pacage contains `HealthChecks`, `Tasks` and "`Managed`" annotations. These annotations can be used to automatically register their respective [Dropwizard][1] components.  Read the [Dropwizard][1] documentation to find out more about the components.
@@ -68,7 +94,7 @@ To run the zapp-example run the following:
 
 You can also run the example zapp without packaging directly via maven.
 
-	mvn compile java:exec
+	mvn compile exec:java
 
 To build your own zapp you can copy and modify the build plugins in the `pom.xml` in the zapp-example project or you can use the zapp maven archetype (TBD) to generate a zapp project skeleton.
 
