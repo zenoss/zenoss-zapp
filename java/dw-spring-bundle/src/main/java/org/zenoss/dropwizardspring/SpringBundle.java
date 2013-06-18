@@ -43,21 +43,23 @@ public final class SpringBundle implements ConfiguredBundle<Configuration> {
 
     AnnotationConfigApplicationContext applicationContext;
     private final String[] basePackages;
+    private String[] profiles = new String[]{"prod"};
 
     /**
      * Creates the SpringBundle that will scan the packages
      *
-     * @param bootstrap
      * @param packages java packages that will be scanned for Spring components
      */
-    public SpringBundle(String... packages) {
+    public SpringBundle( String... packages) {
         this.basePackages = packages;
+    }
+
+    public void setDefaultProfiles(String... profiles){
+        this.profiles = profiles;
     }
 
     @Override
     public void initialize(Bootstrap<?> bootstrap) {
-//        this.initializeSpring();
-
     }
 
     @Override
@@ -81,6 +83,9 @@ public final class SpringBundle implements ConfiguredBundle<Configuration> {
 
             // Register the dropwizard config as a bean
             beanFactory.registerSingleton("dropwizard", configuration);
+
+            //Set the default profile
+            applicationContext.getEnvironment().setDefaultProfiles(this.profiles);
 
             // Look for annotated things
             applicationContext.scan(basePackages);
