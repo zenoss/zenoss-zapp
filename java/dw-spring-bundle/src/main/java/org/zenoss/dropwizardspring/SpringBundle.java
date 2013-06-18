@@ -11,6 +11,7 @@
 
 package org.zenoss.dropwizardspring;
 
+import com.google.common.base.Strings;
 import com.yammer.dropwizard.ConfiguredBundle;
 import com.yammer.dropwizard.config.Bootstrap;
 import com.yammer.dropwizard.config.Configuration;
@@ -21,7 +22,9 @@ import com.yammer.metrics.core.HealthCheck;
 import org.springframework.beans.factory.config.ConfigurableListableBeanFactory;
 import org.springframework.context.annotation.AnnotationConfigApplicationContext;
 import org.zenoss.dropwizardspring.annotations.Resource;
+import org.zenoss.dropwizardspring.websockets.SpringWebSocketServlet;
 
+import javax.ws.rs.Path;
 import java.util.Map;
 
 
@@ -40,21 +43,23 @@ public final class SpringBundle implements ConfiguredBundle<Configuration> {
 
     AnnotationConfigApplicationContext applicationContext;
     private final String[] basePackages;
+    private String[] profiles = new String[]{"prod"};
 
     /**
      * Creates the SpringBundle that will scan the packages
      *
-     * @param bootstrap
      * @param packages java packages that will be scanned for Spring components
      */
     public SpringBundle(String... packages) {
         this.basePackages = packages;
     }
 
+    public void setDefaultProfiles(String... profiles) {
+        this.profiles = profiles;
+    }
+
     @Override
     public void initialize(Bootstrap<?> bootstrap) {
-//        this.initializeSpring();
-
     }
 
     @Override
@@ -67,6 +72,7 @@ public final class SpringBundle implements ConfiguredBundle<Configuration> {
         addHealthChecks(environment);
         addTasks(environment);
         addManaged(environment);
+        addWebSockets(environment);
 
     }
 
@@ -77,6 +83,11 @@ public final class SpringBundle implements ConfiguredBundle<Configuration> {
 
             // Register the dropwizard config as a bean
             beanFactory.registerSingleton("dropwizard", configuration);
+
+            //Set the default profile
+            if (this.profiles != null && this.profiles.length > 0) {
+                applicationContext.getEnvironment().setDefaultProfiles(this.profiles);
+            }
 
             // Look for annotated things
             applicationContext.scan(basePackages);
@@ -112,6 +123,20 @@ public final class SpringBundle implements ConfiguredBundle<Configuration> {
         for (final Managed managed : manageds.values()) {
             environment.manage(managed);
         }
+    }
+
+    private void addWebSockets(Environment environment) {
+        final Map<String, Object> listeners = applicationContext.getBeansWithAnnotation(org.zenoss.dropwizardspring.websockets.annotations.WebSocketListener.class);
+        for (final Object listener : listeners.values()) {
+            Path path = listener.getClass().getAnnotation(Path.class);
+            if (path == null || Strings.isNullOrEmpty(path.value())) {
+                throw new IllegalStateException("Path must be defined: " + listener.getClass());
+            }
+            SpringWebSocketServlet wss = new SpringWebSocketServlet(listener, path.value());
+            environment.addServlet(wss, path.value());
+        }
+
+
     }
 
 }

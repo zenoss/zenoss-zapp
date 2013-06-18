@@ -11,8 +11,6 @@
 
 package org.zenoss.app;
 
-import com.yammer.dropwizard.config.Configuration;
-import com.yammer.dropwizard.config.Environment;
 import org.junit.Assert;
 import org.junit.Test;
 import org.zenoss.app.autobundle.FakeAppConfig;
