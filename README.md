@@ -99,8 +99,9 @@ example a component that runs in production can be annotated `@Profile("prod")` 
 in development can be annotated with `@Profile("dev")`. If a component is annotated with a profile than it will only be
 loaded if the profile matches any of the active profiles.
 
-The bundle sets the default [Spring][2] active profile to be `prod`. The active profile can be changed by setting a
+The bundle sets the default active profile to be `prod`. The active profile can be changed by setting a
 command line environment.
+
     java -Dspring.profiles.active=dev
 
 Read more about Spring [Profiles](http://blog.springsource.com/2011/02/14/spring-3-1-m1-introducing-profile/).

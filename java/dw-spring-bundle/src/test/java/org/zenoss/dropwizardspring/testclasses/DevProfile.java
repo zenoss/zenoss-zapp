@@ -9,18 +9,13 @@
  * ***************************************************************************
  */
 
-package org.zenoss.dropwizardspring.websockets.annotations;
+package org.zenoss.dropwizardspring.testclasses;
 
+import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Component;
 
-import java.lang.annotation.Retention;
-import java.lang.annotation.RetentionPolicy;
-
-/**
- *
- * This annotation marks a class to be loaded by  spring and registered as a websocket listener.
- */
+@Profile("dev")
 @Component
-@Retention(RetentionPolicy.RUNTIME)
-public @interface WebSocketListener {
+public class DevProfile {
+
 }

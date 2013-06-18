@@ -1,9 +1,23 @@
+/*
+ * ****************************************************************************
+ *
+ *  Copyright (C) Zenoss, Inc. 2013, all rights reserved.
+ *
+ *  This content is made available according to terms specified in
+ *  License.zenoss under the directory where your Zenoss product is installed.
+ *
+ * ***************************************************************************
+ */
+
 package org.zenoss.dropwizardspring.websockets;
 
+import com.google.common.base.Preconditions;
 import org.eclipse.jetty.websocket.WebSocket;
 import org.eclipse.jetty.websocket.WebSocket.Connection;
 import org.eclipse.jetty.websocket.WebSocket.OnTextMessage;
 import org.eclipse.jetty.websocket.WebSocketServlet;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.zenoss.dropwizardspring.websockets.annotations.OnMessage;
 
 import javax.servlet.http.HttpServletRequest;
@@ -15,12 +29,17 @@ import java.lang.reflect.Method;
  *
  */
 public final class SpringWebSocketServlet extends WebSocketServlet {
+    private static final Logger LOGGER = LoggerFactory.getLogger(SpringWebSocketServlet.class);
 
-    public SpringWebSocketServlet(Object listener) {
+    private final ListenerProxy listener;
+    private final String path;
+
+    public SpringWebSocketServlet(Object listener, String path) {
+        Preconditions.checkNotNull(path);
+        this.path = path;
         this.listener = new ListenerProxy(listener);
     }
 
-    private final ListenerProxy listener;
 
 
     @Override
@@ -28,7 +47,7 @@ public final class SpringWebSocketServlet extends WebSocketServlet {
         return new TextWebSocket();
     }
 
-    private final class TextWebSocket implements OnTextMessage {
+    final class TextWebSocket implements OnTextMessage {
         private Connection connection;
 
         @Override
@@ -49,7 +68,7 @@ public final class SpringWebSocketServlet extends WebSocketServlet {
         }
     }
 
-    private final class ListenerProxy {
+    final class ListenerProxy {
 
         private final Object obj;
         private Method call;
@@ -67,6 +86,8 @@ public final class SpringWebSocketServlet extends WebSocketServlet {
             if (this.call == null) {
                 throw new IllegalArgumentException("Object does not have listener method: " + this.obj.getClass());
             }
+            LOGGER.info(String.format("WebSocket Endpoint registered on %s using handler %s:%s", path,
+                    obj.getClass().getName(), call.getName()  ));
         }
 
         private void checkSignature(Method m) {

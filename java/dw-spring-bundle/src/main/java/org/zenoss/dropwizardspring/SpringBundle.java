@@ -50,11 +50,11 @@ public final class SpringBundle implements ConfiguredBundle<Configuration> {
      *
      * @param packages java packages that will be scanned for Spring components
      */
-    public SpringBundle( String... packages) {
+    public SpringBundle(String... packages) {
         this.basePackages = packages;
     }
 
-    public void setDefaultProfiles(String... profiles){
+    public void setDefaultProfiles(String... profiles) {
         this.profiles = profiles;
     }
 
@@ -85,7 +85,9 @@ public final class SpringBundle implements ConfiguredBundle<Configuration> {
             beanFactory.registerSingleton("dropwizard", configuration);
 
             //Set the default profile
-            applicationContext.getEnvironment().setDefaultProfiles(this.profiles);
+            if (this.profiles != null && this.profiles.length > 0) {
+                applicationContext.getEnvironment().setDefaultProfiles(this.profiles);
+            }
 
             // Look for annotated things
             applicationContext.scan(basePackages);
@@ -126,14 +128,13 @@ public final class SpringBundle implements ConfiguredBundle<Configuration> {
     private void addWebSockets(Environment environment) {
         final Map<String, Object> listeners = applicationContext.getBeansWithAnnotation(org.zenoss.dropwizardspring.websockets.annotations.WebSocketListener.class);
         for (final Object listener : listeners.values()) {
-            SpringWebSocketServlet wss = new SpringWebSocketServlet(listener);
-            String path = listener.getClass().getAnnotation(Path.class).value();
-            if (Strings.isNullOrEmpty(path)){
-                throw new IllegalStateException("Path must be defined: "+listener.getClass());
+            Path path = listener.getClass().getAnnotation(Path.class);
+            if (path == null || Strings.isNullOrEmpty(path.value())) {
+                throw new IllegalStateException("Path must be defined: " + listener.getClass());
             }
-            environment.addServlet(wss, path);
+            SpringWebSocketServlet wss = new SpringWebSocketServlet(listener, path.value());
+            environment.addServlet(wss, path.value());
         }
-
 
 
     }
