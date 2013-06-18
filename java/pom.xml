@@ -26,6 +26,15 @@
         <module>dw-spring-bundle</module>
         <module>zapp-example</module>
     </modules>
+<build>
+<plugins>
+  <plugin>
+    <groupId>org.jacoco</groupId>
+    <artifactId>jacoco-maven-plugin</artifactId>
+    <version>0.6.3.201306030806</version>
+ </plugin>
+</plugins>
+</build>
     <repositories>
         <repository>
             <id>zenoss-nexus</id>
