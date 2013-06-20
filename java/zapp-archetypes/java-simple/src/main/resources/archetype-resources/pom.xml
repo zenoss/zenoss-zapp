@@ -129,6 +129,7 @@
 					<keystore>\${project.build.directory}/ssl.pfx</keystore>
 					<dname>cn=localhost</dname>
 					<keypass>zapp_pass</keypass>
+					<storepass>zapp_pass</storepass>
 					<alias>zapp</alias>
 					<keyalg>RSA</keyalg>
 					<storetype>pkcs12</storetype>
