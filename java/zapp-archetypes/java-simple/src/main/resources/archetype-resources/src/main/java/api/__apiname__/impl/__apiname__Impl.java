@@ -19,7 +19,7 @@ import ${package}.${appname}Configuration;
 import ${package}.api.${apiname}.${apiname}Response;
 
 /**
- * ${name} API provider class.
+ * ${appname} API provider class.
  */
 @API //API annotation ensures it is loaded via Spring
 public class ${apiname}Impl implements ${apiname}API {
