@@ -27,8 +27,8 @@
 	
 	<dependencies>
 		<dependency>
-			<groupId>org.zenoss.app</groupId>
-			<artifactId>zenoss-zapp</artifactId>
+			<groupId>org.zenoss.zapp</groupId>
+			<artifactId>zenoss-app</artifactId>
 			<version>\${zapp.version}</version>
 		</dependency>
 		
@@ -104,6 +104,37 @@
 					</execution>
 				</executions>			
 			</plugin>
+			
+			<plugin>
+				<groupId>org.codehaus.mojo</groupId>
+				<artifactId>keytool-maven-plugin</artifactId>
+				<version>1.0</version>
+				<executions>
+					<execution>
+						<phase>generate-resources</phase>
+						<id>clean</id>
+						<goals>
+							<goal>clean</goal>
+						</goals>
+					</execution>
+					<execution>
+						<phase>generate-resources</phase>
+						<id>genkey</id>
+						<goals>
+							<goal>genkey</goal>
+						</goals>
+					</execution>
+				</executions>
+				<configuration>
+					<keystore>${project.build.directory}/ssl.pfx</keystore>
+					<dname>cn=localhost</dname>
+					<keypass>zapp_pass</keypass>
+					<alias>zapp</alias>
+					<keyalg>RSA</keyalg>
+					<storetype>pkcs12</storetype>
+				</configuration>
+			</plugin>
+			
 		</plugins>
 	</build>
 	

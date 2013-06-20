@@ -20,8 +20,13 @@ public class ${appname}Application extends AutowiredApp<${appname}Configuration>
 	}
 	
 	@Override
-	public String getName() {
-		return "${appname}"
+	public String getAppName() {
+		return "${appname} App";
+	}
+	
+	@Override
+	protected Class<${appname}Configuration> getConfigType() {
+		return ${appname}Configuration.class;
 	}
 	
 }
