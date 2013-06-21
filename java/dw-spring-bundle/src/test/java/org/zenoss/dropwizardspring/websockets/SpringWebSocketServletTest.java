@@ -19,38 +19,41 @@ import org.junit.Assert;
 
 import javax.servlet.http.HttpServletRequest;
 
+import java.io.IOException;
+
 import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.verify;
 
 public class SpringWebSocketServletTest {
 
 
     @Test(expected = IllegalArgumentException.class)
-    public void testPlainObject(){
+    public void testPlainObject() {
         new SpringWebSocketServlet(new Object(), "/test");
     }
 
     @Test()
-    public void testConstructor(){
-        new SpringWebSocketServlet(new Handler(), "/test");
+    public void testConstructor() {
+        new SpringWebSocketServlet(new StringHandler(), "/test");
     }
 
     @Test(expected = IllegalArgumentException.class)
-    public void testListenerWrongSignature(){
-        new SpringWebSocketServlet(new Handler2(), "/test");
+    public void testListenerWrongSignature() {
+        new SpringWebSocketServlet(new InvalidSignatureHandler(), "/test");
     }
 
 
     @Test
-    public void testDoWebSocketConnect(){
-        SpringWebSocketServlet servlet = new SpringWebSocketServlet(new Handler(), "/test");
+    public void testDoWebSocketConnect() {
+        SpringWebSocketServlet servlet = new SpringWebSocketServlet(new StringHandler(), "/test");
         HttpServletRequest request = mock(HttpServletRequest.class);
         TextWebSocket ws = (TextWebSocket) servlet.doWebSocketConnect(request, "");
 //        Assert.notNull(ws);
     }
 
     @Test
-    public void testTextWebSocket(){
-        Handler handler = new Handler();
+    public void testTextWebSocket() {
+        StringHandler handler = new StringHandler();
         SpringWebSocketServlet servlet = new SpringWebSocketServlet(handler, "/test");
         HttpServletRequest request = mock(HttpServletRequest.class);
         TextWebSocket tws = (TextWebSocket) servlet.doWebSocketConnect(request, "");
@@ -62,23 +65,85 @@ public class SpringWebSocketServletTest {
         Assert.assertEquals(msg, handler.data);
     }
 
+    @Test
+    public void testTextWebSocketJsonInputHandling() {
+        JsonHandler handler = new JsonHandler();
+        SpringWebSocketServlet servlet = new SpringWebSocketServlet(handler, "/test");
+        HttpServletRequest request = mock(HttpServletRequest.class);
+        TextWebSocket tws = (TextWebSocket) servlet.doWebSocketConnect(request, "");
+        tws.onOpen(mock(Connection.class));
+        tws.onClose(1, "closed");
+
+        String msg = "{\"message\":\"here is some data\"}";
+        Assert.assertEquals(null, handler.data);
+        tws.onMessage(msg);
+        Assert.assertEquals("here is some data", handler.data.message);
+    }
+
+    @Test
+    public void testTextWebSocketJsonInputOutputHandling() throws IOException {
+        JsonInputOutputHandler handler = new JsonInputOutputHandler();
+        Connection connection = mock(Connection.class);
+        SpringWebSocketServlet servlet = new SpringWebSocketServlet(handler, "/test");
+        HttpServletRequest request = mock(HttpServletRequest.class);
+        TextWebSocket tws = (TextWebSocket) servlet.doWebSocketConnect(request, "");
+
+        tws.onOpen(connection);
+        String msg = "{\"message\":\"here is some data\"}";
+        Assert.assertEquals(null, handler.data);
+        tws.onMessage(msg);
+        Assert.assertEquals("here is some data", handler.data.message);
+        verify( connection).sendMessage( "{\"message\":null}");
+    }
 
 
+    public static class Pojo {
+        String message;
+        public Pojo() {
+        }
 
+        public void setMessage(String message) {
+            this.message= message;
+        }
 
-    public static class Handler{
+        public String getMessage() {
+            return message;
+        }
+    }
+
+    public static class StringHandler {
         String data;
+
         @OnMessage
-        public void handle(String data, Connection c){
+        public void handle(String data, Connection c) {
             this.data = data;
         }
     }
 
-    public static class Handler2{
+    public static class JsonHandler {
+        Pojo data;
+
         @OnMessage
-        public void handle(String data){}
+        public void handle(Pojo data, Connection c) {
+            this.data = data;
+        }
     }
 
+    public static class JsonInputOutputHandler {
+        Pojo data;
+
+        @OnMessage
+        public Pojo handle(Pojo data, Connection c) {
+            this.data = data;
+            return new Pojo();
+        }
+    }
+
+    public static class InvalidSignatureHandler {
+        @OnMessage
+        public void handle(String data) {
+        }
+    }
 
 
 }
