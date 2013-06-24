@@ -156,6 +156,7 @@ public final class SpringWebSocketServlet extends WebSocketServlet {
             } catch (IOException ex) {
                 LOGGER.error("Exception deserializing data: {} into pojoClass: {}", data, ex);
                 LOGGER.error(" with exception", ex);
+                throw new RuntimeException(ex);
             }
         }
     }

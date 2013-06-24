@@ -21,7 +21,12 @@ import javax.servlet.http.HttpServletRequest;
 
 import java.io.IOException;
 
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNull;
+import static org.junit.Assert.fail;
+import static org.mockito.Matchers.anyString;
 import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 
 public class SpringWebSocketServletTest {
@@ -80,6 +85,18 @@ public class SpringWebSocketServletTest {
         Assert.assertEquals("here is some data", handler.data.message);
     }
 
+    @Test(expected=RuntimeException.class)
+    public void testTextWebSocketJsonInputHandlingWithDeserializeException() throws IOException {
+        Connection connection = mock(Connection.class);
+        JsonHandlerWithInputError handler = new JsonHandlerWithInputError();
+        SpringWebSocketServlet servlet = new SpringWebSocketServlet(handler, "/test");
+        HttpServletRequest request = mock(HttpServletRequest.class);
+        TextWebSocket tws = (TextWebSocket) servlet.doWebSocketConnect(request, "");
+        tws.onOpen(mock(Connection.class));
+        tws.onMessage("{}");
+        verify(connection, never()).sendMessage(anyString());
+    }
+
     @Test
     public void testTextWebSocketJsonInputOutputHandling() throws IOException {
         JsonInputOutputHandler handler = new JsonInputOutputHandler();
@@ -96,6 +113,24 @@ public class SpringWebSocketServletTest {
         verify( connection).sendMessage( "{\"message\":null}");
     }
 
+    @Test
+    public void testTextWebSocketJsonInputHandlingWithSerializeException() throws IOException {
+        JsonInputOutputHandlerWithOutputError handler = new JsonInputOutputHandlerWithOutputError();
+        SpringWebSocketServlet servlet = new SpringWebSocketServlet(handler, "/test");
+        HttpServletRequest request = mock(HttpServletRequest.class);
+        TextWebSocket tws = (TextWebSocket) servlet.doWebSocketConnect(request, "");
+        Connection connection = mock(Connection.class);
+        tws.onOpen(connection);
+
+        assertNull( handler.data);
+        try {
+            tws.onMessage("{\"message\":\"hi\"}");
+            fail();
+        } catch (RuntimeException ex) {
+        }
+        assertEquals("hi", handler.data.message);
+        verify(connection, never()).sendMessage(anyString());
+    }
 
     public static class Pojo {
         String message;
@@ -108,6 +143,18 @@ public class SpringWebSocketServletTest {
 
         public String getMessage() {
             return message;
+        }
+    }
+
+    public static class InvalidPojo {
+        int i;
+
+        public InvalidPojo(int i) {
+            this.i = i;
+        }
+
+        int getI() throws IOException {
+            throw new IOException( "Failure!");
         }
     }
 
@@ -129,6 +176,13 @@ public class SpringWebSocketServletTest {
         }
     }
 
+    public static class JsonHandlerWithInputError {
+
+        @OnMessage
+        public void handle(InvalidPojo data, Connection c) {
+        }
+    }
+
     public static class JsonInputOutputHandler {
         Pojo data;
 
@@ -136,6 +190,16 @@ public class SpringWebSocketServletTest {
         public Pojo handle(Pojo data, Connection c) {
             this.data = data;
             return new Pojo();
+        }
+    }
+
+    public static class JsonInputOutputHandlerWithOutputError {
+        Pojo data;
+
+        @OnMessage
+        public InvalidPojo handle(Pojo data, Connection c) {
+            this.data = data;
+            return new InvalidPojo(1);
         }
     }
 
