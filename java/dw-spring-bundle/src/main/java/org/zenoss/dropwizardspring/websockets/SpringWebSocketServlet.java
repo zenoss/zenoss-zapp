@@ -11,6 +11,7 @@
 
 package org.zenoss.dropwizardspring.websockets;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.common.base.Preconditions;
 import org.eclipse.jetty.websocket.WebSocket;
 import org.eclipse.jetty.websocket.WebSocket.Connection;
@@ -21,26 +22,25 @@ import org.slf4j.LoggerFactory;
 import org.zenoss.dropwizardspring.websockets.annotations.OnMessage;
 
 import javax.servlet.http.HttpServletRequest;
+import java.io.IOException;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 
 /**
  * Servlet to accept websocket connections with text based messages.
- *
  */
 public final class SpringWebSocketServlet extends WebSocketServlet {
     private static final Logger LOGGER = LoggerFactory.getLogger(SpringWebSocketServlet.class);
 
+    private final ObjectMapper mapper = new ObjectMapper();
     private final ListenerProxy listener;
     private final String path;
 
     public SpringWebSocketServlet(Object listener, String path) {
         Preconditions.checkNotNull(path);
         this.path = path;
-        this.listener = new ListenerProxy(listener);
+        this.listener = createListenerProxy(listener);
     }
-
-
 
     @Override
     public WebSocket doWebSocketConnect(HttpServletRequest request, String protocol) {
@@ -68,41 +68,129 @@ public final class SpringWebSocketServlet extends WebSocketServlet {
         }
     }
 
-    final class ListenerProxy {
+    private ListenerProxy createListenerProxy(Object object) {
+        Method call = null;
+        for (Method m : object.getClass().getMethods()) {
+            if (m.getAnnotation(OnMessage.class) != null) {
+                //this.checkSignature(m);
+                call = m;
+                break;
+            }
+        }
+        if (call == null) {
+            throw new IllegalArgumentException("Object does not have listener method: " + object.getClass());
+        }
 
-        private final Object obj;
-        private Method call;
-
-
-        public ListenerProxy(Object listener) {
-            this.obj = listener;
-            for (Method m : this.obj.getClass().getMethods()) {
-                if (m.getAnnotation(OnMessage.class) != null) {
-                    this.checkSignature(m);
-                    this.call = m;
-                    break;
+        //identify which proxy method to call
+        ListenerProxy proxy = null;
+        Class<?> returnClass = call.getReturnType();
+        Class<?>[] params = call.getParameterTypes();
+        if (params.length == 2) {
+            if (Connection.class.isAssignableFrom(params[1])) {
+                if (String.class.isAssignableFrom(params[0])) {
+                    proxy = new StringListenerProxy(object, call);
+                } else if (void.class.equals(returnClass)) {
+                    proxy = new JsonListenerProxy(object, call, params[0]);
+                } else {
+                    proxy = new JsonListenerProxyWithResponse(object, call, params[0], returnClass);
                 }
             }
-            if (this.call == null) {
-                throw new IllegalArgumentException("Object does not have listener method: " + this.obj.getClass());
-            }
-            LOGGER.info(String.format("WebSocket Endpoint registered on %s using handler %s:%s", path,
-                    obj.getClass().getName(), call.getName()  ));
+        }
+        if (proxy == null) {
+            throw new IllegalArgumentException("Object does not have valid listener method: " + object.getClass());
         }
 
-        private void checkSignature(Method m) {
-            Class<?>[] params = m.getParameterTypes();
-            if (params.length != 2 || !String.class.isAssignableFrom(params[0]) || !Connection.class.isAssignableFrom(params[1])) {
-                throw new IllegalArgumentException("Wrong signature for @OnMessage method: " + m.getName()
-                        + " on class " + this.obj.getClass().getName());
-            }
+        LOGGER.info("WebSocket Endpoint registered on {} using handler {}:{}", path, object.getClass(), call.getName());
+        return proxy;
+    }
+
+    abstract class ListenerProxy {
+        final Object obj;
+        final Method call;
+
+        ListenerProxy(Object listener, Method call) {
+            this.obj = listener;
+            this.call = call;
         }
 
-        public void onMessage(String data, Connection connection) {
+        Object invoke(Object data, Connection connection) {
             try {
-                this.call.invoke(this.obj, data, connection);
+                return call.invoke(obj, data, connection);
             } catch (IllegalAccessException | InvocationTargetException e) {
                 throw new RuntimeException(e);
+            }
+        }
+
+        abstract void onMessage(String data, Connection connection);
+    }
+
+
+    /**
+     * Listener proxy for onMessage methods that accept String.class and Connection.class
+     */
+    final class StringListenerProxy extends ListenerProxy {
+        StringListenerProxy(Object listener, Method m) {
+            super(listener, m);
+        }
+
+        void onMessage(String data, Connection connection) {
+            invoke(data, connection);
+        }
+    }
+
+    /**
+     * Listener proxy for onMessage methods that accept a Pojo and Connection.class
+     */
+    final class JsonListenerProxy extends ListenerProxy {
+        final Class<?> pojoClass;
+
+        JsonListenerProxy(Object listener, Method m, Class<?> pojoClass) {
+            super(listener, m);
+            this.pojoClass = pojoClass;
+        }
+
+        void onMessage(String data, Connection connection) {
+            try {
+                Object pojo = mapper.readValue(data, pojoClass);
+                invoke(pojo, connection);
+            } catch (IOException ex) {
+                LOGGER.error("Exception deserializing data: {} into pojoClass: {}", data, ex);
+                LOGGER.error(" with exception", ex);
+                throw new RuntimeException(ex);
+            }
+        }
+    }
+
+    /**
+     * Listener proxy for onMessage methods that accept a Pojo and Connection.class and Responds with a Pojo
+     */
+    final class JsonListenerProxyWithResponse extends ListenerProxy {
+        final Class<?> pojoClass;
+        final Class<?> returnClass;
+
+        JsonListenerProxyWithResponse(Object listener, Method m, Class<?> pojoClass, Class<?> returnClass) {
+            super(listener, m);
+            this.pojoClass = pojoClass;
+            this.returnClass = returnClass;
+        }
+
+        void onMessage(String data, Connection connection) {
+            Object pojo;
+            try {
+                pojo = mapper.readValue(data, pojoClass);
+            } catch (IOException ex) {
+                LOGGER.error("Exception deserializing data: {} into pojoClass: {}", data, pojoClass);
+                LOGGER.error(" with exception", ex);
+                throw new RuntimeException(ex);
+            }
+            Object result = invoke(pojo, connection);
+            try {
+                String value = mapper.writeValueAsString(result);
+                connection.sendMessage(value);
+            } catch (IOException ex) {
+                LOGGER.error("Exception serializing return pojo: {} from pojoClass", result, returnClass);
+                LOGGER.error(" with exception", ex);
+                throw new RuntimeException( ex);
             }
         }
     }
