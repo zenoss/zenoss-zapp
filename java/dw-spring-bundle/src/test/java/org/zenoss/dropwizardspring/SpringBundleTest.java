@@ -12,12 +12,13 @@
 package org.zenoss.dropwizardspring;
 
 import com.yammer.dropwizard.config.Configuration;
+import com.yammer.dropwizard.config.Bootstrap;
 import com.yammer.dropwizard.config.Environment;
 import com.yammer.dropwizard.lifecycle.Managed;
 import com.yammer.dropwizard.tasks.Task;
 import com.yammer.metrics.core.HealthCheck;
-import org.junit.Test;
 import org.junit.Assert;
+import org.junit.Test;
 
 import static org.mockito.Mockito.*;
 
@@ -29,6 +30,8 @@ public class SpringBundleTest {
         SpringBundle sb = new SpringBundle("org.zenoss.dropwizardspring.testclasses");
         Configuration config = mock(Configuration.class);
         Environment environment = mock(Environment.class);
+        Bootstrap bootStrap = mock(Bootstrap.class);
+        sb.initialize(bootStrap);
         sb.run(config, environment);
         verify(environment, times(1)).addResource(sb.applicationContext.getBean("fakeResource"));
         verify(environment, times(1)).addHealthCheck(sb.applicationContext.getBean("fakeHealthCheck", HealthCheck.class));

@@ -1,0 +1,14 @@
+v0.0.3 - W.I.P.
+    - new archetype for creating zapp projects
+    - websocket listeners use jackson for auto marshalling and un-marshalling of websocket msgs
+    - update docs with example for spring and resource testing
+    - more test coverage
+    - Active Spring profiles can be defined by instances of AutowiredApp
+
+v0.0.2 - 2013/06/18
+    - Add support for registering websocket listeners via Spring
+    - Spring bundle sets a default profile
+
+v0.0.1 - 2013/06/13
+    - Spring integration for dropwizard
+    - Auto registration of Spring components into dropwizard

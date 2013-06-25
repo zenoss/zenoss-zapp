@@ -106,6 +106,65 @@ command line environment.
 
 Read more about Spring [Profiles](http://blog.springsource.com/2011/02/14/spring-3-1-m1-introducing-profile/).
 
+Writing unit tests
+---
+Writing tests for zapp resource requires a combination of spring and dropwizard test classes. Add the dropwizard and
+spring dependencies to your pom.
+
+         <dependency>
+             <groupId>com.yammer.dropwizard</groupId>
+             <artifactId>dropwizard-testing</artifactId>
+             <version>${dropwizard.version}</version>
+             <scope>test</scope>
+         </dependency>
+         <dependency>
+             <groupId>org.springframework</groupId>
+             <artifactId>spring-test</artifactId>
+             <version>${spring.version}</version>
+             <scope>test</scope>
+
+
+Extend the Dropwizard test class `ResourceTest` to test resources. If you want Spring to autowire your resources you'll
+need to annotate your test class to provide a Spring environment. The annotated static class in the test will allow you
+to register mock beans or any other bean needed to run the test.
+
+
+    @RunWith(SpringJUnit4ClassRunner.class)
+    @ContextConfiguration(loader = AnnotationConfigContextLoader.class)
+    @ActiveProfiles({"dev","test"}) //Profiles used by the test
+    public class QueryTest extends ResourceTest {
+
+        //static configuration class provides the spring configuration i.e. what beans are loaded
+        @Configuration
+        @ComponentScan(basePackages = {"org.zenoss.app"})//scan for annotated classes
+        static class ContextConfiguration {
+
+            @Bean //provide you app config if needed
+            public QueryAppConfiguration getQueryAppConfiguration() {
+                return new QueryAppConfiguration();
+            }
+        }
+
+        @Autowired
+        PerformanceMetricQueryResources resource;
+
+        @Test
+        public void myTest() throws Exception {
+            //see http://dropwizard.codahale.com/manual/testing/#testing-resources
+        }
+
+        /*
+         * (non-Javadoc)
+         *
+         * @see com.yammer.dropwizard.testing.ResourceTest#setUpResources()
+         */
+        // @Override
+        protected void setUpResources() throws Exception {
+            addResource(resource);
+        }
+    }
+
+
 Building and running
 ---
 The example zapp contains examples of the mvn build plugins needed to create a zapp jar.  To build example app run the
