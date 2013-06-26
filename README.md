@@ -59,10 +59,16 @@ resource requests.
 
 Registering a websocket listener
 ---
-Websocket listeners can be registered automatically using [Spring][2].  Any classe annotated with the
+Websocket listeners can be registered automatically using [Spring][2].  Any class annotated with the
 `org.zenoss.dropwizardspring.websocket.annotations.WebSocketListener` will be registerd to listen on the path defined by
 the `@Path` annotation. Additionally the `org.zenoss.dropwizardsrping.annotations.OnMessage` annotations is needed to
-define the method that will handle websocket messages.
+define the method that will handle websocket messages.  The OnMessage annotation supports raw data and automatic
+marshalling of Java POJOs using jackson.  Automatic marshalling from json to java occurs when the annotated method's
+first argument is not a String object.  Additionally, the websocket listener will marshall a java pojo into json.
+Return marshalling from java to json occurs when the annotated method's return type is non-void and the annotated
+method's first parameter is not a String.  See examples below:
+
+### OnMessage - Raw Data
 
     import com.fasterxml.jackson.databind.ObjectMapper;
     import org.eclipse.jetty.websocket.WebSocket.Connection;
@@ -83,6 +89,64 @@ define the method that will handle websocket messages.
         public void echo(String data, Connection connection) throws IOException {
             ArrayList<String> input = mapper.readValue(data, new TypeReference<ArrayList<String>>() {});
             connection.sendMessage(mapper.writeValueAsString(input));
+        }
+    }
+
+### OnMessage - Json Marshalling - Json 2 Java
+
+    import com.fasterxml.jackson.databind.ObjectMapper;
+    import org.eclipse.jetty.websocket.WebSocket.Connection;
+    import org.springframework.beans.factory.annotation.Autowired;
+    import org.zenoss.dropwizardspring.websockets.annotations.OnMessage;
+    import org.zenoss.dropwizardspring.websockets.annotations.WebSocketListener;
+
+    import javax.ws.rs.Path;
+    import java.io.IOException;
+
+    @Path("/ws/example")
+    @WebSocketListener
+    public class ExampleWebSocket {
+        private ObjectMapper mapper = new ObjectMapper();
+
+        class Pojo {
+            private String message;
+            public void setMessage(String message) { this.message = message; }
+            public String getMessage() { return message;}
+            public Pojo(String message) { this.message = message; }
+            public Pojo() { }
+        }
+
+        @OnMessage
+        public void echo(Pojo pojo, Connection connection) throws IOException {
+            connection.sendMessage(mapper.writeValueAsString(pojo.getMessage()));
+        }
+    }
+
+### OnMessage - Json Unmarshalling/Marshalling - Json 2 Java and Java 2 Json
+
+    import com.fasterxml.jackson.databind.ObjectMapper;
+    import org.eclipse.jetty.websocket.WebSocket.Connection;
+    import org.springframework.beans.factory.annotation.Autowired;
+    import org.zenoss.dropwizardspring.websockets.annotations.OnMessage;
+    import org.zenoss.dropwizardspring.websockets.annotations.WebSocketListener;
+
+    import javax.ws.rs.Path;
+    import java.io.IOException;
+
+    @Path("/ws/example")
+    @WebSocketListener
+    public class ExampleWebSocket {
+        class Pojo {
+            private String message;
+            public void setMessage(String message) { this.message = message; }
+            public String getMessage() { return message;}
+            public Pojo(String message) { this.message = message; }
+            public Pojo() { }
+        }
+
+        @OnMessage
+        public Pojo echo(Pojo pojo, Connection connection) throws IOException {
+            return new Pojo( pojo.message);
         }
     }
 
