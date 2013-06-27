@@ -246,7 +246,18 @@ You can also run the example zapp without packaging directly via maven.
 	mvn compile exec:java
 
 To build your own zapp you can copy and modify the build plugins in the `pom.xml` in the zapp-example project or you can
-use the zapp maven archetype (TBD) to generate a zapp project skeleton.
+use the zapp maven archetype to generate a zapp project skeleton.
+
+### Zapp archetype
+A skeleton for a zapp project can be created using maven archetypes. To create a project type
+`mvn archetype:generate -DarchetypeArtifactId=java-simple -DarchetypeGroupId=org.zenoss.zapp.archetypes`. The archetype
+requires some properties to be entered:
+    * `groupId` - The group for you artifact, generally something like `org.zenoss.<group>`
+    * `artifactId` - The artifact id, e.g `helloworld-service`
+    * `apiname`: : name of the API where your business logic is contained e.g. `helloAPI`
+    * `apiurl`: url to access API via rest. e.g. `/helloworld`
+    * `appname`: : Name of the app `helloapp`
+    * `package`:  defaults to `org.zenoss.app.<appname>`.
 
 
 

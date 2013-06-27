@@ -12,7 +12,10 @@
 		<requiredProperty key="apiurl" />
 		<requiredProperty key="package">
 			<defaultValue>org.zenoss.app.${appname}</defaultValue>
-		</requiredProperty>		
+		</requiredProperty>
+        <requiredProperty key="version">
+        	<defaultValue>0.0.1-SNAPSHOT</defaultValue>
+        </requiredProperty>
 	</requiredProperties>
 	
 	<fileSets>
