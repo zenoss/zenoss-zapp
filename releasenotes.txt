@@ -1,4 +1,4 @@
-v0.0.3 - W.I.P.
+v0.0.3 - 2013/06/27
     - new archetype for creating zapp projects
     - websocket listeners use jackson for auto marshalling and un-marshalling of websocket msgs
     - update docs with example for spring and resource testing
