@@ -30,6 +30,7 @@ import javax.servlet.Servlet;
 public abstract class AutowiredApp<T extends AppConfiguration> extends Service<T> {
 
     public static final String DEFAULT_SCAN = "org.zenoss.app";
+    public static final String DEFAULT_ACTIVE_PROFILE = "prod";
 
     /**
      * The app name
@@ -47,13 +48,26 @@ public abstract class AutowiredApp<T extends AppConfiguration> extends Service<T
         return new String[]{DEFAULT_SCAN};
     }
 
+
+    /**
+     * The Spring profile activated by default.
+     *
+     * @return String[] of profiles to activate.
+     */
+    protected String[] getActivateProfiles() {
+        return new String[]{DEFAULT_ACTIVE_PROFILE};
+    }
+
+
     /**
      * {@inheritDoc}
      */
     @Override
     public final void initialize(Bootstrap<T> bootstrap) {
         bootstrap.setName(this.getAppName());
-        bootstrap.addBundle(new SpringBundle(getScanPackages()));
+        SpringBundle sb = new SpringBundle(getScanPackages());
+        sb.setDefaultProfiles(this.getActivateProfiles());
+        bootstrap.addBundle(sb);
         Class configType = getConfigType();
         try {
             new BundleLoader().loadBundles(bootstrap, configType, getScanPackages());

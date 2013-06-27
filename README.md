@@ -59,10 +59,16 @@ resource requests.
 
 Registering a websocket listener
 ---
-Websocket listeners can be registered automatically using [Spring][2].  Any classe annotated with the
+Websocket listeners can be registered automatically using [Spring][2].  Any class annotated with the
 `org.zenoss.dropwizardspring.websocket.annotations.WebSocketListener` will be registerd to listen on the path defined by
 the `@Path` annotation. Additionally the `org.zenoss.dropwizardsrping.annotations.OnMessage` annotations is needed to
-define the method that will handle websocket messages.
+define the method that will handle websocket messages.  The OnMessage annotation supports raw data and automatic
+marshalling of Java POJOs using jackson.  Automatic marshalling from json to java occurs when the annotated method's
+first argument is not a String object.  Additionally, the websocket listener will marshall a java pojo into json.
+Return marshalling from java to json occurs when the annotated method's return type is non-void and the annotated
+method's first parameter is not a String.  See examples below:
+
+### OnMessage - Raw Data
 
     import com.fasterxml.jackson.databind.ObjectMapper;
     import org.eclipse.jetty.websocket.WebSocket.Connection;
@@ -86,6 +92,64 @@ define the method that will handle websocket messages.
         }
     }
 
+### OnMessage - Json Marshalling - Json 2 Java
+
+    import com.fasterxml.jackson.databind.ObjectMapper;
+    import org.eclipse.jetty.websocket.WebSocket.Connection;
+    import org.springframework.beans.factory.annotation.Autowired;
+    import org.zenoss.dropwizardspring.websockets.annotations.OnMessage;
+    import org.zenoss.dropwizardspring.websockets.annotations.WebSocketListener;
+
+    import javax.ws.rs.Path;
+    import java.io.IOException;
+
+    @Path("/ws/example")
+    @WebSocketListener
+    public class ExampleWebSocket {
+        private ObjectMapper mapper = new ObjectMapper();
+
+        class Pojo {
+            private String message;
+            public void setMessage(String message) { this.message = message; }
+            public String getMessage() { return message;}
+            public Pojo(String message) { this.message = message; }
+            public Pojo() { }
+        }
+
+        @OnMessage
+        public void echo(Pojo pojo, Connection connection) throws IOException {
+            connection.sendMessage(mapper.writeValueAsString(pojo.getMessage()));
+        }
+    }
+
+### OnMessage - Json Unmarshalling/Marshalling - Json 2 Java and Java 2 Json
+
+    import com.fasterxml.jackson.databind.ObjectMapper;
+    import org.eclipse.jetty.websocket.WebSocket.Connection;
+    import org.springframework.beans.factory.annotation.Autowired;
+    import org.zenoss.dropwizardspring.websockets.annotations.OnMessage;
+    import org.zenoss.dropwizardspring.websockets.annotations.WebSocketListener;
+
+    import javax.ws.rs.Path;
+    import java.io.IOException;
+
+    @Path("/ws/example")
+    @WebSocketListener
+    public class ExampleWebSocket {
+        class Pojo {
+            private String message;
+            public void setMessage(String message) { this.message = message; }
+            public String getMessage() { return message;}
+            public Pojo(String message) { this.message = message; }
+            public Pojo() { }
+        }
+
+        @OnMessage
+        public Pojo echo(Pojo pojo, Connection connection) throws IOException {
+            return new Pojo( pojo.message);
+        }
+    }
+
 Registring Dropwizard objects
 ---
 The `org.zenoss.dropwizardspring.annotations` pacage contains `HealthChecks`, `Tasks` and "`Managed`" annotations.
@@ -106,6 +170,65 @@ command line environment.
 
 Read more about Spring [Profiles](http://blog.springsource.com/2011/02/14/spring-3-1-m1-introducing-profile/).
 
+Writing unit tests
+---
+Writing tests for zapp resource requires a combination of spring and dropwizard test classes. Add the dropwizard and
+spring dependencies to your pom.
+
+         <dependency>
+             <groupId>com.yammer.dropwizard</groupId>
+             <artifactId>dropwizard-testing</artifactId>
+             <version>${dropwizard.version}</version>
+             <scope>test</scope>
+         </dependency>
+         <dependency>
+             <groupId>org.springframework</groupId>
+             <artifactId>spring-test</artifactId>
+             <version>${spring.version}</version>
+             <scope>test</scope>
+
+
+Extend the Dropwizard test class `ResourceTest` to test resources. If you want Spring to autowire your resources you'll
+need to annotate your test class to provide a Spring environment. The annotated static class in the test will allow you
+to register mock beans or any other bean needed to run the test.
+
+
+    @RunWith(SpringJUnit4ClassRunner.class)
+    @ContextConfiguration(loader = AnnotationConfigContextLoader.class)
+    @ActiveProfiles({"dev","test"}) //Profiles used by the test
+    public class QueryTest extends ResourceTest {
+
+        //static configuration class provides the spring configuration i.e. what beans are loaded
+        @Configuration
+        @ComponentScan(basePackages = {"org.zenoss.app"})//scan for annotated classes
+        static class ContextConfiguration {
+
+            @Bean //provide you app config if needed
+            public QueryAppConfiguration getQueryAppConfiguration() {
+                return new QueryAppConfiguration();
+            }
+        }
+
+        @Autowired
+        PerformanceMetricQueryResources resource;
+
+        @Test
+        public void myTest() throws Exception {
+            //see http://dropwizard.codahale.com/manual/testing/#testing-resources
+        }
+
+        /*
+         * (non-Javadoc)
+         *
+         * @see com.yammer.dropwizard.testing.ResourceTest#setUpResources()
+         */
+        // @Override
+        protected void setUpResources() throws Exception {
+            addResource(resource);
+        }
+    }
+
+
 Building and running
 ---
 The example zapp contains examples of the mvn build plugins needed to create a zapp jar.  To build example app run the
@@ -123,7 +246,18 @@ You can also run the example zapp without packaging directly via maven.
 	mvn compile exec:java
 
 To build your own zapp you can copy and modify the build plugins in the `pom.xml` in the zapp-example project or you can
-use the zapp maven archetype (TBD) to generate a zapp project skeleton.
+use the zapp maven archetype to generate a zapp project skeleton.
+
+### Zapp archetype
+A skeleton for a zapp project can be created using maven archetypes. To create a project type
+`mvn archetype:generate -DarchetypeArtifactId=java-simple -DarchetypeGroupId=org.zenoss.zapp.archetypes`. The archetype
+requires some properties to be entered:
+    * `groupId` - The group for you artifact, generally something like `org.zenoss.<group>`
+    * `artifactId` - The artifact id, e.g `helloworld-service`
+    * `apiname`: : name of the API where your business logic is contained e.g. `helloAPI`
+    * `apiurl`: url to access API via rest. e.g. `/helloworld`
+    * `appname`: : Name of the app `helloapp`
+    * `package`:  defaults to `org.zenoss.app.<appname>`.
 
 
 

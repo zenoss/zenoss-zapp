@@ -5,7 +5,7 @@
 
     <groupId>org.zenoss.zapp</groupId>
     <artifactId>zapp-parent</artifactId>
-    <version>0.0.2</version>
+    <version>0.0.3</version>
     <packaging>pom</packaging>
     <name>zapp-parent</name>
     <description/>
@@ -25,7 +25,17 @@
         <module>zenoss-app</module>
         <module>dw-spring-bundle</module>
         <module>zapp-example</module>
+        <module>zapp-archetypes</module>
     </modules>
+<build>
+<plugins>
+  <plugin>
+    <groupId>org.jacoco</groupId>
+    <artifactId>jacoco-maven-plugin</artifactId>
+    <version>0.6.3.201306030806</version>
+ </plugin>
+</plugins>
+</build>
     <repositories>
         <repository>
             <id>zenoss-nexus</id>
