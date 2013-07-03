@@ -26,7 +26,7 @@
     
     <modules>
     	<module>java-simple</module>
-    </modules>
+  </modules>
     
     <build>
     	<extensions>

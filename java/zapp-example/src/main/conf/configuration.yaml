@@ -5,6 +5,6 @@ http:
   port: 8443
   ssl:
       #Example is using a java keystore in the target directory.
-      keyStore: ./target/ssl.pfx
+      keyStore: ${ssl.cert.dir}/ssl.pfx
       keyStorePassword: zapp_pass
       keyStoreType: pkcs12

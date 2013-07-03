@@ -23,6 +23,8 @@
 		<project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
 		<zapp.version>${project.version}</zapp.version>
 		<mainClass>\${package}.\${appname}Application</mainClass>
+        <ssl.cert.dir>target/cert</ssl.cert.dir>
+        <assembly.skipAssembly>true</assembly.skipAssembly>
 	</properties>
 	
 	<dependencies>
@@ -50,6 +52,13 @@
 	</dependencies>
 	
 	<build>
+        <resources>
+            <resource>
+                <targetPath>\${project.build.directory}/conf</targetPath>
+                <filtering>true</filtering>
+                <directory>\${basedir}/src/main/conf</directory>
+            </resource>
+        </resources>
 		<plugins>
 			<plugin>
 				<groupId>org.codehaus.mojo</groupId>
@@ -59,7 +68,7 @@
 					<mainClass>\${mainClass}</mainClass>
 					<arguments>
 						<argument>server</argument>
-						<argument>configuration.yaml</argument>
+                        <argument>\${project.build.directory}/conf/configuration.yaml</argument>
 					</arguments>
 				</configuration>
 			</plugin>
@@ -126,7 +135,7 @@
 					</execution>
 				</executions>
 				<configuration>
-					<keystore>\${project.build.directory}/ssl.pfx</keystore>
+                    <keystore>\${project.build.directory}/cert/ssl.pfx</keystore>
 					<dname>cn=localhost</dname>
 					<keypass>zapp_pass</keypass>
 					<storepass>zapp_pass</storepass>
@@ -135,8 +144,35 @@
 					<storetype>pkcs12</storetype>
 				</configuration>
 			</plugin>
-			
-		</plugins>
+            <plugin>
+                        <artifactId>maven-assembly-plugin</artifactId>
+                        <version>2.4</version>
+                        <configuration>
+                            <descriptors>
+                                <descriptor>src/main/assembly/zapp.xml</descriptor>
+                            </descriptors>
+                        </configuration>
+                        <executions>
+                            <execution>
+                                <id>make-assembly</id>
+                                <!-- this is used for inheritance merges -->
+                                <phase>package</phase>
+                                <!-- bind to the packaging phase -->
+                                <goals>
+                                    <goal>single</goal>
+                                </goals>
+                            </execution>
+                        </executions>
+                    </plugin>
+                </plugins>
 	</build>
-	
+<profiles>
+    <profile>
+        <id>assemble</id>
+        <properties>
+            <ssl.cert.dir>cert</ssl.cert.dir>
+            <assembly.skipAssembly>false</assembly.skipAssembly>
+        </properties>
+    </profile>
+</profiles>
 </project>
