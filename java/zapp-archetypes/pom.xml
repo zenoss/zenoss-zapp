@@ -1,96 +1,98 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
-	
-	<modelVersion>4.0.0</modelVersion>
-	
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+
+    <modelVersion>4.0.0</modelVersion>
+
     <parent>
         <groupId>org.zenoss.zapp</groupId>
-        <artifactId>zapp-parent</artifactId>        
+        <artifactId>zapp-parent</artifactId>
         <version>0.0.4-SNAPSHOT</version>
     </parent>
-    
+
     <properties>
-    	<project.build.itSourceDirectory>${project.basedir}/src/test/resources/projects</project.build.itSourceDirectory>
-    	<project.build.itDirectory>${project.build.directory}/it</project.build.itDirectory>
-    	<project.build.itOutputDirectory>${project.build.itDirectory}/projects</project.build.itOutputDirectory>
+        <project.build.itSourceDirectory>${project.basedir}/src/test/resources/projects
+        </project.build.itSourceDirectory>
+        <project.build.itDirectory>${project.build.directory}/it</project.build.itDirectory>
+        <project.build.itOutputDirectory>${project.build.itDirectory}/projects</project.build.itOutputDirectory>
     </properties>
-    
+
     <groupId>org.zenoss.zapp.archetypes</groupId>
     <artifactId>zapp-archetypes</artifactId>
     <packaging>pom</packaging>
-    
+
     <name>ZAPP Archetypes</name>
     <description>
-    	A collection of Maven Archetypes for bootstrapping development of a new Zenoss App Service. 
+        A collection of Maven Archetypes for bootstrapping development of a new Zenoss App Service.
     </description>
-    
+
     <modules>
-    	<module>java-simple</module>
-  </modules>
-    
+        <module>java-simple</module>
+    </modules>
+
     <build>
-    	<extensions>
-    		<extension>
-    			<groupId>org.apache.maven.archetype</groupId>
-    			<artifactId>archetype-packaging</artifactId>
-    			<version>2.2</version>    				
-    		</extension>
-    	</extensions>
-    	
-    	<pluginManagement>
-    		<plugins>
-    			<plugin>
-    				<artifactId>maven-archetype-plugin</artifactId>
-    				<version>2.2</version>
-    			</plugin>
-    			
-    			<plugin>
-    				<artifactId>maven-resources-plugin</artifactId>
-    				<version>2.5</version>
-    				<configuration>
-    					<escapeString>\</escapeString>    					
-    				</configuration>
-    			</plugin>
-    			
-    			
-    			<!-- TODO: Tests an archetype -->
-    			<plugin>
-    				<artifactId>maven-invoker-plugin</artifactId>
-    				<version>1.7</version>
-    				<configuration>
-    					<settingsFile>${project.parent.basedir}/src/test/resources/settings.xml</settingsFile>
-    					<localRepositoryPath>${project.build.itDirectory}/repo</localRepositoryPath>
-    					<streamLogs>true</streamLogs>
-    				</configuration>
-    				<executions>
-    					<execution>
-    						<id>generate-project</id>
-    						<goals>
-    							<goal>install</goal>
-    							<goal>run</goal>
-    						</goals>
-    						<configuration>
-    							<goals>
-    								<goal>org.apache.maven.plugins:maven-archetype-plugin:generate</goal>
-    							</goals>
-    							<pomIncludes>
-    								<pomInclude>*</pomInclude>
-    							</pomIncludes>
-    							<cloneProjectsTo>${project.build.itOutputDirectory</cloneProjectsTo>
-    							<projectsDirectory>${project.build.itSourceDirectory</projectsDirectory>
-    							<properties>
-    								<archetypeArtifactId>${project.artifactId}</archetypeArtifactId>
-    								<archetypeGroupId>${project.groupId}</archetypeGroupId>
-    								<archetypeVersion>${project.version}</archetypeVersion>
-    								<archetypeRepositorty>local</archetypeRepositorty>
-    								<interactiveMode>false</interactiveMode>
-    							</properties>
-    						</configuration>
-    					</execution>
-    				</executions>
-    			</plugin>
-    			
-    		</plugins>
-    	</pluginManagement>
+        <extensions>
+            <extension>
+                <groupId>org.apache.maven.archetype</groupId>
+                <artifactId>archetype-packaging</artifactId>
+                <version>2.2</version>
+            </extension>
+        </extensions>
+
+        <pluginManagement>
+            <plugins>
+                <plugin>
+                    <artifactId>maven-archetype-plugin</artifactId>
+                    <version>2.2</version>
+                </plugin>
+
+                <plugin>
+                    <artifactId>maven-resources-plugin</artifactId>
+                    <version>2.5</version>
+                    <configuration>
+                        <escapeString>\</escapeString>
+                    </configuration>
+                </plugin>
+
+
+                <!-- TODO: Tests an archetype -->
+                <plugin>
+                    <artifactId>maven-invoker-plugin</artifactId>
+                    <version>1.7</version>
+                    <configuration>
+                        <settingsFile>${project.parent.basedir}/src/test/resources/settings.xml</settingsFile>
+                        <localRepositoryPath>${project.build.itDirectory}/repo</localRepositoryPath>
+                        <streamLogs>true</streamLogs>
+                    </configuration>
+                    <executions>
+                        <execution>
+                            <id>generate-project</id>
+                            <goals>
+                                <goal>install</goal>
+                                <goal>run</goal>
+                            </goals>
+                            <configuration>
+                                <goals>
+                                    <goal>org.apache.maven.plugins:maven-archetype-plugin:generate</goal>
+                                </goals>
+                                <pomIncludes>
+                                    <pomInclude>*</pomInclude>
+                                </pomIncludes>
+                                <cloneProjectsTo>${project.build.itOutputDirectory</cloneProjectsTo>
+                                <projectsDirectory>${project.build.itSourceDirectory</projectsDirectory>
+                                <properties>
+                                    <archetypeArtifactId>${project.artifactId}</archetypeArtifactId>
+                                    <archetypeGroupId>${project.groupId}</archetypeGroupId>
+                                    <archetypeVersion>${project.version}</archetypeVersion>
+                                    <archetypeRepositorty>local</archetypeRepositorty>
+                                    <interactiveMode>false</interactiveMode>
+                                </properties>
+                            </configuration>
+                        </execution>
+                    </executions>
+                </plugin>
+
+            </plugins>
+        </pluginManagement>
     </build>
 </project>
