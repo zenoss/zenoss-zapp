@@ -38,7 +38,7 @@
 
         <!-- configuration! -->
         <fileSet encoding="UTF-8">
-            <directory>src/main/conf</directory>
+            <directory>src/main/etc</directory>
             <includes>
                 <include>**/*</include>
             </includes>

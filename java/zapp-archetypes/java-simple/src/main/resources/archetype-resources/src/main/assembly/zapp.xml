@@ -5,7 +5,7 @@
     <formats>
         <format>tar.gz</format>
     </formats>
-
+    <includeBaseDirectory>false</includeBaseDirectory>
     <fileSets>
         <fileSet>
             <includes>
@@ -14,21 +14,21 @@
         </fileSet>
         <fileSet>
             <directory>target</directory>
-            <outputDirectory></outputDirectory>
+            <outputDirectory>lib/${project.artifactId}</outputDirectory>
             <includes>
                 <include>${project.artifactId}*.jar</include>
             </includes>
         </fileSet>
         <fileSet>
             <directory>target/cert</directory>
-            <outputDirectory>/cert</outputDirectory>
+            <outputDirectory>/etc/${project.artifactId}/cert</outputDirectory>
             <includes>
                 <include>ssl.pfx</include>
             </includes>
         </fileSet>
         <fileSet>
-            <directory>target/conf</directory>
-            <outputDirectory></outputDirectory>
+            <directory>target/etc</directory>
+            <outputDirectory>etc/${project.artifactId}</outputDirectory>
         </fileSet>
     </fileSets>
 </assembly>

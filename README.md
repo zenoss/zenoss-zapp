@@ -236,9 +236,9 @@ following in the zapp-example directory:
 	
 	mvn package
 
-To run the zapp-example run the following:
+To run the zapp-example run the following, replacing `<version>`:
 
-	java -jar target/zapp-example-0.0.1-SNAPSHOT.jar server configuration.yaml
+	java -jar target/zapp-example-<version>.jar server target/conf/configuration.yaml
 	
 
 You can also run the example zapp without packaging directly via maven.
