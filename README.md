@@ -178,8 +178,15 @@ asynchronous event handling system.  Use appropriately.  See example autowiring 
 
 ### Synchronous EventBus Subscriber - Field based configuration
 
+import com.google.common.eventbus.EventBus;
+import com.google.common.eventbus.Subscribe;
+
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Qualifier;
+import org.springframework.stereotype.Component;
+
 @Component
-class AnEventBusSubscriber
+public class AnEventBusSubscriber
 {
     @Autowired
     @Qualifer("zapp::event-bus::sync")
@@ -196,6 +203,13 @@ class AnEventBusSubscriber
 }
 
 ### Asynchronous EventBus Subscriber - Constructor based configuration
+
+import com.google.common.eventbus.EventBus;
+import com.google.common.eventbus.Subscribe;
+
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Qualifier;
+import org.springframework.stereotype.Component;
 
 @Component
 class AnEventBusSubscriber
