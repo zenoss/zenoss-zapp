@@ -178,52 +178,52 @@ asynchronous event handling system.  Use appropriately.  See example autowiring 
 
 ### Synchronous EventBus Subscriber - Field based configuration
 
-import com.google.common.eventbus.EventBus;
-import com.google.common.eventbus.Subscribe;
-
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.beans.factory.annotation.Qualifier;
-import org.springframework.stereotype.Component;
-
-@Component
-public class AnEventBusSubscriber
-{
-    @Autowired
-    @Qualifer("zapp::event-bus::sync")
-    EventBus eventBus;
-
-    @PostConstruct
-    public void registerSubscribers() {
-        eventBus.register( this);
+    import com.google.common.eventbus.EventBus;
+    import com.google.common.eventbus.Subscribe;
+    
+    import org.springframework.beans.factory.annotation.Autowired;
+    import org.springframework.beans.factory.annotation.Qualifier;
+    import org.springframework.stereotype.Component;
+    
+    @Component
+    public class AnEventBusSubscriber
+    {
+        @Autowired
+        @Qualifer("zapp::event-bus::sync")
+        EventBus eventBus;
+    
+        @PostConstruct
+        public void registerSubscribers() {
+            eventBus.register( this);
+        }
+    
+        @Subscribe public void eventHandler( Object event) {
+            //do something with event
+        }
     }
-
-    @Subscribe public void eventHandler( Object event) {
-        //do something with event
-    }
-}
 
 ### Asynchronous EventBus Subscriber - Constructor based configuration
 
-import com.google.common.eventbus.EventBus;
-import com.google.common.eventbus.Subscribe;
-
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.beans.factory.annotation.Qualifier;
-import org.springframework.stereotype.Component;
-
-@Component
-class AnEventBusSubscriber
-{
-    @Autowired
-    public AnEventBusSubscriber( @Qualifer("zapp::event-bus::async") EventBus eventBus) {
-        this.eventBus = eventBus;
-        this.eventBus.register( this);
+    import com.google.common.eventbus.EventBus;
+    import com.google.common.eventbus.Subscribe;
+    
+    import org.springframework.beans.factory.annotation.Autowired;
+    import org.springframework.beans.factory.annotation.Qualifier;
+    import org.springframework.stereotype.Component;
+    
+    @Component
+    class AnEventBusSubscriber
+    {
+        @Autowired
+        public AnEventBusSubscriber( @Qualifer("zapp::event-bus::async") EventBus eventBus) {
+            this.eventBus = eventBus;
+            this.eventBus.register( this);
+        }
+    
+        @Subscribe public void eventHandler( Object event) {
+            //do something with event
+        }
     }
-
-    @Subscribe public void eventHandler( Object event) {
-        //do something with event
-    }
-}
 
 Read more about Guava [EventBus](http://code.google.com/p/guava-libraries/wiki/EventBusExplained)
 
