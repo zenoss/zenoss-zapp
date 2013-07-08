@@ -12,6 +12,8 @@
 package org.zenoss.dropwizardspring;
 
 import com.google.common.base.Strings;
+import com.google.common.eventbus.AsyncEventBus;
+import com.google.common.eventbus.EventBus;
 import com.yammer.dropwizard.ConfiguredBundle;
 import com.yammer.dropwizard.config.Bootstrap;
 import com.yammer.dropwizard.config.Configuration;
@@ -26,6 +28,8 @@ import org.zenoss.dropwizardspring.websockets.SpringWebSocketServlet;
 
 import javax.ws.rs.Path;
 import java.util.Map;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.TimeUnit;
 
 
 /**
@@ -64,8 +68,7 @@ public final class SpringBundle implements ConfiguredBundle<Configuration> {
 
     @Override
     public void run(Configuration configuration, Environment environment) throws Exception {
-
-        initializeSpring(configuration);
+        initializeSpring(configuration, environment);
 
         // Do the dropwizard registrations
         addResources(environment);
@@ -76,13 +79,15 @@ public final class SpringBundle implements ConfiguredBundle<Configuration> {
 
     }
 
-    private void initializeSpring(Configuration configuration) {
+    private void initializeSpring(Configuration configuration, Environment environment) {
         if (applicationContext == null) {
             applicationContext = new AnnotationConfigApplicationContext();
             ConfigurableListableBeanFactory beanFactory = applicationContext.getBeanFactory();
 
             // Register the dropwizard config as a bean
             beanFactory.registerSingleton("dropwizard", configuration);
+
+            initializeEventBus(beanFactory, environment);
 
             //Set the default profile
             if (this.profiles != null && this.profiles.length > 0) {
@@ -91,9 +96,17 @@ public final class SpringBundle implements ConfiguredBundle<Configuration> {
 
             // Look for annotated things
             applicationContext.scan(basePackages);
-
             applicationContext.refresh();
         }
+    }
+
+    private void initializeEventBus(ConfigurableListableBeanFactory beanFactory, Environment environment) {
+        EventBus syncEventBus = new EventBus();
+        beanFactory.registerSingleton("zapp::event-bus::sync", syncEventBus);
+
+        ExecutorService executorService = environment.managedExecutorService("EventBus", 5, 10, 60, TimeUnit.SECONDS);
+        EventBus asyncEventBus = new AsyncEventBus(executorService);
+        beanFactory.registerSingleton("zapp::event-bus::async", asyncEventBus);
     }
 
 
@@ -135,8 +148,5 @@ public final class SpringBundle implements ConfiguredBundle<Configuration> {
             SpringWebSocketServlet wss = new SpringWebSocketServlet(listener, path.value());
             environment.addServlet(wss, path.value());
         }
-
-
     }
-
 }
