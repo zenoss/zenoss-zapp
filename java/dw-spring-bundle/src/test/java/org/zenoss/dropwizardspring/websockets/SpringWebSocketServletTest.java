@@ -11,11 +11,15 @@
 
 package org.zenoss.dropwizardspring.websockets;
 
+import com.google.common.eventbus.EventBus;
 import org.eclipse.jetty.websocket.WebSocket.Connection;
 import org.junit.Assert;
+import org.junit.Before;
 import org.junit.Test;
 import org.zenoss.dropwizardspring.websockets.SpringWebSocketServlet.TextBinaryWebSocket;
 import org.zenoss.dropwizardspring.websockets.annotations.OnMessage;
+import org.zenoss.dropwizardspring.websockets.events.BroadcastWebSocketMessage;
+import org.zenoss.dropwizardspring.websockets.events.BroadcastWebSocketPojo;
 
 import javax.servlet.http.HttpServletRequest;
 import java.io.IOException;
@@ -24,31 +28,37 @@ import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNull;
 import static org.junit.Assert.fail;
 import static org.mockito.Matchers.anyString;
-import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.never;
-import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.*;
 
 public class SpringWebSocketServletTest {
 
+    EventBus syncEventBus;
+    EventBus asyncEventBus;
+
+    @Before
+    public void setUp() {
+        syncEventBus = mock(EventBus.class);
+        asyncEventBus = mock(EventBus.class);
+    }
 
     @Test(expected = IllegalArgumentException.class)
     public void testPlainObject() {
-        new SpringWebSocketServlet(new Object(), "/test");
+        new SpringWebSocketServlet(new Object(), syncEventBus, asyncEventBus, "/test");
     }
 
     @Test()
     public void testConstructor() {
-        new SpringWebSocketServlet(new StringHandler(), "/test");
+        new SpringWebSocketServlet(new StringHandler(), syncEventBus, asyncEventBus, "/test");
     }
 
     @Test(expected = IllegalArgumentException.class)
     public void testListenerWrongSignature() {
-        new SpringWebSocketServlet(new InvalidSignatureHandler(), "/test");
+        new SpringWebSocketServlet(new InvalidSignatureHandler(), syncEventBus, asyncEventBus, "/test");
     }
 
     @Test
     public void testDoWebSocketConnect() {
-        SpringWebSocketServlet servlet = new SpringWebSocketServlet(new StringHandler(), "/test");
+        SpringWebSocketServlet servlet = new SpringWebSocketServlet(new StringHandler(), syncEventBus, asyncEventBus, "/test");
         HttpServletRequest request = mock(HttpServletRequest.class);
         TextBinaryWebSocket ws = (TextBinaryWebSocket) servlet.doWebSocketConnect(request, "");
 //        Assert.notNull(ws);
@@ -57,7 +67,7 @@ public class SpringWebSocketServletTest {
     @Test
     public void testTextBinaryWebSocket() {
         StringHandler handler = new StringHandler();
-        SpringWebSocketServlet servlet = new SpringWebSocketServlet(handler, "/test");
+        SpringWebSocketServlet servlet = new SpringWebSocketServlet(handler, syncEventBus, asyncEventBus, "/test");
         HttpServletRequest request = mock(HttpServletRequest.class);
         TextBinaryWebSocket tws = (TextBinaryWebSocket) servlet.doWebSocketConnect(request, "");
         tws.onOpen(mock(Connection.class));
@@ -71,7 +81,7 @@ public class SpringWebSocketServletTest {
     @Test
     public void testBinaryWebSocket() {
         BinaryHandler handler = new BinaryHandler();
-        SpringWebSocketServlet servlet = new SpringWebSocketServlet(handler, "/test");
+        SpringWebSocketServlet servlet = new SpringWebSocketServlet(handler, syncEventBus, asyncEventBus, "/test");
         HttpServletRequest request = mock(HttpServletRequest.class);
         TextBinaryWebSocket bws = (TextBinaryWebSocket) servlet.doWebSocketConnect(request, "");
         bws.onOpen(mock(Connection.class));
@@ -85,7 +95,7 @@ public class SpringWebSocketServletTest {
     @Test
     public void testTextBinaryWebSocketJsonInputHandling() {
         JsonHandler handler = new JsonHandler();
-        SpringWebSocketServlet servlet = new SpringWebSocketServlet(handler, "/test");
+        SpringWebSocketServlet servlet = new SpringWebSocketServlet(handler, syncEventBus, asyncEventBus, "/test");
         HttpServletRequest request = mock(HttpServletRequest.class);
         TextBinaryWebSocket tws = (TextBinaryWebSocket) servlet.doWebSocketConnect(request, "");
         tws.onOpen(mock(Connection.class));
@@ -101,7 +111,7 @@ public class SpringWebSocketServletTest {
     public void testTextBinaryWebSocketJsonInputHandlingWithDeserializeException() throws IOException {
         Connection connection = mock(Connection.class);
         JsonHandlerWithInputError handler = new JsonHandlerWithInputError();
-        SpringWebSocketServlet servlet = new SpringWebSocketServlet(handler, "/test");
+        SpringWebSocketServlet servlet = new SpringWebSocketServlet(handler, syncEventBus, asyncEventBus, "/test");
         HttpServletRequest request = mock(HttpServletRequest.class);
         TextBinaryWebSocket tws = (TextBinaryWebSocket) servlet.doWebSocketConnect(request, "");
         tws.onOpen(mock(Connection.class));
@@ -113,7 +123,7 @@ public class SpringWebSocketServletTest {
     public void testTextBinaryWebSocketJsonInputOutputHandling() throws IOException {
         JsonInputOutputHandler handler = new JsonInputOutputHandler();
         Connection connection = mock(Connection.class);
-        SpringWebSocketServlet servlet = new SpringWebSocketServlet(handler, "/test");
+        SpringWebSocketServlet servlet = new SpringWebSocketServlet(handler, syncEventBus, asyncEventBus, "/test");
         HttpServletRequest request = mock(HttpServletRequest.class);
         TextBinaryWebSocket tws = (TextBinaryWebSocket) servlet.doWebSocketConnect(request, "");
 
@@ -128,7 +138,7 @@ public class SpringWebSocketServletTest {
     @Test
     public void testTextBinaryWebSocketJsonInputHandlingWithSerializeException() throws IOException {
         JsonInputOutputHandlerWithOutputError handler = new JsonInputOutputHandlerWithOutputError();
-        SpringWebSocketServlet servlet = new SpringWebSocketServlet(handler, "/test");
+        SpringWebSocketServlet servlet = new SpringWebSocketServlet(handler, syncEventBus, asyncEventBus, "/test");
         HttpServletRequest request = mock(HttpServletRequest.class);
         TextBinaryWebSocket tws = (TextBinaryWebSocket) servlet.doWebSocketConnect(request, "");
         Connection connection = mock(Connection.class);
@@ -144,10 +154,63 @@ public class SpringWebSocketServletTest {
         verify(connection, never()).sendMessage(anyString());
     }
 
+
+    @Test
+    public void testEventBusRegisterAndUnregister() {
+        StringHandler handler = new StringHandler();
+        SpringWebSocketServlet servlet = new SpringWebSocketServlet(handler, syncEventBus, asyncEventBus, "/test");
+        HttpServletRequest request = mock(HttpServletRequest.class);
+        TextBinaryWebSocket tws = (TextBinaryWebSocket) servlet.doWebSocketConnect(request, "");
+        Connection connection = mock(Connection.class);
+
+        tws.onOpen(connection);
+        verify(syncEventBus, times(1)).register(tws);
+        verify(asyncEventBus, times(1)).register(tws);
+
+        tws.onClose(0, "a reason");
+        verify(syncEventBus, times(1)).unregister(tws);
+        verify(asyncEventBus, times(1)).unregister(tws);
+    }
+
+    @Test
+    public void testBroadcastMessageEvent() throws IOException {
+        syncEventBus = new EventBus();
+        StringHandler handler = new StringHandler();
+        SpringWebSocketServlet servlet = new SpringWebSocketServlet(handler, syncEventBus, asyncEventBus, "/test");
+        HttpServletRequest request = mock(HttpServletRequest.class);
+        TextBinaryWebSocket tws = (TextBinaryWebSocket) servlet.doWebSocketConnect(request, "");
+        Connection connection = mock(Connection.class);
+        tws.onOpen(connection);
+
+        syncEventBus.post( new BroadcastWebSocketMessage( String.class, "a websocket message"));
+        syncEventBus.post( new BroadcastWebSocketMessage( StringHandler.class, "a websocket message"));
+        verify( connection, times(1)).sendMessage( "a websocket message");
+    }
+
+    @Test
+    public void testBroadcastPojoEvent() throws IOException {
+        syncEventBus = new EventBus();
+        JsonHandler handler = new JsonHandler();
+        SpringWebSocketServlet servlet = new SpringWebSocketServlet(handler, syncEventBus, asyncEventBus, "/test");
+        HttpServletRequest request = mock(HttpServletRequest.class);
+        TextBinaryWebSocket tws = (TextBinaryWebSocket) servlet.doWebSocketConnect(request, "");
+        Connection connection = mock(Connection.class);
+        tws.onOpen(connection);
+
+        syncEventBus.post( new BroadcastWebSocketPojo( Pojo.class, new Pojo("a websocket message")));
+        syncEventBus.post( new BroadcastWebSocketPojo( JsonHandler.class, new Pojo("a websocket message")));
+        verify( connection, times(1)).sendMessage( "{\"message\":\"a websocket message\"}");
+    }
+
     public static class Pojo {
         String message;
 
         public Pojo() {
+        }
+
+
+        public Pojo(String message) {
+            this.message = message;
         }
 
         public void setMessage(String message) {
@@ -230,6 +293,4 @@ public class SpringWebSocketServletTest {
         public void handle(String data) {
         }
     }
-
-
 }

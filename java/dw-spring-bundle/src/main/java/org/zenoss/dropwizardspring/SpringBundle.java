@@ -48,6 +48,8 @@ public final class SpringBundle implements ConfiguredBundle<Configuration> {
     AnnotationConfigApplicationContext applicationContext;
     private final String[] basePackages;
     private String[] profiles = new String[]{"prod"};
+    private EventBus syncEventBus;
+    private EventBus asyncEventBus;
 
     /**
      * Creates the SpringBundle that will scan the packages
@@ -101,11 +103,11 @@ public final class SpringBundle implements ConfiguredBundle<Configuration> {
     }
 
     private void initializeEventBus(ConfigurableListableBeanFactory beanFactory, Environment environment) {
-        EventBus syncEventBus = new EventBus();
+        syncEventBus = new EventBus();
         beanFactory.registerSingleton("zapp::event-bus::sync", syncEventBus);
 
         ExecutorService executorService = environment.managedExecutorService("EventBus", 5, 10, 60, TimeUnit.SECONDS);
-        EventBus asyncEventBus = new AsyncEventBus(executorService);
+        asyncEventBus = new AsyncEventBus(executorService);
         beanFactory.registerSingleton("zapp::event-bus::async", asyncEventBus);
     }
 
@@ -145,7 +147,7 @@ public final class SpringBundle implements ConfiguredBundle<Configuration> {
             if (path == null || Strings.isNullOrEmpty(path.value())) {
                 throw new IllegalStateException("Path must be defined: " + listener.getClass());
             }
-            SpringWebSocketServlet wss = new SpringWebSocketServlet(listener, path.value());
+            SpringWebSocketServlet wss = new SpringWebSocketServlet(listener, syncEventBus, asyncEventBus, path.value());
             environment.addServlet(wss, path.value());
         }
     }

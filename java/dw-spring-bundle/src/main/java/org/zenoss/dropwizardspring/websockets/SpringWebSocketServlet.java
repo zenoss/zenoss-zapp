@@ -13,6 +13,8 @@ package org.zenoss.dropwizardspring.websockets;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.common.base.Preconditions;
+import com.google.common.eventbus.EventBus;
+import com.google.common.eventbus.Subscribe;
 import org.eclipse.jetty.websocket.WebSocket;
 import org.eclipse.jetty.websocket.WebSocket.Connection;
 import org.eclipse.jetty.websocket.WebSocket.OnBinaryMessage;
@@ -21,6 +23,8 @@ import org.eclipse.jetty.websocket.WebSocketServlet;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.zenoss.dropwizardspring.websockets.annotations.OnMessage;
+import org.zenoss.dropwizardspring.websockets.events.BroadcastWebSocketMessage;
+import org.zenoss.dropwizardspring.websockets.events.BroadcastWebSocketPojo;
 
 import javax.servlet.http.HttpServletRequest;
 import java.io.IOException;
@@ -35,12 +39,18 @@ public final class SpringWebSocketServlet extends WebSocketServlet {
     private static final Logger LOGGER = LoggerFactory.getLogger(SpringWebSocketServlet.class);
 
     private final ObjectMapper mapper = new ObjectMapper();
+    private final EventBus syncEventBus;
+    private final EventBus asyncEventBus;
     private final ListenerProxy listener;
     private final String path;
 
-    public SpringWebSocketServlet(Object listener, String path) {
+    public SpringWebSocketServlet(Object listener, EventBus syncEventBus, EventBus asyncEventBus, String path) {
         Preconditions.checkNotNull(path);
+        Preconditions.checkNotNull(syncEventBus);
+        Preconditions.checkNotNull(asyncEventBus);
         this.path = path;
+        this.syncEventBus = syncEventBus;
+        this.asyncEventBus = asyncEventBus;
         this.listener = createListenerProxy(listener);
     }
 
@@ -73,23 +83,53 @@ public final class SpringWebSocketServlet extends WebSocketServlet {
 
         @Override
         public void onOpen(Connection connection) {
-            //TODO log
+            LOGGER.info("onOpen( connection={})", connection);
             this.connection = connection;
+            syncEventBus.register(this);
+            asyncEventBus.register(this);
         }
 
         @Override
         public void onClose(int closeCode, String message) {
-            //TODO log
-            this.connection = null;
+            LOGGER.info("onClose( closeCode={}, message={})", connection, message);
+            syncEventBus.unregister(this);
+            asyncEventBus.unregister(this);
         }
 
+        @Subscribe
+        @SuppressWarnings({"unused"})
+        public void handle(BroadcastWebSocketMessage event) {
+            if (listener.obj.getClass() == event.sender()) {
+                String message = event.message();
+                try {
+                    connection.sendMessage(message);
+                } catch (IOException e) {
+                    LOGGER.error("Failed sending message: {}", message);
+                    LOGGER.error(" w/exception:", e);
+                }
+            }
+        }
+
+        @Subscribe
+        @SuppressWarnings({"unused"})
+        public void handle(BroadcastWebSocketPojo event) {
+            if (listener.obj.getClass() == event.sender()) {
+                Object pojo = event.pojo();
+                try {
+                    String message = mapper.writeValueAsString(pojo);
+                    connection.sendMessage(message);
+                } catch (IOException e) {
+                    LOGGER.error("Failed serializing/sending pojo: {}", pojo);
+                    LOGGER.error(" w/exception:", e);
+                }
+            }
+        }
     }
 
     private ListenerProxy createListenerProxy(Object object) {
         Method call = null;
         for (Method m : object.getClass().getMethods()) {
             if (m.getAnnotation(OnMessage.class) != null) {
-                //this.checkSignature(m);
                 call = m;
                 break;
             }
