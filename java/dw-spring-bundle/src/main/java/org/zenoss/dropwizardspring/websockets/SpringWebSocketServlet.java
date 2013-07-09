@@ -15,6 +15,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.common.base.Preconditions;
 import org.eclipse.jetty.websocket.WebSocket;
 import org.eclipse.jetty.websocket.WebSocket.Connection;
+import org.eclipse.jetty.websocket.WebSocket.OnBinaryMessage;
 import org.eclipse.jetty.websocket.WebSocket.OnTextMessage;
 import org.eclipse.jetty.websocket.WebSocketServlet;
 import org.slf4j.Logger;
@@ -25,6 +26,7 @@ import javax.servlet.http.HttpServletRequest;
 import java.io.IOException;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
+import java.util.Arrays;
 
 /**
  * Servlet to accept websocket connections with text based messages.
@@ -44,15 +46,29 @@ public final class SpringWebSocketServlet extends WebSocketServlet {
 
     @Override
     public WebSocket doWebSocketConnect(HttpServletRequest request, String protocol) {
-        return new TextWebSocket();
+        return new TextBinaryWebSocket();
     }
 
-    final class TextWebSocket implements OnTextMessage {
+    final class TextBinaryWebSocket implements OnTextMessage, OnBinaryMessage {
         private Connection connection;
 
         @Override
         public void onMessage(String data) {
-            listener.onMessage(data, this.connection);
+            try {
+                ((TextListenerProxy) listener).onMessage(data, this.connection);
+            } catch (ClassCastException e) {
+                throw new RuntimeException("No text listeners are provided", e);
+            }
+        }
+
+        @Override
+        public void onMessage(byte[] data, int offset, int length) {
+            final byte[] msgData = Arrays.copyOfRange(data, offset, length + offset);
+            try {
+                ((BinaryListenerProxy) listener).onMessage(msgData, this.connection);
+            } catch (ClassCastException e) {
+                throw new RuntimeException("No binary listeners are provided", e);
+            }
         }
 
         @Override
@@ -66,6 +82,7 @@ public final class SpringWebSocketServlet extends WebSocketServlet {
             //TODO log
             this.connection = null;
         }
+
     }
 
     private ListenerProxy createListenerProxy(Object object) {
@@ -89,6 +106,8 @@ public final class SpringWebSocketServlet extends WebSocketServlet {
             if (Connection.class.isAssignableFrom(params[1])) {
                 if (String.class.isAssignableFrom(params[0])) {
                     proxy = new StringListenerProxy(object, call);
+                } else if (byte[].class.isAssignableFrom(params[0])) {
+                    proxy = new BinaryListenerProxy(object, call);
                 } else if (void.class.equals(returnClass)) {
                     proxy = new JsonListenerProxy(object, call, params[0]);
                 } else {
@@ -104,7 +123,7 @@ public final class SpringWebSocketServlet extends WebSocketServlet {
         return proxy;
     }
 
-    abstract class ListenerProxy {
+    private class ListenerProxy {
         final Object obj;
         final Method call;
 
@@ -120,15 +139,21 @@ public final class SpringWebSocketServlet extends WebSocketServlet {
                 throw new RuntimeException(e);
             }
         }
+    }
+
+    abstract class TextListenerProxy extends ListenerProxy {
+
+        TextListenerProxy(Object listener, Method call) {
+            super(listener, call);
+        }
 
         abstract void onMessage(String data, Connection connection);
     }
 
-
     /**
      * Listener proxy for onMessage methods that accept String.class and Connection.class
      */
-    final class StringListenerProxy extends ListenerProxy {
+    final class StringListenerProxy extends TextListenerProxy {
         StringListenerProxy(Object listener, Method m) {
             super(listener, m);
         }
@@ -139,9 +164,22 @@ public final class SpringWebSocketServlet extends WebSocketServlet {
     }
 
     /**
+     * Listener proxy for onMessage methods that accept byte[].class and Connection.class
+     */
+    final class BinaryListenerProxy extends ListenerProxy {
+        BinaryListenerProxy(Object listener, Method m) {
+            super(listener, m);
+        }
+
+        void onMessage(byte[] data, Connection connection) {
+            invoke(data, connection);
+        }
+    }
+
+    /**
      * Listener proxy for onMessage methods that accept a Pojo and Connection.class
      */
-    final class JsonListenerProxy extends ListenerProxy {
+    final class JsonListenerProxy extends TextListenerProxy {
         final Class<?> pojoClass;
 
         JsonListenerProxy(Object listener, Method m, Class<?> pojoClass) {
@@ -164,7 +202,7 @@ public final class SpringWebSocketServlet extends WebSocketServlet {
     /**
      * Listener proxy for onMessage methods that accept a Pojo and Connection.class and Responds with a Pojo
      */
-    final class JsonListenerProxyWithResponse extends ListenerProxy {
+    final class JsonListenerProxyWithResponse extends TextListenerProxy {
         final Class<?> pojoClass;
         final Class<?> returnClass;
 
@@ -190,7 +228,7 @@ public final class SpringWebSocketServlet extends WebSocketServlet {
             } catch (IOException ex) {
                 LOGGER.error("Exception serializing return pojo: {} from pojoClass", result, returnClass);
                 LOGGER.error(" with exception", ex);
-                throw new RuntimeException( ex);
+                throw new RuntimeException(ex);
             }
         }
     }

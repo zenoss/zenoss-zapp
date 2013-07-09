@@ -136,7 +136,6 @@ public final class SpringBundle implements ConfiguredBundle<Configuration> {
             environment.addServlet(wss, path.value());
         }
 
-
     }
 
 }
