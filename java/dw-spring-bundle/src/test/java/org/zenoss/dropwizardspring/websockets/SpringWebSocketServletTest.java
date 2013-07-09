@@ -12,14 +12,12 @@
 package org.zenoss.dropwizardspring.websockets;
 
 import org.eclipse.jetty.websocket.WebSocket.Connection;
+import org.junit.Assert;
 import org.junit.Test;
 import org.zenoss.dropwizardspring.websockets.SpringWebSocketServlet.TextBinaryWebSocket;
 import org.zenoss.dropwizardspring.websockets.annotations.OnMessage;
-import org.junit.Assert;
 
 import javax.servlet.http.HttpServletRequest;
-
-import java.io.ByteArrayInputStream;
 import java.io.IOException;
 
 import static org.junit.Assert.assertEquals;
@@ -99,7 +97,7 @@ public class SpringWebSocketServletTest {
         Assert.assertEquals("here is some data", handler.data.message);
     }
 
-    @Test(expected=RuntimeException.class)
+    @Test(expected = RuntimeException.class)
     public void testTextBinaryWebSocketJsonInputHandlingWithDeserializeException() throws IOException {
         Connection connection = mock(Connection.class);
         JsonHandlerWithInputError handler = new JsonHandlerWithInputError();
@@ -124,7 +122,7 @@ public class SpringWebSocketServletTest {
         Assert.assertEquals(null, handler.data);
         tws.onMessage(msg);
         Assert.assertEquals("here is some data", handler.data.message);
-        verify( connection).sendMessage( "{\"message\":null}");
+        verify(connection).sendMessage("{\"message\":null}");
     }
 
     @Test
@@ -136,7 +134,7 @@ public class SpringWebSocketServletTest {
         Connection connection = mock(Connection.class);
         tws.onOpen(connection);
 
-        assertNull( handler.data);
+        assertNull(handler.data);
         try {
             tws.onMessage("{\"message\":\"hi\"}");
             fail();
@@ -148,11 +146,12 @@ public class SpringWebSocketServletTest {
 
     public static class Pojo {
         String message;
+
         public Pojo() {
         }
 
         public void setMessage(String message) {
-            this.message= message;
+            this.message = message;
         }
 
         public String getMessage() {
@@ -168,7 +167,7 @@ public class SpringWebSocketServletTest {
         }
 
         int getI() throws IOException {
-            throw new IOException( "Failure!");
+            throw new IOException("Failure!");
         }
     }
 
