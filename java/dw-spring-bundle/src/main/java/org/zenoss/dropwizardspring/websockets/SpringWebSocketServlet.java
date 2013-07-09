@@ -123,7 +123,7 @@ public final class SpringWebSocketServlet extends WebSocketServlet {
         return proxy;
     }
 
-    private class ListenerProxy {
+    private abstract class ListenerProxy {
         final Object obj;
         final Method call;
 
