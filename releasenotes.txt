@@ -1,3 +1,7 @@
+v0.0.4 - 2013/07/09
+    - WebSocket listeners support binary data
+    - Synchronous and asynchronous guava event buses available via Spring autowiring
+
 v0.0.3 - 2013/06/27
     - new archetype for creating zapp projects
     - websocket listeners use jackson for auto marshalling and un-marshalling of websocket msgs

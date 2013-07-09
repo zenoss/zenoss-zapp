@@ -59,16 +59,21 @@ resource requests.
 
 Registering a websocket listener
 ---
-Websocket listeners can be registered automatically using [Spring][2].  Any class annotated with the
-`org.zenoss.dropwizardspring.websocket.annotations.WebSocketListener` will be registerd to listen on the path defined by
-the `@Path` annotation. Additionally the `org.zenoss.dropwizardsrping.annotations.OnMessage` annotations is needed to
-define the method that will handle websocket messages.  The OnMessage annotation supports raw data and automatic
-marshalling of Java POJOs using jackson.  Automatic marshalling from json to java occurs when the annotated method's
-first argument is not a String object.  Additionally, the websocket listener will marshall a java pojo into json.
-Return marshalling from java to json occurs when the annotated method's return type is non-void and the annotated
-method's first parameter is not a String.  See examples below:
+Websocket listeners can be registered automatically using [Spring][2].  Any
+class annotated with the
+`org.zenoss.dropwizardspring.websocket.annotations.WebSocketListener` will be
+registered to listen on the path defined by the `@Path` annotation.
+Additionally the `org.zenoss.dropwizardsrping.annotations.OnMessage`
+annotations is needed to define the method that will handle websocket messages.
+The OnMessage annotation supports raw data (text or binary) and automatic
+marshalling of Java POJOs using Jackson.  Automatic marshalling from JSON to
+Java occurs when the annotated method's first argument is neither a String
+object nor a byte array.  Additionally, the WebSocket listener will marshall
+a Java POJO into JSON.  Return marshalling from Java to JSON occurs when the
+annotated method's return type is non-void and the annotated method's first
+parameter is neither a String nor a byte array.  See examples below:
 
-### OnMessage - Raw Data
+### OnMessage - Raw Text
 
     import com.fasterxml.jackson.databind.ObjectMapper;
     import org.eclipse.jetty.websocket.WebSocket.Connection;
@@ -89,6 +94,26 @@ method's first parameter is not a String.  See examples below:
         public void echo(String data, Connection connection) throws IOException {
             ArrayList<String> input = mapper.readValue(data, new TypeReference<ArrayList<String>>() {});
             connection.sendMessage(mapper.writeValueAsString(input));
+        }
+    }
+
+### OnMessage - Raw Binary
+
+    import org.eclipse.jetty.websocket.WebSocket.Connection;
+    import org.springframework.beans.factory.annotation.Autowired;
+    import org.zenoss.dropwizardspring.websockets.annotations.OnMessage;
+    import org.zenoss.dropwizardspring.websockets.annotations.WebSocketListener;
+
+    import javax.ws.rs.Path;
+    import java.io.IOException;
+
+    @Path("/ws/example")
+    @WebSocketListener
+    public class ExampleWebSocket {
+
+        @OnMessage
+        public void echo(byte[] data, Connection connection) throws IOException {
+            connection.sendMessage(data);
         }
     }
 
@@ -150,25 +175,87 @@ method's first parameter is not a String.  See examples below:
         }
     }
 
-Registring Dropwizard objects
+Registering Dropwizard objects
 ---
-The `org.zenoss.dropwizardspring.annotations` pacage contains `HealthChecks`, `Tasks` and "`Managed`" annotations.
-These annotations can be used to automatically register their respective [Dropwizard][1] components.  Read the
+The `org.zenoss.dropwizardspring.annotations` package contains `HealthChecks`,
+`Tasks` and "`Managed`" annotations.  These annotations can be used to
+automatically register their respective [Dropwizard][1] components.  Read the
 [Dropwizard][1] documentation to find out more about the components.
 
 Spring Profiles
 ---
-You can annotate your components that have different implementations based on running environment with `Profile`. For
-example a component that runs in production can be annotated `@Profile("prod")` and a version of the component that runs
-in development can be annotated with `@Profile("dev")`. If a component is annotated with a profile than it will only be
-loaded if the profile matches any of the active profiles.
+You can annotate your components that have different implementations based on
+running environment with `Profile`. For example a component that runs in
+production can be annotated `@Profile("prod")` and a version of the component
+that runs in development can be annotated with `@Profile("dev")`. If
+a component is annotated with a profile than it will only be loaded if the
+profile matches any of the active profiles.
 
-The bundle sets the default active profile to be `prod`. The active profile can be changed by setting a
-command line environment.
+The bundle sets the default active profile to be `prod`. The active profile can
+be changed by setting a command line environment.
 
     java -Dspring.profiles.active=dev
 
 Read more about Spring [Profiles](http://blog.springsource.com/2011/02/14/spring-3-1-m1-introducing-profile/).
+
+Application Event Handling
+---
+Zapp provides two Guava EventBus spring beans, zapp::event-bus::sync and
+zapp::event-bus::async. The zapp::event-bus::sync bean provides a synchronous
+event handling system.  The zapp::event-bus::async provides an asynchronous
+event handling system.  Use appropriately.  See example autowiring and
+configuration below.
+
+### Synchronous EventBus Subscriber - Field based configuration
+
+    import com.google.common.eventbus.EventBus;
+    import com.google.common.eventbus.Subscribe;
+    
+    import org.springframework.beans.factory.annotation.Autowired;
+    import org.springframework.beans.factory.annotation.Qualifier;
+    import org.springframework.stereotype.Component;
+    
+    @Component
+    public class AnEventBusSubscriber
+    {
+        @Autowired
+        @Qualifer("zapp::event-bus::sync")
+        EventBus eventBus;
+    
+        @PostConstruct
+        public void registerSubscribers() {
+            eventBus.register( this);
+        }
+    
+        @Subscribe public void eventHandler( Object event) {
+            //do something with event
+        }
+    }
+
+### Asynchronous EventBus Subscriber - Constructor based configuration
+
+    import com.google.common.eventbus.EventBus;
+    import com.google.common.eventbus.Subscribe;
+    
+    import org.springframework.beans.factory.annotation.Autowired;
+    import org.springframework.beans.factory.annotation.Qualifier;
+    import org.springframework.stereotype.Component;
+    
+    @Component
+    class AnEventBusSubscriber
+    {
+        @Autowired
+        public AnEventBusSubscriber( @Qualifer("zapp::event-bus::async") EventBus eventBus) {
+            this.eventBus = eventBus;
+            this.eventBus.register( this);
+        }
+    
+        @Subscribe public void eventHandler( Object event) {
+            //do something with event
+        }
+    }
+
+Read more about Guava [EventBus](http://code.google.com/p/guava-libraries/wiki/EventBusExplained)
 
 Writing unit tests
 ---
