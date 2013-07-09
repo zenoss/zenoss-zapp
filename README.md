@@ -170,6 +170,63 @@ command line environment.
 
 Read more about Spring [Profiles](http://blog.springsource.com/2011/02/14/spring-3-1-m1-introducing-profile/).
 
+Application Event Handling
+---
+Zapp provides two Guava EventBus spring beans, zapp::event-bus::sync and zapp::event-bus::async. The
+zapp::event-bus::sync bean provides a synchronous event handling system.  The zapp::event-bus::async provides an
+asynchronous event handling system.  Use appropriately.  See example autowiring and configuration below.
+
+### Synchronous EventBus Subscriber - Field based configuration
+
+    import com.google.common.eventbus.EventBus;
+    import com.google.common.eventbus.Subscribe;
+    
+    import org.springframework.beans.factory.annotation.Autowired;
+    import org.springframework.beans.factory.annotation.Qualifier;
+    import org.springframework.stereotype.Component;
+    
+    @Component
+    public class AnEventBusSubscriber
+    {
+        @Autowired
+        @Qualifer("zapp::event-bus::sync")
+        EventBus eventBus;
+    
+        @PostConstruct
+        public void registerSubscribers() {
+            eventBus.register( this);
+        }
+    
+        @Subscribe public void eventHandler( Object event) {
+            //do something with event
+        }
+    }
+
+### Asynchronous EventBus Subscriber - Constructor based configuration
+
+    import com.google.common.eventbus.EventBus;
+    import com.google.common.eventbus.Subscribe;
+    
+    import org.springframework.beans.factory.annotation.Autowired;
+    import org.springframework.beans.factory.annotation.Qualifier;
+    import org.springframework.stereotype.Component;
+    
+    @Component
+    class AnEventBusSubscriber
+    {
+        @Autowired
+        public AnEventBusSubscriber( @Qualifer("zapp::event-bus::async") EventBus eventBus) {
+            this.eventBus = eventBus;
+            this.eventBus.register( this);
+        }
+    
+        @Subscribe public void eventHandler( Object event) {
+            //do something with event
+        }
+    }
+
+Read more about Guava [EventBus](http://code.google.com/p/guava-libraries/wiki/EventBusExplained)
+
 Writing unit tests
 ---
 Writing tests for zapp resource requires a combination of spring and dropwizard test classes. Add the dropwizard and
