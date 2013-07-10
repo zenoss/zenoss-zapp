@@ -18,7 +18,7 @@ import org.zenoss.dropwizardspring.websockets.annotations.OnMessage;
 import org.zenoss.dropwizardspring.websockets.annotations.WebSocketListener;
 
 @Profile("broken")
-@WebSocketListener("broken")
+@WebSocketListener(name="broken")
 public class BrokenWebSocket {
 
     @OnMessage

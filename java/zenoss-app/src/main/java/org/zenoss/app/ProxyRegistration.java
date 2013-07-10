@@ -147,12 +147,12 @@ public class ProxyRegistration implements Managed {
 	
 	private void registerHTTP(Transaction t, Object resource) {
 		Resource r = resource.getClass().getAnnotation(Resource.class);
-		register(t, r.value(), httpServer);
+		register(t, r.name(), httpServer);
 	}
 	
 	private void registerWS(Transaction t, Object websocket) {
 		WebSocketListener w = websocket.getClass().getAnnotation(WebSocketListener.class);
-		register(t, w.value(), wsServer);
+		register(t, w.name(), wsServer);
 	}
 		
 	@Override
@@ -221,11 +221,11 @@ public class ProxyRegistration implements Managed {
 	
 	private void unregisterHTTP(Transaction t, Object resource) {
 		Resource r = resource.getClass().getAnnotation(Resource.class);
-		unregister(t, r.value(), httpServer);
+		unregister(t, r.name(), httpServer);
 	}
 	
 	private void unregisterWS(Transaction t, Object websocket) {
 		WebSocketListener w = websocket.getClass().getAnnotation(WebSocketListener.class);
-		unregister(t, w.value(), wsServer);
+		unregister(t, w.name(), wsServer);
 	}
 }

@@ -19,5 +19,5 @@ import java.lang.annotation.RetentionPolicy;
 @Component
 @Retention(RetentionPolicy.RUNTIME)
 public @interface Resource {
-	String value();	
+	String name();	
 }
