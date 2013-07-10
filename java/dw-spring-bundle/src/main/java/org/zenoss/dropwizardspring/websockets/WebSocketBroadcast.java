@@ -62,6 +62,24 @@ public final class WebSocketBroadcast {
                     '}';
         }
 
+        @Override
+        public boolean equals(Object o) {
+            if (this == o) return true;
+            if (o == null || getClass() != o.getClass()) return false;
+
+            Message message1 = (Message) o;
+            if (!message.equals(message1.message)) return false;
+            if (!webSocketEndPoint.equals(message1.webSocketEndPoint)) return false;
+            return true;
+        }
+
+        @Override
+        public int hashCode() {
+            int result = message.hashCode();
+            result = 31 * result + webSocketEndPoint.hashCode();
+            return result;
+        }
+
         private final Object message;
         private final Class<?> webSocketEndPoint;
     }
