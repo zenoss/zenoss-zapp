@@ -180,7 +180,8 @@ parameter is neither a String nor a byte array.  See examples below:
 Zapp WebSockets support listener based message broadcasting.  In other words, a
 Zapp can broadcast a message to all connections assigned to a WebSocketListener.
 Broadcasting supports String, binary, and Json messages.  Message broadcasts is
-supported through the [EventBus] (#EventBus).  See below for examples.
+supported through the [EventBus] (#EventBusConfiguration).  See below for
+examples.
 
 #### Broadcast String Message
 
@@ -264,7 +265,7 @@ be changed by setting a command line environment.
 
 Read more about Spring [Profiles](http://blog.springsource.com/2011/02/14/spring-3-1-m1-introducing-profile/).
 
-<a id="EventBus"/>Application Event Handling with Guava EventBus
+<a id="EventBusConfiguration"></a>Application Event Handling with Guava EventBus
 ---
 Zapp provides two Guava EventBus spring beans, zapp::event-bus::sync and
 zapp::event-bus::async. The zapp::event-bus::sync bean provides a synchronous
@@ -408,9 +409,9 @@ A skeleton for a zapp project can be created using maven archetypes. To create a
 
 The archetype requires some properties to be entered:
 
-    * `groupId` - The group for you artifact, generally something like `org.zenoss.<group>`
-    * `artifactId` - The artifact id, e.g `helloworld-service`
-    * `apiname`: : name of the API where your business logic is contained e.g. `helloAPI`
+    * `groupId`: The group for you artifact, generally something like `org.zenoss.<group>`
+    * `artifactId`: The artifact id, e.g `helloworld-service`
+    * `apiname`: name of the API where your business logic is contained e.g. `helloAPI`
     * `apiurl`: url to access API via rest. e.g. `/helloworld`
     * `appname`: : Name of the app `helloapp`
     * `package`:  defaults to `org.zenoss.app.<appname>`.
