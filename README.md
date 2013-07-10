@@ -180,7 +180,7 @@ parameter is neither a String nor a byte array.  See examples below:
 Zapp WebSockets support listener based message broadcasting.  In other words, a
 Zapp can broadcast a message to all connections assigned to a WebSocketListener.
 Broadcasting supports String, binary, and Json messages.  Message broadcasts is
-supported through the [EventBus] (#EventBusConfiguration).  See below for
+supported through the [EventBus] (#event-bus-configuration).  See below for
 examples.
 
 #### Broadcast String Message
@@ -265,9 +265,7 @@ be changed by setting a command line environment.
 
 Read more about Spring [Profiles](http://blog.springsource.com/2011/02/14/spring-3-1-m1-introducing-profile/).
 
-<a id="EventBusConfiguration"></a>
-
-Application Event Handling with Guava EventBus
+[Application Event Handling with Guava EventBus](#event-bus-configuration)
 ---
 Zapp provides two Guava EventBus spring beans, zapp::event-bus::sync and
 zapp::event-bus::async. The zapp::event-bus::sync bean provides a synchronous
