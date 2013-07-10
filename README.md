@@ -265,7 +265,9 @@ be changed by setting a command line environment.
 
 Read more about Spring [Profiles](http://blog.springsource.com/2011/02/14/spring-3-1-m1-introducing-profile/).
 
-<a id="EventBusConfiguration"></a>Application Event Handling with Guava EventBus
+<a id="EventBusConfiguration"></a>
+
+Application Event Handling with Guava EventBus
 ---
 Zapp provides two Guava EventBus spring beans, zapp::event-bus::sync and
 zapp::event-bus::async. The zapp::event-bus::sync bean provides a synchronous
