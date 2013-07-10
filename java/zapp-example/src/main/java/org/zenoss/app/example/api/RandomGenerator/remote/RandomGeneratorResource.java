@@ -30,7 +30,7 @@ import javax.ws.rs.core.MediaType;
  * @see <a href="http://dropwizard.codahale.com/manual/">http://dropwizard.codahale.com/manual/</a>
  *
  */
-@Resource //Annotation ensures it is loaded and registered via Spring
+@Resource("RandomGenerator") //Annotation ensures it is loaded and registered via Spring
 @Path("/example")
 @Produces(MediaType.APPLICATION_JSON)
 public class RandomGeneratorResource {

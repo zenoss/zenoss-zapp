@@ -13,7 +13,7 @@ import javax.ws.rs.Path;
 import java.io.IOException;
 
 @Path("/ws/example")
-@WebSocketListener
+@WebSocketListener("RandomGenerator")
 public class RandomGeneratorWebSocket {
 
     @Autowired

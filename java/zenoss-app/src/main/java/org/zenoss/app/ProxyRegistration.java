@@ -20,8 +20,10 @@ import com.yammer.dropwizard.lifecycle.Managed;
 public class ProxyRegistration implements Managed {
 	private static final String REDIS_HOST_KEY = "zapp.autoreg.host";
 	private static final String REDIS_PORT_KEY = "zapp.autoreg.port";	
-	private static final String REDIS_STORE_KEY_FORMAT = "frontend:/app/%s";
-	private static final String REDIS_DEAD_KEY_FORMAT = "dead:/app/%s";
+	private static final String REDIS_HTTP_KEY_FORMAT = "%s:/app/%s";
+	private static final String REDIS_WS_KEY_FORMAT = "%s:/ws/%s";
+	private static final String REDIS_SERVER_POOL = "frontend";
+	private static final String REDIS_DEAD_POOL = "dead";
 	
 	private boolean enabled = false;
 	private String redisHost;
@@ -123,8 +125,13 @@ public class ProxyRegistration implements Managed {
 	}
 	
 	private void register(Transaction t, String appname, String server) {
-		String endpoint = String.format(REDIS_STORE_KEY_FORMAT, appname);
-		
+		String endpoint = null;		
+		if (server.startsWith("ws")) {
+			endpoint = String.format(REDIS_WS_KEY_FORMAT, REDIS_SERVER_POOL, appname);
+		} else { 
+			endpoint = String.format(REDIS_HTTP_KEY_FORMAT, REDIS_SERVER_POOL, appname);
+		}
+				
 		// Get all servers from the redis pool
 		Response<List<String>> response = t.lrange(endpoint, 0, -1);
 		List<String> serverList = response.get();
@@ -189,8 +196,16 @@ public class ProxyRegistration implements Managed {
 	}
 	
 	private void unregister(Transaction t, String appname, String server) {
-		String endpoint = String.format(REDIS_STORE_KEY_FORMAT, appname);
-		String deadpoint = String.format(REDIS_DEAD_KEY_FORMAT, appname);
+		String endpoint = null;
+		String deadpoint = null;
+		
+		if (server.startsWith("ws")) {
+			endpoint = String.format(REDIS_WS_KEY_FORMAT, REDIS_SERVER_POOL, appname);
+			deadpoint = String.format(REDIS_WS_KEY_FORMAT, REDIS_DEAD_POOL, appname);
+		} else { 
+			endpoint = String.format(REDIS_HTTP_KEY_FORMAT, REDIS_SERVER_POOL, appname);
+			deadpoint = String.format(REDIS_HTTP_KEY_FORMAT, REDIS_DEAD_POOL, appname);
+		}
 		
 		// Get all the servers from the redis pool
 		Response<List<String>> response = t.lrange(endpoint, 0, -1);

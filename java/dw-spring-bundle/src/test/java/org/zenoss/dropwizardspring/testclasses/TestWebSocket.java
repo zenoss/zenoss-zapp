@@ -20,7 +20,7 @@ import javax.ws.rs.Path;
 
 
 @Path("/test")
-@WebSocketListener
+@WebSocketListener("testws")
 public class TestWebSocket {
 
     @OnMessage
