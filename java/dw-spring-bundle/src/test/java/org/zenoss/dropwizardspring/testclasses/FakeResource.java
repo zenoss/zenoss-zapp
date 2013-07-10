@@ -13,6 +13,6 @@ package org.zenoss.dropwizardspring.testclasses;
 
 import org.zenoss.dropwizardspring.annotations.Resource;
 
-@Resource("fake")
+@Resource("fakeResource")
 public class FakeResource {
 }
