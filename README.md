@@ -30,7 +30,7 @@ To get started you need provide an implementation of `org.zenoss.app.AutowiredAp
 	    @Override
     	protected Class<ExampleAppConfiguration> getConfigType() {
         	return ExampleAppConfiguration.class;
-	    }
+	}
     }
 
 By default the `AutowiredApp` will scan `org.zenoss.app` and it's sub packages for any classes that need to be loaded
@@ -48,9 +48,9 @@ resource and the `org.zenoss.dropwizardspring.annotations.Resource` annotation t
 	public class ExampleResource {
 	
 	@Path("/hello")
-    @Timed
-    @GET
-    public String hello(){ return "hello";}
+	@Timed
+	@GET
+	public String hello(){ return "hello";}
 	…
 
 Read the [Jersey][3] [documentation](https://jersey.java.net/nonav/documentation/2.0/index.html) to how to handle
@@ -178,12 +178,11 @@ parameter is neither a String nor a byte array.  See examples below:
 
 ### WebSocket Message Broadcast
 Zapp WebSockets support listener based message broadcasting.  In other words, a
-Zapp can broadcast a message to all connections assigned to a
-WebSocketListener.  Broadcasting supports String and Json Pojo messages.
-Message broadcasts is supported through the [EventBus] (#EventBus).  See below
-for examples.
+Zapp can broadcast a message to all connections assigned to a WebSocketListener.
+Broadcasting supports String, binary, and Json messages.  Message broadcasts is
+supported through the [EventBus] (#EventBus).  See below for examples.
 
-#### Broadcast Message
+#### Broadcast String Message
 
     @Path("/ws/example")
     @WebSocketListener
@@ -195,7 +194,25 @@ for examples.
 
         @OnMessage
         public void broadcast(String message, Connection connection) throws IOException {
-            eventBus.post( new BroadcastWebSocketMessage( ExampleWebSocket.class, message));
+            WebSocketBroadcast.Message wsMessage = WebSocketBroadcast.newMessage( ExampleWebSocket.class, message);
+            eventBus.post( wsMessage);
+        }
+    }
+
+#### Broadcast Binary Message
+
+    @Path("/ws/example")
+    @WebSocketListener
+    public class ExampleWebSocket {
+
+        @AutoWired
+        @Qualifer("zapp::event-bus::async")
+        EventBus eventBus
+
+        @OnMessage
+        public void broadcast(String message, Connection connection) throws IOException {
+            WebSocketBroadcast.Message wsMessage = WebSocketBroadcast.newMessage( ExampleWebSocket.class, new byte[] {...});
+            eventBus.post( wsMessage);
         }
     }
 
@@ -219,7 +236,8 @@ for examples.
 
         @OnMessage
         public void broadcast(Pojo pojo, Connection connection) throws IOException {
-            eventBus.post( new BroadcastWebSocketPojo( ExampleWebSocket.class, pojo));
+            WebSocketBroadcast.Message wsMessage = WebSocketBroadcast.newMessage( ExampleWebSocket.class, pojo);
+            eventBus.post( wsMessage);
         }
     }
 
@@ -246,7 +264,7 @@ be changed by setting a command line environment.
 
 Read more about Spring [Profiles](http://blog.springsource.com/2011/02/14/spring-3-1-m1-introducing-profile/).
 
-<a id="EventBus"/>Application Event Handling
+<a id="EventBus"/>Application Event Handling with Guava EventBus
 ---
 Zapp provides two Guava EventBus spring beans, zapp::event-bus::sync and
 zapp::event-bus::async. The zapp::event-bus::sync bean provides a synchronous
@@ -385,8 +403,11 @@ use the zapp maven archetype to generate a zapp project skeleton.
 
 ### Zapp archetype
 A skeleton for a zapp project can be created using maven archetypes. To create a project type
-`mvn archetype:generate -DarchetypeArtifactId=java-simple -DarchetypeGroupId=org.zenoss.zapp.archetypes`. The archetype
-requires some properties to be entered:
+
+	mvn archetype:generate -DarchetypeArtifactId=java-simple -DarchetypeGroupId=org.zenoss.zapp.archetypes
+
+The archetype requires some properties to be entered:
+
     * `groupId` - The group for you artifact, generally something like `org.zenoss.<group>`
     * `artifactId` - The artifact id, e.g `helloworld-service`
     * `apiname`: : name of the API where your business logic is contained e.g. `helloAPI`
@@ -394,9 +415,6 @@ requires some properties to be entered:
     * `appname`: : Name of the app `helloapp`
     * `package`:  defaults to `org.zenoss.app.<appname>`.
 
-
-
 [1]: http://dropwizard.codahale.com/
 [2]: http://www.springsource.org/
 [3]: https://jersey.java.net/
-

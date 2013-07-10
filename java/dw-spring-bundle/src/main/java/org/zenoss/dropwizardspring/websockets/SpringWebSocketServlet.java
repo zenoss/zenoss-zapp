@@ -23,14 +23,13 @@ import org.eclipse.jetty.websocket.WebSocketServlet;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.zenoss.dropwizardspring.websockets.annotations.OnMessage;
-import org.zenoss.dropwizardspring.websockets.events.BroadcastWebSocketMessage;
-import org.zenoss.dropwizardspring.websockets.events.BroadcastWebSocketPojo;
 
 import javax.servlet.http.HttpServletRequest;
 import java.io.IOException;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.util.Arrays;
+import java.util.concurrent.ExecutorService;
 
 /**
  * Servlet to accept websocket connections with text based messages.
@@ -39,16 +38,19 @@ public final class SpringWebSocketServlet extends WebSocketServlet {
     private static final Logger LOGGER = LoggerFactory.getLogger(SpringWebSocketServlet.class);
 
     private final ObjectMapper mapper = new ObjectMapper();
+    private final ExecutorService executorService;
     private final EventBus syncEventBus;
     private final EventBus asyncEventBus;
     private final ListenerProxy listener;
     private final String path;
 
-    public SpringWebSocketServlet(Object listener, EventBus syncEventBus, EventBus asyncEventBus, String path) {
+    public SpringWebSocketServlet(Object listener, ExecutorService executorService, EventBus syncEventBus, EventBus asyncEventBus, String path) {
         Preconditions.checkNotNull(path);
+        Preconditions.checkNotNull(executorService);
         Preconditions.checkNotNull(syncEventBus);
         Preconditions.checkNotNull(asyncEventBus);
         this.path = path;
+        this.executorService = executorService;
         this.syncEventBus = syncEventBus;
         this.asyncEventBus = asyncEventBus;
         this.listener = createListenerProxy(listener);
@@ -98,30 +100,26 @@ public final class SpringWebSocketServlet extends WebSocketServlet {
 
         @Subscribe
         @SuppressWarnings({"unused"})
-        public void handle(BroadcastWebSocketMessage event) {
-            if (listener.obj.getClass() == event.sender()) {
-                String message = event.message();
-                try {
-                    connection.sendMessage(message);
-                } catch (IOException e) {
-                    LOGGER.error("Failed sending message: {}", message);
-                    LOGGER.error(" w/exception:", e);
-                }
-            }
-        }
-
-        @Subscribe
-        @SuppressWarnings({"unused"})
-        public void handle(BroadcastWebSocketPojo event) {
-            if (listener.obj.getClass() == event.sender()) {
-                Object pojo = event.pojo();
-                try {
-                    String message = mapper.writeValueAsString(pojo);
-                    connection.sendMessage(message);
-                } catch (IOException e) {
-                    LOGGER.error("Failed serializing/sending pojo: {}", pojo);
-                    LOGGER.error(" w/exception:", e);
-                }
+        public void handle(final WebSocketBroadcast.Message event) {
+            if (listener.webSocketEndPoint() == event.webSocketEndPoint()) {
+                executorService.execute(new Runnable() {
+                    @Override
+                    public void run() {
+                        try {
+                            if (event.isStringClass()) {
+                                String message = event.asString();
+                                connection.sendMessage(message);
+                            } else {
+                                assert event.isByteArrayClass();
+                                byte[] message = event.asByteArray();
+                                connection.sendMessage(message, 0, message.length);
+                            }
+                        } catch (IOException e) {
+                            LOGGER.error("Failed broadcasting : {}", event);
+                            LOGGER.error(" w/exception:", e);
+                        }
+                    }
+                });
             }
         }
     }
@@ -178,6 +176,10 @@ public final class SpringWebSocketServlet extends WebSocketServlet {
             } catch (IllegalAccessException | InvocationTargetException e) {
                 throw new RuntimeException(e);
             }
+        }
+
+        Class<?> webSocketEndPoint() {
+            return obj.getClass();
         }
     }
 

@@ -78,7 +78,6 @@ public final class SpringBundle implements ConfiguredBundle<Configuration> {
         addTasks(environment);
         addManaged(environment);
         addWebSockets(environment);
-
     }
 
     private void initializeSpring(Configuration configuration, Environment environment) {
@@ -106,6 +105,7 @@ public final class SpringBundle implements ConfiguredBundle<Configuration> {
         syncEventBus = new EventBus();
         beanFactory.registerSingleton("zapp::event-bus::sync", syncEventBus);
 
+        //TODO make the executor service params configurable
         ExecutorService executorService = environment.managedExecutorService("EventBus", 5, 10, 60, TimeUnit.SECONDS);
         asyncEventBus = new AsyncEventBus(executorService);
         beanFactory.registerSingleton("zapp::event-bus::async", asyncEventBus);
@@ -147,7 +147,10 @@ public final class SpringBundle implements ConfiguredBundle<Configuration> {
             if (path == null || Strings.isNullOrEmpty(path.value())) {
                 throw new IllegalStateException("Path must be defined: " + listener.getClass());
             }
-            SpringWebSocketServlet wss = new SpringWebSocketServlet(listener, syncEventBus, asyncEventBus, path.value());
+
+            //TODO make the executor service params configurable
+            ExecutorService executorService = environment.managedExecutorService("EventBus", 5, 10, 60, TimeUnit.SECONDS);
+            SpringWebSocketServlet wss = new SpringWebSocketServlet(listener, executorService, syncEventBus, asyncEventBus, path.value());
             environment.addServlet(wss, path.value());
         }
     }
