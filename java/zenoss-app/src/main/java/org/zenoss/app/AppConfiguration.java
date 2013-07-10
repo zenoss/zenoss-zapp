@@ -12,6 +12,9 @@
 package org.zenoss.app;
 
 
+import org.zenoss.app.config.ProxyConfiguration;
+
+import com.fasterxml.jackson.annotation.JsonProperty;
 import com.yammer.dropwizard.config.Configuration;
 
 
@@ -20,5 +23,11 @@ import com.yammer.dropwizard.config.Configuration;
  * sub configuration objects.
  */
 public abstract class AppConfiguration extends Configuration {
+	@JsonProperty
+	private ProxyConfiguration proxy = new ProxyConfiguration();
+	
+	public ProxyConfiguration getProxyConfiguration() {
+		return proxy;
+	}
 
 }
