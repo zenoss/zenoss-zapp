@@ -241,6 +241,60 @@ examples.
             eventBus.post( wsMessage);
         }
     }
+    
+Registering Dropwizard Bundles
+---
+The `org.zenoss.app.annotations.Bundle` annotation, along with the interface `org.zenoss.app.autobundle.AutoBundle` can
+be utilized to register additional Dropwizard bundles as part of your application.  An example would be the registering
+an AssetBundle so that your Zenoss Application(tm) can server static web content such as JavaScript files.
+
+To register additional bundles either create a new class annotated with `@Bundle` or annotate an existing class, such as
+your application class. Also ensure that this class implements the AutoBundle interface.  The following example 
+illustrates an application class that registers an AssetBundle that requires no additional configuration classes
+(indicated by the `Optional.<class>absent()` return value in the `getRequiredConfig` method call.
+
+This example exposes files in the JAR file under the '/api' directory as static content under the URL path `/api`; the
+second parameter to the AssetBundle constructor controls the URL path that is exposed.  Dropwizard does not appear to
+announce the accessibility of these files as it does the resources after the startup banner, not does it seem to support
+indexing of the files if you perform an HTTP GET on the directory.
+
+It should be noted that for each dropwizard bundle you wish to register you will be required to create a new Java class that is annotated with `@Bundle` and implements the `AutoBundle` interface.
+
+    import org.zenoss.app.annotations.Bundle;
+    import org.zenoss.app.autobundle.AutoBundle;
+    import com.google.common.base.Optional;
+    import com.yammer.dropwizard.assets.AssetsBundle;
+
+    @Bundle
+    public class MyServiceApp extends
+        AutowiredApp<MyServiceAppConfiguration> implements AutoBundle {
+
+        public static final String APP_NAME = "My Service Zapplication";
+
+        public static void main(String[] args) throws Exception {
+            new MyServiceApp().run(args);
+        }
+
+        @Override
+        public String getAppName() {
+            return APP_NAME;
+        }
+
+        @Override
+        protected Class<MyServiceAppConfiguration> getConfigType() {
+            return MyServiceAppConfiguration.class;
+        }
+
+        @Override
+        public com.yammer.dropwizard.Bundle getBundle() {
+            return new AssetsBundle("/api/", "/api/");
+        }
+
+        @Override
+        public Optional<Class> getRequiredConfig() {
+            return Optional.<Class> absent();
+        }
+    }
 
 Registering Dropwizard objects
 ---
