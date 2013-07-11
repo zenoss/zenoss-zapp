@@ -20,7 +20,7 @@
         <dropwizard.version>0.6.2</dropwizard.version>
         <!--<jackson.version>2.1.4</jackson.version>-->
         <jetty.version>8.1.10.v20130312</jetty.version>
-        <jedis.version>2.0.0</jedis.version>
+        <jedis.version>2.1.0</jedis.version>
     </properties>
     <modules>
         <module>zenoss-app</module>

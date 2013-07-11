@@ -1,7 +1,6 @@
 package org.zenoss.app;
 
 import java.net.Socket;
-import java.util.List;
 import java.util.Map;
 
 import org.springframework.beans.factory.annotation.Autowired;
@@ -11,8 +10,6 @@ import org.zenoss.dropwizardspring.annotations.Resource;
 import org.zenoss.dropwizardspring.websockets.annotations.WebSocketListener;
 
 import redis.clients.jedis.Jedis;
-import redis.clients.jedis.Response;
-import redis.clients.jedis.Transaction;
 
 import com.yammer.dropwizard.lifecycle.Managed;
 
@@ -20,11 +17,10 @@ import com.yammer.dropwizard.lifecycle.Managed;
 public class ProxyRegistration implements Managed {
 	private static final String REDIS_HOST_KEY = "zapp.autoreg.host";
 	private static final String REDIS_PORT_KEY = "zapp.autoreg.port";	
-	private static final String REDIS_HTTP_KEY_FORMAT = "%s:/app/%s";
-	private static final String REDIS_WS_KEY_FORMAT = "%s:/ws/%s";
-	private static final String REDIS_SERVER_POOL = "frontend";
-	private static final String REDIS_DEAD_POOL = "dead";
-	
+	private static final String REDIS_SCRIPTS_KEY = "scripts";
+	private static final String REDIS_REGISTER_SCRIPT = "register";
+	private static final String REDIS_UNREGISTER_SCRIPT = "unregister";
+		
 	private boolean enabled = false;
 	private String redisHost;
 	private int redisPort;		
@@ -37,10 +33,6 @@ public class ProxyRegistration implements Managed {
 	@Autowired 
 	private ApplicationContext applicationContext;
 		
-	public ProxyRegistration() throws Exception {
-		setUp();
-	}
-	
 	private void setUp() throws Exception {
 		final String SERVER_ADDRESS_FORMAT = "%s://%s:%d";
 		
@@ -86,36 +78,29 @@ public class ProxyRegistration implements Managed {
 		
 	@Override
 	public void start() throws Exception {
+		setUp();
+		
 		Jedis jedis = null;
-		Transaction transaction = null;
 		
 		if (!enabled) return;
 		
 		try {
 			jedis = new Jedis(this.redisHost, this.redisPort);
 			jedis.connect();
-			transaction = jedis.multi();
 			
 			// Get all http resources and map them to the proxy
 			final Map<String, Object> resources = applicationContext.getBeansWithAnnotation(Resource.class);
 			for (final Object resource: resources.values()) {
-				registerHTTP(transaction, resource);
+				registerHTTP(jedis, resource);
 			}
 			
 			// Get all ws resources and map them to the proxy
 			final Map<String, Object> websockets = applicationContext.getBeansWithAnnotation(WebSocketListener.class);
 			for (final Object websocket: websockets.values()) {
-				registerWS(transaction, websocket);
+				registerWS(jedis, websocket);
 			}
-			
-			transaction.exec();			
+								
 		} finally {
-			if (transaction != null) {
-				try {
-					transaction.discard();
-				} catch (Exception e) {}
-			}
-			
 			if (jedis != null) {
 				try {
 					jedis.disconnect();
@@ -124,69 +109,45 @@ public class ProxyRegistration implements Managed {
 		}
 	}
 	
-	private void register(Transaction t, String appname, String server) {
-		String endpoint = null;		
-		if (server.startsWith("ws")) {
-			endpoint = String.format(REDIS_WS_KEY_FORMAT, REDIS_SERVER_POOL, appname);
-		} else { 
-			endpoint = String.format(REDIS_HTTP_KEY_FORMAT, REDIS_SERVER_POOL, appname);
-		}
-				
-		// Get all servers from the redis pool
-		Response<List<String>> response = t.lrange(endpoint, 0, -1);
-		List<String> serverList = response.get();
-		
-		if (serverList.isEmpty()) {
-			t.rpush(endpoint, appname);
-		}
-		
-		if (!serverList.contains(server)) {
-			t.rpush(endpoint, server);			
-		}				
+	private void register(Jedis j, String appname, String server) {
+		String sha1 = j.hget(REDIS_SCRIPTS_KEY, REDIS_REGISTER_SCRIPT);
+		if (sha1 != null) {			
+			j.evalsha(sha1, 1, appname, server);			
+		} // throw exception if false		
 	}
 	
-	private void registerHTTP(Transaction t, Object resource) {
+	private void registerHTTP(Jedis j, Object resource) {
 		Resource r = resource.getClass().getAnnotation(Resource.class);
-		register(t, r.name(), httpServer);
+		register(j, r.name(), httpServer);
 	}
 	
-	private void registerWS(Transaction t, Object websocket) {
+	private void registerWS(Jedis j, Object websocket) {
 		WebSocketListener w = websocket.getClass().getAnnotation(WebSocketListener.class);
-		register(t, w.name(), wsServer);
+		register(j, w.name(), wsServer);
 	}
 		
 	@Override
 	public void stop() throws Exception {
 		Jedis jedis = null;
-		Transaction transaction = null;
 		
 		if (!enabled) return;
 		
 		try {
 			jedis = new Jedis(this.redisHost, this.redisPort);
 			jedis.connect();
-			transaction = jedis.multi();
 			
 			// Get all http resources and map them to the proxy
 			final Map<String, Object> resources = applicationContext.getBeansWithAnnotation(Resource.class);
 			for (final Object resource: resources.values()) {
-				unregisterHTTP(transaction, resource);
+				unregisterHTTP(jedis, resource);
 			}
 			
 			// Get all ws resources and map them to the proxy
 			final Map<String, Object> websockets = applicationContext.getBeansWithAnnotation(WebSocketListener.class);
 			for (final Object websocket: websockets.values()) {
-				unregisterWS(transaction, websocket);
+				unregisterWS(jedis, websocket);
 			}
-			
-			transaction.exec();			
-		} finally {
-			if (transaction != null) {
-				try {
-					transaction.discard();
-				} catch (Exception e) {}
-			}
-			
+		} finally {			
 			if (jedis != null) {
 				try {
 					jedis.disconnect();
@@ -195,58 +156,20 @@ public class ProxyRegistration implements Managed {
 		}
 	}
 	
-	private void unregister(Transaction t, String appname, String server) {
-		String endpoint = null;
-		String deadpoint = null;
-		
-		if (server.startsWith("ws")) {
-			endpoint = String.format(REDIS_WS_KEY_FORMAT, REDIS_SERVER_POOL, appname);
-			deadpoint = String.format(REDIS_WS_KEY_FORMAT, REDIS_DEAD_POOL, appname);
-		} else { 
-			endpoint = String.format(REDIS_HTTP_KEY_FORMAT, REDIS_SERVER_POOL, appname);
-			deadpoint = String.format(REDIS_HTTP_KEY_FORMAT, REDIS_DEAD_POOL, appname);
-		}
-		
-		// Get all the servers from the redis pool
-		Response<List<String>> endpointResponse = t.lrange(endpoint, 0, -1);
-		List<String> serverList = endpointResponse.get();		
-		
-		/* 
-		 * Remove any instances of the server from the "dead" pool.
-		 * The dead pool stores a list of indices corresponding to the indices
-		 * in the server pool.  When removing an element from the server pool, 
-		 * if the index of the server is not at the end of the list, then the
-		 * dead list has to be updated for those indexes that occur after the 
-		 * index of the server being removed.
-		 */
-		
-		int index = serverList.indexOf(server);
-		if (index > -1) {
-			t.lrem(deadpoint, 0, String.valueOf(index));						
-
-			if (index < serverList.size() - 1) {
-				// Fix the list of dead indices
-				Response<List<String>> deadpointResponse = t.lrange(deadpoint, 0, -1);
-				List<String> deadList = deadpointResponse.get();
-				for (int i = 0; i < deadList.size(); i++) {
-					int dindex = Integer.parseInt(deadList.get(i));
-					if (dindex > index) {
-						t.lset(deadpoint, i, String.valueOf(dindex-1));
-					}
-				}
-			}
-						
-			t.lrem(endpoint, 0, server);
-		}		
+	private void unregister(Jedis j, String appname, String server) {
+		String sha1 = j.hget(REDIS_SCRIPTS_KEY, REDIS_UNREGISTER_SCRIPT);
+		if (sha1 != null) {			
+			j.evalsha(sha1, 1, appname, server);			
+		} // throw exception if false		
 	}
 	
-	private void unregisterHTTP(Transaction t, Object resource) {
+	private void unregisterHTTP(Jedis j, Object resource) {
 		Resource r = resource.getClass().getAnnotation(Resource.class);
-		unregister(t, r.name(), httpServer);
+		unregister(j, r.name(), httpServer);
 	}
 	
-	private void unregisterWS(Transaction t, Object websocket) {
+	private void unregisterWS(Jedis j, Object websocket) {
 		WebSocketListener w = websocket.getClass().getAnnotation(WebSocketListener.class);
-		unregister(t, w.name(), wsServer);
+		unregister(j, w.name(), wsServer);
 	}
 }
