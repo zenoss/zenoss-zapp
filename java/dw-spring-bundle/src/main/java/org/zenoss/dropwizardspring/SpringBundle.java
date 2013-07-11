@@ -24,7 +24,9 @@ import com.yammer.metrics.core.HealthCheck;
 import org.springframework.beans.factory.config.ConfigurableListableBeanFactory;
 import org.springframework.context.annotation.AnnotationConfigApplicationContext;
 import org.zenoss.dropwizardspring.annotations.Resource;
+import org.zenoss.dropwizardspring.eventbus.EventBusConfiguration;
 import org.zenoss.dropwizardspring.websockets.SpringWebSocketServlet;
+import org.zenoss.dropwizardspring.websockets.WebSocketConfiguration;
 
 import javax.ws.rs.Path;
 import java.util.Map;
@@ -77,7 +79,7 @@ public final class SpringBundle implements ConfiguredBundle<Configuration> {
         addHealthChecks(environment);
         addTasks(environment);
         addManaged(environment);
-        addWebSockets(environment);
+        addWebSockets(environment, ((SpringConfiguration) configuration).getWebSocketConfiguration());
     }
 
     private void initializeSpring(Configuration configuration, Environment environment) {
@@ -88,7 +90,7 @@ public final class SpringBundle implements ConfiguredBundle<Configuration> {
             // Register the dropwizard config as a bean
             beanFactory.registerSingleton("dropwizard", configuration);
 
-            initializeEventBus(beanFactory, environment);
+            initializeEventBus(((SpringConfiguration) configuration).getEventBusConfiguration(), beanFactory, environment);
 
             //Set the default profile
             if (this.profiles != null && this.profiles.length > 0) {
@@ -101,12 +103,14 @@ public final class SpringBundle implements ConfiguredBundle<Configuration> {
         }
     }
 
-    private void initializeEventBus(ConfigurableListableBeanFactory beanFactory, Environment environment) {
+    private void initializeEventBus(EventBusConfiguration config, ConfigurableListableBeanFactory beanFactory, Environment environment) {
         syncEventBus = new EventBus();
         beanFactory.registerSingleton("zapp::event-bus::sync", syncEventBus);
 
-        //TODO make the executor service params configurable
-        ExecutorService executorService = environment.managedExecutorService("EventBus", 5, 10, 60, TimeUnit.SECONDS);
+        int minThreads = config.getMinEventBusThreads();
+        int maxThreads = config.getMaxEventBusThreads();
+        int keepAliveMillis = config.getEventBusThreadKeepAliveMillis();
+        ExecutorService executorService = environment.managedExecutorService("EventBusExecutorService", minThreads, maxThreads, keepAliveMillis, TimeUnit.MILLISECONDS);
         asyncEventBus = new AsyncEventBus(executorService);
         beanFactory.registerSingleton("zapp::event-bus::async", asyncEventBus);
     }
@@ -140,16 +144,18 @@ public final class SpringBundle implements ConfiguredBundle<Configuration> {
         }
     }
 
-    private void addWebSockets(Environment environment) {
+    private void addWebSockets(Environment environment, WebSocketConfiguration config) {
         final Map<String, Object> listeners = applicationContext.getBeansWithAnnotation(org.zenoss.dropwizardspring.websockets.annotations.WebSocketListener.class);
+        int minThreads = config.getMinBroadcastThreads();
+        int maxThreads = config.getMaxBroadcastThreads();
+        int keepAliveMillis = config.getBroadcastThreadKeepAliveMillis();
+        ExecutorService executorService = environment.managedExecutorService("WebSocketBroadcastExecutorService", minThreads, maxThreads, keepAliveMillis, TimeUnit.MILLISECONDS);
         for (final Object listener : listeners.values()) {
             Path path = listener.getClass().getAnnotation(Path.class);
             if (path == null || Strings.isNullOrEmpty(path.value())) {
                 throw new IllegalStateException("Path must be defined: " + listener.getClass());
             }
 
-            //TODO make the executor service params configurable
-            ExecutorService executorService = environment.managedExecutorService("EventBus", 5, 10, 60, TimeUnit.SECONDS);
             SpringWebSocketServlet wss = new SpringWebSocketServlet(listener, executorService, syncEventBus, asyncEventBus, path.value());
             environment.addServlet(wss, path.value());
         }
