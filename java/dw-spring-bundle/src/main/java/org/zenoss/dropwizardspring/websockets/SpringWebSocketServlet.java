@@ -13,6 +13,8 @@ package org.zenoss.dropwizardspring.websockets;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.common.base.Preconditions;
+import com.google.common.eventbus.EventBus;
+import com.google.common.eventbus.Subscribe;
 import org.eclipse.jetty.websocket.WebSocket;
 import org.eclipse.jetty.websocket.WebSocket.Connection;
 import org.eclipse.jetty.websocket.WebSocket.OnBinaryMessage;
@@ -27,6 +29,7 @@ import java.io.IOException;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.util.Arrays;
+import java.util.concurrent.ExecutorService;
 
 /**
  * Servlet to accept websocket connections with text based messages.
@@ -35,12 +38,21 @@ public final class SpringWebSocketServlet extends WebSocketServlet {
     private static final Logger LOGGER = LoggerFactory.getLogger(SpringWebSocketServlet.class);
 
     private final ObjectMapper mapper = new ObjectMapper();
+    private final ExecutorService executorService;
+    private final EventBus syncEventBus;
+    private final EventBus asyncEventBus;
     private final ListenerProxy listener;
     private final String path;
 
-    public SpringWebSocketServlet(Object listener, String path) {
+    public SpringWebSocketServlet(Object listener, ExecutorService executorService, EventBus syncEventBus, EventBus asyncEventBus, String path) {
         Preconditions.checkNotNull(path);
+        Preconditions.checkNotNull(executorService);
+        Preconditions.checkNotNull(syncEventBus);
+        Preconditions.checkNotNull(asyncEventBus);
         this.path = path;
+        this.executorService = executorService;
+        this.syncEventBus = syncEventBus;
+        this.asyncEventBus = asyncEventBus;
         this.listener = createListenerProxy(listener);
     }
 
@@ -73,23 +85,49 @@ public final class SpringWebSocketServlet extends WebSocketServlet {
 
         @Override
         public void onOpen(Connection connection) {
-            //TODO log
+            LOGGER.info("onOpen( connection={})", connection);
             this.connection = connection;
+            syncEventBus.register(this);
+            asyncEventBus.register(this);
         }
 
         @Override
         public void onClose(int closeCode, String message) {
-            //TODO log
-            this.connection = null;
+            LOGGER.info("onClose( closeCode={}, message={})", connection, message);
+            syncEventBus.unregister(this);
+            asyncEventBus.unregister(this);
         }
 
+        @Subscribe
+        @SuppressWarnings({"unused"})
+        public void handle(final WebSocketBroadcast.Message event) {
+            if (listener.webSocketEndPoint() == event.webSocketEndPoint()) {
+                executorService.execute(new Runnable() {
+                    @Override
+                    public void run() {
+                        try {
+                            if (event.isStringClass()) {
+                                String message = event.asString();
+                                connection.sendMessage(message);
+                            } else {
+                                assert event.isByteArrayClass();
+                                byte[] message = event.asByteArray();
+                                connection.sendMessage(message, 0, message.length);
+                            }
+                        } catch (IOException e) {
+                            LOGGER.error("Failed broadcasting : {}", event);
+                            LOGGER.error(" w/exception:", e);
+                        }
+                    }
+                });
+            }
+        }
     }
 
     private ListenerProxy createListenerProxy(Object object) {
         Method call = null;
         for (Method m : object.getClass().getMethods()) {
             if (m.getAnnotation(OnMessage.class) != null) {
-                //this.checkSignature(m);
                 call = m;
                 break;
             }
@@ -138,6 +176,10 @@ public final class SpringWebSocketServlet extends WebSocketServlet {
             } catch (IllegalAccessException | InvocationTargetException e) {
                 throw new RuntimeException(e);
             }
+        }
+
+        Class<?> webSocketEndPoint() {
+            return obj.getClass();
         }
     }
 

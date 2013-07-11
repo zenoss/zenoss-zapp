@@ -1,6 +1,5 @@
 zenoss-zapp
 ===========
-
 Base project for creating zenoss REST applications.
 
 Intro
@@ -31,7 +30,7 @@ To get started you need provide an implementation of `org.zenoss.app.AutowiredAp
 	    @Override
     	protected Class<ExampleAppConfiguration> getConfigType() {
         	return ExampleAppConfiguration.class;
-	    }
+	}
     }
 
 By default the `AutowiredApp` will scan `org.zenoss.app` and it's sub packages for any classes that need to be loaded
@@ -49,16 +48,18 @@ resource and the `org.zenoss.dropwizardspring.annotations.Resource` annotation t
 	public class ExampleResource {
 	
 	@Path("/hello")
-    @Timed
-    @GET
-    public String hello(){ return "hello";}
+	@Timed
+	@GET
+	public String hello(){ return "hello";}
 	…
 
 Read the [Jersey][3] [documentation](https://jersey.java.net/nonav/documentation/2.0/index.html) to how to handle
 resource requests.
 
-Registering a websocket listener
+Websockets
 ---
+
+### Registering a websocket listener
 Websocket listeners can be registered automatically using [Spring][2].  Any
 class annotated with the
 `org.zenoss.dropwizardspring.websocket.annotations.WebSocketListener` will be
@@ -73,7 +74,7 @@ a Java POJO into JSON.  Return marshalling from Java to JSON occurs when the
 annotated method's return type is non-void and the annotated method's first
 parameter is neither a String nor a byte array.  See examples below:
 
-### OnMessage - Raw Text
+#### OnMessage - Raw Text
 
     import com.fasterxml.jackson.databind.ObjectMapper;
     import org.eclipse.jetty.websocket.WebSocket.Connection;
@@ -97,7 +98,7 @@ parameter is neither a String nor a byte array.  See examples below:
         }
     }
 
-### OnMessage - Raw Binary
+#### OnMessage - Raw Binary
 
     import org.eclipse.jetty.websocket.WebSocket.Connection;
     import org.springframework.beans.factory.annotation.Autowired;
@@ -117,7 +118,7 @@ parameter is neither a String nor a byte array.  See examples below:
         }
     }
 
-### OnMessage - Json Marshalling - Json 2 Java
+#### OnMessage - Json Marshalling - Json 2 Java
 
     import com.fasterxml.jackson.databind.ObjectMapper;
     import org.eclipse.jetty.websocket.WebSocket.Connection;
@@ -147,7 +148,7 @@ parameter is neither a String nor a byte array.  See examples below:
         }
     }
 
-### OnMessage - Json Unmarshalling/Marshalling - Json 2 Java and Java 2 Json
+#### OnMessage - Json Unmarshalling/Marshalling - Json 2 Java and Java 2 Json
 
     import com.fasterxml.jackson.databind.ObjectMapper;
     import org.eclipse.jetty.websocket.WebSocket.Connection;
@@ -175,6 +176,72 @@ parameter is neither a String nor a byte array.  See examples below:
         }
     }
 
+### WebSocket Message Broadcast
+Zapp WebSockets support listener based message broadcasting.  In other words, a
+Zapp can broadcast a message to all connections assigned to a WebSocketListener.
+Broadcasting supports String, binary, and Json messages.  Message broadcasts is
+supported through the [EventBus] (#event-bus-configuration).  See below for
+examples.
+
+#### Broadcast String Message
+
+    @Path("/ws/example")
+    @WebSocketListener
+    public class ExampleWebSocket {
+
+        @AutoWired
+        @Qualifer("zapp::event-bus::async")
+        EventBus eventBus
+
+        @OnMessage
+        public void broadcast(String message, Connection connection) throws IOException {
+            WebSocketBroadcast.Message wsMessage = WebSocketBroadcast.newMessage( ExampleWebSocket.class, message);
+            eventBus.post( wsMessage);
+        }
+    }
+
+#### Broadcast Binary Message
+
+    @Path("/ws/example")
+    @WebSocketListener
+    public class ExampleWebSocket {
+
+        @AutoWired
+        @Qualifer("zapp::event-bus::async")
+        EventBus eventBus
+
+        @OnMessage
+        public void broadcast(String message, Connection connection) throws IOException {
+            WebSocketBroadcast.Message wsMessage = WebSocketBroadcast.newMessage( ExampleWebSocket.class, new byte[] {...});
+            eventBus.post( wsMessage);
+        }
+    }
+
+#### Broadcast Pojo 
+
+    @Path("/ws/example")
+    @WebSocketListener
+    public class ExampleWebSocket {
+
+        @AutoWired
+        @Qualifer("zapp::event-bus::async")
+        EventBus eventBus
+
+        class Pojo {
+            private String message;
+            public void setMessage(String message) { this.message = message; }
+            public String getMessage() { return message;}
+            public Pojo(String message) { this.message = message; }
+            public Pojo() { }
+        }
+
+        @OnMessage
+        public void broadcast(Pojo pojo, Connection connection) throws IOException {
+            WebSocketBroadcast.Message wsMessage = WebSocketBroadcast.newMessage( ExampleWebSocket.class, pojo);
+            eventBus.post( wsMessage);
+        }
+    }
+
 Registering Dropwizard objects
 ---
 The `org.zenoss.dropwizardspring.annotations` package contains `HealthChecks`,
@@ -198,7 +265,7 @@ be changed by setting a command line environment.
 
 Read more about Spring [Profiles](http://blog.springsource.com/2011/02/14/spring-3-1-m1-introducing-profile/).
 
-Application Event Handling
+<a name="event-bus-configuration"></a>Application Event Handling with Guava EventBus
 ---
 Zapp provides two Guava EventBus spring beans, zapp::event-bus::sync and
 zapp::event-bus::async. The zapp::event-bus::sync bean provides a synchronous
@@ -337,18 +404,18 @@ use the zapp maven archetype to generate a zapp project skeleton.
 
 ### Zapp archetype
 A skeleton for a zapp project can be created using maven archetypes. To create a project type
-`mvn archetype:generate -DarchetypeArtifactId=java-simple -DarchetypeGroupId=org.zenoss.zapp.archetypes`. The archetype
-requires some properties to be entered:
-    * `groupId` - The group for you artifact, generally something like `org.zenoss.<group>`
-    * `artifactId` - The artifact id, e.g `helloworld-service`
-    * `apiname`: : name of the API where your business logic is contained e.g. `helloAPI`
+
+	mvn archetype:generate -DarchetypeArtifactId=java-simple -DarchetypeGroupId=org.zenoss.zapp.archetypes
+
+The archetype requires some properties to be entered:
+
+    * `groupId`: The group for you artifact, generally something like `org.zenoss.<group>`
+    * `artifactId`: The artifact id, e.g `helloworld-service`
+    * `apiname`: name of the API where your business logic is contained e.g. `helloAPI`
     * `apiurl`: url to access API via rest. e.g. `/helloworld`
     * `appname`: : Name of the app `helloapp`
     * `package`:  defaults to `org.zenoss.app.<appname>`.
 
-
-
 [1]: http://dropwizard.codahale.com/
 [2]: http://www.springsource.org/
 [3]: https://jersey.java.net/
-
