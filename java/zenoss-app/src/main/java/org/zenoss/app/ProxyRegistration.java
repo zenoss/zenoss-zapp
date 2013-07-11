@@ -208,13 +208,34 @@ public class ProxyRegistration implements Managed {
 		}
 		
 		// Get all the servers from the redis pool
-		Response<List<String>> response = t.lrange(endpoint, 0, -1);
-		List<String> serverList = response.get();
+		Response<List<String>> endpointResponse = t.lrange(endpoint, 0, -1);
+		List<String> serverList = endpointResponse.get();		
 		
-		// Remove any instances of the server from the "dead" pool
+		/* 
+		 * Remove any instances of the server from the "dead" pool.
+		 * The dead pool stores a list of indices corresponding to the indices
+		 * in the server pool.  When removing an element from the server pool, 
+		 * if the index of the server is not at the end of the list, then the
+		 * dead list has to be updated for those indexes that occur after the 
+		 * index of the server being removed.
+		 */
+		
 		int index = serverList.indexOf(server);
-		if (index > -1) {			
-			t.lrem(deadpoint, 0, String.valueOf(index));
+		if (index > -1) {
+			t.lrem(deadpoint, 0, String.valueOf(index));						
+
+			if (index < serverList.size() - 1) {
+				// Fix the list of dead indices
+				Response<List<String>> deadpointResponse = t.lrange(deadpoint, 0, -1);
+				List<String> deadList = deadpointResponse.get();
+				for (int i = 0; i < deadList.size(); i++) {
+					int dindex = Integer.parseInt(deadList.get(i));
+					if (dindex > index) {
+						t.lset(deadpoint, i, String.valueOf(dindex-1));
+					}
+				}
+			}
+						
 			t.lrem(endpoint, 0, server);
 		}		
 	}
