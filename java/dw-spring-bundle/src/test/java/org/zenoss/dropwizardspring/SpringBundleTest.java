@@ -20,7 +20,9 @@ import com.yammer.dropwizard.tasks.Task;
 import com.yammer.metrics.core.HealthCheck;
 import org.junit.Assert;
 import org.junit.Test;
+import org.zenoss.dropwizardspring.eventbus.EventBusConfiguration;
 import org.zenoss.dropwizardspring.testclasses.TestEventBus;
+import org.zenoss.dropwizardspring.websockets.WebSocketConfiguration;
 
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.TimeUnit;
@@ -33,11 +35,20 @@ import static org.mockito.Mockito.*;
 
 public class SpringBundleTest {
 
+    class TestConfiguration extends Configuration implements SpringConfiguration {
+        public WebSocketConfiguration getWebSocketConfiguration() {
+            return new WebSocketConfiguration();
+        }
+
+        public EventBusConfiguration getEventBusConfiguration() {
+            return new EventBusConfiguration();
+        }
+    }
+
     @Test
     public void scanTest() throws Exception {
-
         SpringBundle sb = new SpringBundle("org.zenoss.dropwizardspring.testclasses");
-        Configuration config = mock(Configuration.class);
+        Configuration config = new TestConfiguration();
         Environment environment = mock(Environment.class);
         Bootstrap bootStrap = mock(Bootstrap.class);
         ExecutorService service = mock(ExecutorService.class);
@@ -54,7 +65,7 @@ public class SpringBundleTest {
     public void testSetDevProfile() throws Exception {
         SpringBundle sb = new SpringBundle("org.zenoss.dropwizardspring.testclasses");
         sb.setDefaultProfiles("dev");
-        Configuration config = mock(Configuration.class);
+        Configuration config = new TestConfiguration();
         Environment environment = mock(Environment.class);
         ExecutorService service = mock(ExecutorService.class);
         when(environment.managedExecutorService(anyString(), anyInt(), anyInt(), anyLong(), any(TimeUnit.class))).thenReturn(service);
@@ -68,7 +79,7 @@ public class SpringBundleTest {
     public void testSetTestProfiles() throws Exception {
         SpringBundle sb = new SpringBundle("org.zenoss.dropwizardspring.testclasses");
         sb.setDefaultProfiles("dev");
-        Configuration config = mock(Configuration.class);
+        Configuration config = new TestConfiguration();
         Environment environment = mock(Environment.class);
         ExecutorService service = mock(ExecutorService.class);
         when(environment.managedExecutorService(anyString(), anyInt(), anyInt(), anyLong(), any(TimeUnit.class))).thenReturn(service);
@@ -81,7 +92,7 @@ public class SpringBundleTest {
     public void testSetTwoProfiles() throws Exception {
         SpringBundle sb = new SpringBundle("org.zenoss.dropwizardspring.testclasses");
         sb.setDefaultProfiles("dev", "test");
-        Configuration config = mock(Configuration.class);
+        Configuration config = new TestConfiguration();
         Environment environment = mock(Environment.class);
         ExecutorService service = mock(ExecutorService.class);
         when(environment.managedExecutorService(anyString(), anyInt(), anyInt(), anyLong(), any(TimeUnit.class))).thenReturn(service);
@@ -94,7 +105,7 @@ public class SpringBundleTest {
     public void testSetNoProfiles() throws Exception {
         SpringBundle sb = new SpringBundle("org.zenoss.dropwizardspring.testclasses");
         sb.setDefaultProfiles(new String[]{});
-        Configuration config = mock(Configuration.class);
+        Configuration config = new TestConfiguration();
         Environment environment = mock(Environment.class);
         ExecutorService service = mock(ExecutorService.class);
         when(environment.managedExecutorService(anyString(), anyInt(), anyInt(), anyLong(), any(TimeUnit.class))).thenReturn(service);
@@ -107,7 +118,7 @@ public class SpringBundleTest {
     public void testNoPathWebSocket() throws Exception {
         SpringBundle sb = new SpringBundle("org.zenoss.dropwizardspring.testclasses");
         sb.setDefaultProfiles("broken");
-        Configuration config = mock(Configuration.class);
+        Configuration config = new TestConfiguration();
         Environment environment = mock(Environment.class);
         ExecutorService service = mock(ExecutorService.class);
         when(environment.managedExecutorService(anyString(), anyInt(), anyInt(), anyLong(), any(TimeUnit.class))).thenReturn(service);
@@ -118,7 +129,7 @@ public class SpringBundleTest {
     public void testEventBus() throws Exception {
         SpringBundle sb = new SpringBundle("org.zenoss.dropwizardspring.testclasses");
         sb.setDefaultProfiles();
-        Configuration config = mock(Configuration.class);
+        Configuration config = new TestConfiguration();
         Environment environment = mock(Environment.class);
         ExecutorService service = mock(ExecutorService.class);
         when(environment.managedExecutorService(anyString(), anyInt(), anyInt(), anyLong(), any(TimeUnit.class))).thenReturn(service);
@@ -131,6 +142,4 @@ public class SpringBundleTest {
         assertThat(testEventBus.getSyncEventBus(), not(instanceOf(AsyncEventBus.class)));
         assertThat(testEventBus.getAsynEventBus(), instanceOf(AsyncEventBus.class));
     }
-
-
 }
