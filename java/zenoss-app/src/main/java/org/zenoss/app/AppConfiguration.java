@@ -12,6 +12,7 @@
 package org.zenoss.app;
 
 import org.zenoss.app.config.ProxyConfiguration;
+import org.zenoss.dropwizardspring.SpringConfiguration;
 import org.zenoss.dropwizardspring.eventbus.EventBusConfiguration;
 import org.zenoss.dropwizardspring.websockets.WebSocketConfiguration;
 
@@ -24,7 +25,7 @@ import com.yammer.dropwizard.config.Configuration;
  * sub configuration objects.
  */
 
-public abstract class AppConfiguration extends Configuration {
+public abstract class AppConfiguration extends Configuration implements SpringConfiguration {
 	@JsonProperty
 	private ProxyConfiguration proxy = new ProxyConfiguration();
 
