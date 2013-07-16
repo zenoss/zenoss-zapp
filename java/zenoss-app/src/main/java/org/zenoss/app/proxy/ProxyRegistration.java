@@ -20,6 +20,16 @@ import redis.clients.jedis.Jedis;
 
 import com.yammer.dropwizard.lifecycle.Managed;
 
+/**
+ * Auto-registers resource and websocket applications onto a centralized proxy 
+ * server.  To enable, add the proxy configuration, with the host and port of
+ * the proxy server and set environment variables for $zapp.autoreg.host and 
+ * $zapp.autoreg.port that points to the proxy's redis database.
+ * 
+ * @author Summer Mousa <smousa@zenoss.com>
+ * @see org.zenoss.app.config.ProxyConfiguration
+ * 
+ */
 @org.zenoss.dropwizardspring.annotations.Managed
 public class ProxyRegistration implements Managed {
 	private static final Logger log = LoggerFactory.getLogger(ProxyRegistration.class);

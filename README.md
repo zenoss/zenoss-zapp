@@ -40,9 +40,9 @@ Registering REST resources
 ---
 The first thing you will probably want to do is provide a REST resource. Here we use [Jersey][3] to implement the rest
 resource and the `org.zenoss.dropwizardspring.annotations.Resource` annotation to automatically register the resource in
- [Dropwizard][1].
+ [Dropwizard][1].  Note that `Resource` annotations requires a parameter `name=<ApplicationName>` which is used for auto-registering the zapp on a proxy server.
 
-	@Resource //Annotation ensures it is loaded and registered via Spring
+	@Resource(name="ExampleApp") //Annotation ensures it is loaded and registered via Spring
 	@Path("/example")
 	@Produces(MediaType.APPLICATION_JSON)
 	public class ExampleResource {
@@ -63,7 +63,7 @@ Websockets
 Websocket listeners can be registered automatically using [Spring][2].  Any
 class annotated with the
 `org.zenoss.dropwizardspring.websocket.annotations.WebSocketListener` will be
-registered to listen on the path defined by the `@Path` annotation.
+registered to listen on the path defined by the `@Path` annotation.  `WebSocketListener` requires a parameter `name=<ApplicationName>` which is used for auto-registering the zapp on a proxy server.
 Additionally the `org.zenoss.dropwizardsrping.annotations.OnMessage`
 annotations is needed to define the method that will handle websocket messages.
 The OnMessage annotation supports raw data (text or binary) and automatic
@@ -86,7 +86,7 @@ parameter is neither a String nor a byte array.  See examples below:
     import java.io.IOException;
 
     @Path("/ws/example")
-    @WebSocketListener
+    @WebSocketListener(name="ExampleApp")
     public class ExampleWebSocket {
 
         private ObjectMapper mapper = new ObjectMapper();
@@ -109,7 +109,7 @@ parameter is neither a String nor a byte array.  See examples below:
     import java.io.IOException;
 
     @Path("/ws/example")
-    @WebSocketListener
+    @WebSocketListener(name="ExampleApp")
     public class ExampleWebSocket {
 
         @OnMessage
@@ -130,7 +130,7 @@ parameter is neither a String nor a byte array.  See examples below:
     import java.io.IOException;
 
     @Path("/ws/example")
-    @WebSocketListener
+    @WebSocketListener(name="ExampleApp")
     public class ExampleWebSocket {
         private ObjectMapper mapper = new ObjectMapper();
 
@@ -160,7 +160,7 @@ parameter is neither a String nor a byte array.  See examples below:
     import java.io.IOException;
 
     @Path("/ws/example")
-    @WebSocketListener
+    @WebSocketListener(name="ExampleApp")
     public class ExampleWebSocket {
         class Pojo {
             private String message;
@@ -186,7 +186,7 @@ examples.
 #### Broadcast String Message
 
     @Path("/ws/example")
-    @WebSocketListener
+    @WebSocketListener(name="ExampleApp")
     public class ExampleWebSocket {
 
         @AutoWired
@@ -203,7 +203,7 @@ examples.
 #### Broadcast Binary Message
 
     @Path("/ws/example")
-    @WebSocketListener
+    @WebSocketListener(name="ExampleApp")
     public class ExampleWebSocket {
 
         @AutoWired
@@ -220,7 +220,7 @@ examples.
 #### Broadcast Pojo 
 
     @Path("/ws/example")
-    @WebSocketListener
+    @WebSocketListener(name="ExampleApp")
     public class ExampleWebSocket {
 
         @AutoWired
@@ -318,6 +318,10 @@ be changed by setting a command line environment.
     java -Dspring.profiles.active=dev
 
 Read more about Spring [Profiles](http://blog.springsource.com/2011/02/14/spring-3-1-m1-introducing-profile/).
+
+Proxy Registration
+---
+Zapp allows registration of a resource or websocket listener with a centralized proxy.  To configure this auto-registration, set zapp.autoreg.host and zapp.autoreg.port as system variables pointing to the redis database for the proxy.  Then, set the proxy host and port in the proxy section of the Zapp's configuration.yaml. 
 
 <a name="event-bus-configuration"></a>Application Event Handling with Guava EventBus
 ---
