@@ -45,5 +45,17 @@
             <version>${mockito.version}</version>
             <scope>test</scope>
         </dependency>
+        <dependency>
+        	<groupId>com.yammer.dropwizard</groupId>
+        	<artifactId>dropwizard-testing</artifactId>
+        	<version>${dropwizard.version}</version>
+        	<scope>test</scope>
+        </dependency>
+        <dependency>
+        	<groupId>org.springframework</groupId>
+        	<artifactId>spring-test</artifactId>
+        	<version>${spring.version}</version>
+        	<scope>test</scope>
+        </dependency>
     </dependencies>
 </project>

@@ -27,7 +27,7 @@ import com.yammer.dropwizard.config.Configuration;
 
 public abstract class AppConfiguration extends Configuration implements SpringConfiguration {
 	@JsonProperty
-	private ProxyConfiguration proxy = new ProxyConfiguration();
+	private ProxyConfiguration proxyConfiguration = new ProxyConfiguration();
 
 	@JsonProperty
     private WebSocketConfiguration webSocketConfiguration = new WebSocketConfiguration();
@@ -36,7 +36,7 @@ public abstract class AppConfiguration extends Configuration implements SpringCo
     private EventBusConfiguration eventBusConfiguration = new EventBusConfiguration();
 
 	public ProxyConfiguration getProxyConfiguration() {
-		return proxy;
+		return proxyConfiguration;
 	}
 
     public WebSocketConfiguration getWebSocketConfiguration() {
@@ -45,6 +45,10 @@ public abstract class AppConfiguration extends Configuration implements SpringCo
 
     public EventBusConfiguration getEventBusConfiguration() {
         return eventBusConfiguration;
+    }
+    
+    public void setProxyConfiguration(ProxyConfiguration proxyConfiguration) {
+    	this.proxyConfiguration = proxyConfiguration;
     }
 
     public void setWebSocketConfiguration(WebSocketConfiguration webSocketConfiguration) {
