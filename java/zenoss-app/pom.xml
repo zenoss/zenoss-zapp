@@ -21,6 +21,13 @@
             <version>${project.version}</version>
         </dependency>
         <dependency>
+		    <groupId>redis.clients</groupId>
+		    <artifactId>jedis</artifactId>
+		    <version>${jedis.version}</version>
+		    <type>jar</type>
+		    <scope>compile</scope>
+		</dependency>
+        <dependency>
            <groupId>eu.infomas</groupId>
            <artifactId>annotation-detector</artifactId>
            <version>3.0.1</version>
@@ -37,6 +44,18 @@
             <artifactId>mockito-all</artifactId>
             <version>${mockito.version}</version>
             <scope>test</scope>
+        </dependency>
+        <dependency>
+        	<groupId>com.yammer.dropwizard</groupId>
+        	<artifactId>dropwizard-testing</artifactId>
+        	<version>${dropwizard.version}</version>
+        	<scope>test</scope>
+        </dependency>
+        <dependency>
+        	<groupId>org.springframework</groupId>
+        	<artifactId>spring-test</artifactId>
+        	<version>${spring.version}</version>
+        	<scope>test</scope>
         </dependency>
     </dependencies>
 </project>
