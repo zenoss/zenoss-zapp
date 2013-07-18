@@ -1,5 +1,8 @@
 logging:
-    level: INFO
+  level: INFO
+proxy:
+  hostname: 10.87.110.247
+  port: 8080
 http:
   connectorType: nonblocking+ssl
   port: 8443

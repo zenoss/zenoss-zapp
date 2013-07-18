@@ -1,3 +1,16 @@
+v0.0.6 - 2013/07/16
+	- Auto-registration of Resource and WebSocketListener on a remote proxy
+	- Beans using either annotation @Resource or @WebSocketListener requires a 'name' parameter
+	- Auto-registration requires SYSVARS $zapp.autoreg.host and $zapp.autoreg.port pointing to the proxy's redis server
+	- Also, the proxy server must be configured in the configuration.yaml
+	 
+v0.0.5 - 2013/07/11
+    - Websocket broadcaset support using Guava event bus.
+
+v0.0.4 - 2013/07/09
+    - WebSocket listeners support binary data
+    - Synchronous and asynchronous guava event buses available via Spring autowiring
+
 v0.0.3 - 2013/06/27
     - new archetype for creating zapp projects
     - websocket listeners use jackson for auto marshalling and un-marshalling of websocket msgs
