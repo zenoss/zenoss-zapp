@@ -1,7 +1,9 @@
 package org.zenoss.app.example.api.RandomGenerator.remote;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
-import com.google.common.base.Optional;
+import java.io.IOException;
+
+import javax.ws.rs.Path;
+
 import org.eclipse.jetty.websocket.WebSocket.Connection;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.zenoss.app.example.api.RandomGenerator.RandomGeneratorAPI;
@@ -9,11 +11,11 @@ import org.zenoss.app.example.api.RandomGenerator.RandomResponse;
 import org.zenoss.dropwizardspring.websockets.annotations.OnMessage;
 import org.zenoss.dropwizardspring.websockets.annotations.WebSocketListener;
 
-import javax.ws.rs.Path;
-import java.io.IOException;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.google.common.base.Optional;
 
 @Path("/ws/example")
-@WebSocketListener
+@WebSocketListener(name="RandomGenerator")
 public class RandomGeneratorWebSocket {
 
     @Autowired
