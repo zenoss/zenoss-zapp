@@ -5,7 +5,7 @@
     <parent>
         <artifactId>zapp-parent</artifactId>
         <groupId>org.zenoss.zapp</groupId>
-        <version>0.0.3</version>
+        <version>0.0.6</version>
     </parent>
     <artifactId>zenoss-app</artifactId>
 
@@ -20,6 +20,13 @@
             <artifactId>dw-spring-bundle</artifactId>
             <version>${project.version}</version>
         </dependency>
+        <dependency>
+		    <groupId>redis.clients</groupId>
+		    <artifactId>jedis</artifactId>
+		    <version>${jedis.version}</version>
+		    <type>jar</type>
+		    <scope>compile</scope>
+		</dependency>
         <dependency>
            <groupId>eu.infomas</groupId>
            <artifactId>annotation-detector</artifactId>
@@ -37,6 +44,18 @@
             <artifactId>mockito-all</artifactId>
             <version>${mockito.version}</version>
             <scope>test</scope>
+        </dependency>
+        <dependency>
+        	<groupId>com.yammer.dropwizard</groupId>
+        	<artifactId>dropwizard-testing</artifactId>
+        	<version>${dropwizard.version}</version>
+        	<scope>test</scope>
+        </dependency>
+        <dependency>
+        	<groupId>org.springframework</groupId>
+        	<artifactId>spring-test</artifactId>
+        	<version>${spring.version}</version>
+        	<scope>test</scope>
         </dependency>
     </dependencies>
 </project>

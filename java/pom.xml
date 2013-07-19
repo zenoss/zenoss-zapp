@@ -5,7 +5,7 @@
 
     <groupId>org.zenoss.zapp</groupId>
     <artifactId>zapp-parent</artifactId>
-    <version>0.0.3</version>
+    <version>0.0.6</version>
     <packaging>pom</packaging>
     <name>zapp-parent</name>
     <description/>
@@ -20,6 +20,7 @@
         <dropwizard.version>0.6.2</dropwizard.version>
         <!--<jackson.version>2.1.4</jackson.version>-->
         <jetty.version>8.1.10.v20130312</jetty.version>
+        <jedis.version>2.1.0</jedis.version>
     </properties>
     <modules>
         <module>zenoss-app</module>
@@ -34,6 +35,20 @@
     <artifactId>jacoco-maven-plugin</artifactId>
     <version>0.6.3.201306030806</version>
  </plugin>
+ <plugin>
+   <groupId>org.apache.maven.plugins</groupId>
+   <artifactId>maven-source-plugin</artifactId>
+   <version>2.2.1</version>
+   <executions>
+     <execution>
+       <id>attach-sources</id>
+       <phase>verify</phase>
+       <goals>
+         <goal>jar-no-fork</goal>
+       </goals>
+     </execution>
+   </executions>
+ </plugin>
 </plugins>
 </build>
     <repositories>
@@ -46,4 +61,6 @@
             </snapshots>
         </repository>
     </repositories>
+
+
 </project>

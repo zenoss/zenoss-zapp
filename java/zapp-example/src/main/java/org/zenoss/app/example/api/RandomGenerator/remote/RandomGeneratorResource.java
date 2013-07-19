@@ -11,18 +11,19 @@
 
 package org.zenoss.app.example.api.RandomGenerator.remote;
 
-import com.google.common.base.Optional;
-import com.yammer.metrics.annotation.Timed;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.zenoss.app.example.api.RandomGenerator.RandomGeneratorAPI;
-import org.zenoss.app.example.api.RandomGenerator.RandomResponse;
-import org.zenoss.dropwizardspring.annotations.Resource;
-
 import javax.ws.rs.GET;
 import javax.ws.rs.Path;
 import javax.ws.rs.Produces;
 import javax.ws.rs.QueryParam;
 import javax.ws.rs.core.MediaType;
+
+import org.springframework.beans.factory.annotation.Autowired;
+import org.zenoss.app.example.api.RandomGenerator.RandomGeneratorAPI;
+import org.zenoss.app.example.api.RandomGenerator.RandomResponse;
+import org.zenoss.dropwizardspring.annotations.Resource;
+
+import com.google.common.base.Optional;
+import com.yammer.metrics.annotation.Timed;
 
 /**
  * Example REST resource provider
@@ -30,7 +31,7 @@ import javax.ws.rs.core.MediaType;
  * @see <a href="http://dropwizard.codahale.com/manual/">http://dropwizard.codahale.com/manual/</a>
  *
  */
-@Resource //Annotation ensures it is loaded and registered via Spring
+@Resource(name="RandomGenerator") //Annotation ensures it is loaded and registered via Spring
 @Path("/example")
 @Produces(MediaType.APPLICATION_JSON)
 public class RandomGeneratorResource {

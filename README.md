@@ -1,6 +1,5 @@
 zenoss-zapp
 ===========
-
 Base project for creating zenoss REST applications.
 
 Intro
@@ -31,7 +30,7 @@ To get started you need provide an implementation of `org.zenoss.app.AutowiredAp
 	    @Override
     	protected Class<ExampleAppConfiguration> getConfigType() {
         	return ExampleAppConfiguration.class;
-	    }
+	}
     }
 
 By default the `AutowiredApp` will scan `org.zenoss.app` and it's sub packages for any classes that need to be loaded
@@ -41,34 +40,41 @@ Registering REST resources
 ---
 The first thing you will probably want to do is provide a REST resource. Here we use [Jersey][3] to implement the rest
 resource and the `org.zenoss.dropwizardspring.annotations.Resource` annotation to automatically register the resource in
- [Dropwizard][1].
+ [Dropwizard][1].  Note that `Resource` annotations requires a parameter `name=<ApplicationName>` which is used for auto-registering the zapp on a proxy server.
 
-	@Resource //Annotation ensures it is loaded and registered via Spring
+	@Resource(name="ExampleApp") //Annotation ensures it is loaded and registered via Spring
 	@Path("/example")
 	@Produces(MediaType.APPLICATION_JSON)
 	public class ExampleResource {
 	
 	@Path("/hello")
-    @Timed
-    @GET
-    public String hello(){ return "hello";}
+	@Timed
+	@GET
+	public String hello(){ return "hello";}
 	…
 
 Read the [Jersey][3] [documentation](https://jersey.java.net/nonav/documentation/2.0/index.html) to how to handle
 resource requests.
 
-Registering a websocket listener
+Websockets
 ---
-Websocket listeners can be registered automatically using [Spring][2].  Any class annotated with the
-`org.zenoss.dropwizardspring.websocket.annotations.WebSocketListener` will be registerd to listen on the path defined by
-the `@Path` annotation. Additionally the `org.zenoss.dropwizardsrping.annotations.OnMessage` annotations is needed to
-define the method that will handle websocket messages.  The OnMessage annotation supports raw data and automatic
-marshalling of Java POJOs using jackson.  Automatic marshalling from json to java occurs when the annotated method's
-first argument is not a String object.  Additionally, the websocket listener will marshall a java pojo into json.
-Return marshalling from java to json occurs when the annotated method's return type is non-void and the annotated
-method's first parameter is not a String.  See examples below:
 
-### OnMessage - Raw Data
+### Registering a websocket listener
+Websocket listeners can be registered automatically using [Spring][2].  Any
+class annotated with the
+`org.zenoss.dropwizardspring.websocket.annotations.WebSocketListener` will be
+registered to listen on the path defined by the `@Path` annotation.  `WebSocketListener` requires a parameter `name=<ApplicationName>` which is used for auto-registering the zapp on a proxy server.
+Additionally the `org.zenoss.dropwizardsrping.annotations.OnMessage`
+annotations is needed to define the method that will handle websocket messages.
+The OnMessage annotation supports raw data (text or binary) and automatic
+marshalling of Java POJOs using Jackson.  Automatic marshalling from JSON to
+Java occurs when the annotated method's first argument is neither a String
+object nor a byte array.  Additionally, the WebSocket listener will marshall
+a Java POJO into JSON.  Return marshalling from Java to JSON occurs when the
+annotated method's return type is non-void and the annotated method's first
+parameter is neither a String nor a byte array.  See examples below:
+
+#### OnMessage - Raw Text
 
     import com.fasterxml.jackson.databind.ObjectMapper;
     import org.eclipse.jetty.websocket.WebSocket.Connection;
@@ -80,7 +86,7 @@ method's first parameter is not a String.  See examples below:
     import java.io.IOException;
 
     @Path("/ws/example")
-    @WebSocketListener
+    @WebSocketListener(name="ExampleApp")
     public class ExampleWebSocket {
 
         private ObjectMapper mapper = new ObjectMapper();
@@ -92,7 +98,27 @@ method's first parameter is not a String.  See examples below:
         }
     }
 
-### OnMessage - Json Marshalling - Json 2 Java
+#### OnMessage - Raw Binary
+
+    import org.eclipse.jetty.websocket.WebSocket.Connection;
+    import org.springframework.beans.factory.annotation.Autowired;
+    import org.zenoss.dropwizardspring.websockets.annotations.OnMessage;
+    import org.zenoss.dropwizardspring.websockets.annotations.WebSocketListener;
+
+    import javax.ws.rs.Path;
+    import java.io.IOException;
+
+    @Path("/ws/example")
+    @WebSocketListener(name="ExampleApp")
+    public class ExampleWebSocket {
+
+        @OnMessage
+        public void echo(byte[] data, Connection connection) throws IOException {
+            connection.sendMessage(data);
+        }
+    }
+
+#### OnMessage - Json Marshalling - Json 2 Java
 
     import com.fasterxml.jackson.databind.ObjectMapper;
     import org.eclipse.jetty.websocket.WebSocket.Connection;
@@ -104,7 +130,7 @@ method's first parameter is not a String.  See examples below:
     import java.io.IOException;
 
     @Path("/ws/example")
-    @WebSocketListener
+    @WebSocketListener(name="ExampleApp")
     public class ExampleWebSocket {
         private ObjectMapper mapper = new ObjectMapper();
 
@@ -122,7 +148,7 @@ method's first parameter is not a String.  See examples below:
         }
     }
 
-### OnMessage - Json Unmarshalling/Marshalling - Json 2 Java and Java 2 Json
+#### OnMessage - Json Unmarshalling/Marshalling - Json 2 Java and Java 2 Json
 
     import com.fasterxml.jackson.databind.ObjectMapper;
     import org.eclipse.jetty.websocket.WebSocket.Connection;
@@ -134,7 +160,7 @@ method's first parameter is not a String.  See examples below:
     import java.io.IOException;
 
     @Path("/ws/example")
-    @WebSocketListener
+    @WebSocketListener(name="ExampleApp")
     public class ExampleWebSocket {
         class Pojo {
             private String message;
@@ -150,25 +176,211 @@ method's first parameter is not a String.  See examples below:
         }
     }
 
-Registring Dropwizard objects
+### WebSocket Message Broadcast
+Zapp WebSockets support listener based message broadcasting.  In other words, a
+Zapp can broadcast a message to all connections assigned to a WebSocketListener.
+Broadcasting supports String, binary, and Json messages.  Message broadcasts is
+supported through the [EventBus] (#event-bus-configuration).  See below for
+examples.
+
+#### Broadcast String Message
+
+    @Path("/ws/example")
+    @WebSocketListener(name="ExampleApp")
+    public class ExampleWebSocket {
+
+        @AutoWired
+        @Qualifer("zapp::event-bus::async")
+        EventBus eventBus
+
+        @OnMessage
+        public void broadcast(String message, Connection connection) throws IOException {
+            WebSocketBroadcast.Message wsMessage = WebSocketBroadcast.newMessage( ExampleWebSocket.class, message);
+            eventBus.post( wsMessage);
+        }
+    }
+
+#### Broadcast Binary Message
+
+    @Path("/ws/example")
+    @WebSocketListener(name="ExampleApp")
+    public class ExampleWebSocket {
+
+        @AutoWired
+        @Qualifer("zapp::event-bus::async")
+        EventBus eventBus
+
+        @OnMessage
+        public void broadcast(String message, Connection connection) throws IOException {
+            WebSocketBroadcast.Message wsMessage = WebSocketBroadcast.newMessage( ExampleWebSocket.class, new byte[] {...});
+            eventBus.post( wsMessage);
+        }
+    }
+
+#### Broadcast Pojo 
+
+    @Path("/ws/example")
+    @WebSocketListener(name="ExampleApp")
+    public class ExampleWebSocket {
+
+        @AutoWired
+        @Qualifer("zapp::event-bus::async")
+        EventBus eventBus
+
+        class Pojo {
+            private String message;
+            public void setMessage(String message) { this.message = message; }
+            public String getMessage() { return message;}
+            public Pojo(String message) { this.message = message; }
+            public Pojo() { }
+        }
+
+        @OnMessage
+        public void broadcast(Pojo pojo, Connection connection) throws IOException {
+            WebSocketBroadcast.Message wsMessage = WebSocketBroadcast.newMessage( ExampleWebSocket.class, pojo);
+            eventBus.post( wsMessage);
+        }
+    }
+    
+Registering Dropwizard Bundles
 ---
-The `org.zenoss.dropwizardspring.annotations` pacage contains `HealthChecks`, `Tasks` and "`Managed`" annotations.
-These annotations can be used to automatically register their respective [Dropwizard][1] components.  Read the
+The `org.zenoss.app.annotations.Bundle` annotation, along with the interface `org.zenoss.app.autobundle.AutoBundle` can
+be utilized to register additional Dropwizard bundles as part of your application.  An example would be the registering
+an AssetBundle so that your Zenoss Application(tm) can server static web content such as JavaScript files.
+
+To register additional bundles either create a new class annotated with `@Bundle` or annotate an existing class, such as
+your application class. Also ensure that this class implements the AutoBundle interface.  The following example 
+illustrates an application class that registers an AssetBundle that requires no additional configuration classes
+(indicated by the `Optional.<class>absent()` return value in the `getRequiredConfig` method call.
+
+This example exposes files in the JAR file under the '/api' directory as static content under the URL path `/api`; the
+second parameter to the AssetBundle constructor controls the URL path that is exposed.  Dropwizard does not appear to
+announce the accessibility of these files as it does the resources after the startup banner, not does it seem to support
+indexing of the files if you perform an HTTP GET on the directory.
+
+It should be noted that for each dropwizard bundle you wish to register you will be required to create a new Java class that is annotated with `@Bundle` and implements the `AutoBundle` interface.
+
+    import org.zenoss.app.annotations.Bundle;
+    import org.zenoss.app.autobundle.AutoBundle;
+    import com.google.common.base.Optional;
+    import com.yammer.dropwizard.assets.AssetsBundle;
+
+    @Bundle
+    public class MyServiceApp extends
+        AutowiredApp<MyServiceAppConfiguration> implements AutoBundle {
+
+        public static final String APP_NAME = "My Service Zapplication";
+
+        public static void main(String[] args) throws Exception {
+            new MyServiceApp().run(args);
+        }
+
+        @Override
+        public String getAppName() {
+            return APP_NAME;
+        }
+
+        @Override
+        protected Class<MyServiceAppConfiguration> getConfigType() {
+            return MyServiceAppConfiguration.class;
+        }
+
+        @Override
+        public com.yammer.dropwizard.Bundle getBundle() {
+            return new AssetsBundle("/api/", "/api/");
+        }
+
+        @Override
+        public Optional<Class> getRequiredConfig() {
+            return Optional.<Class> absent();
+        }
+    }
+
+Registering Dropwizard objects
+---
+The `org.zenoss.dropwizardspring.annotations` package contains `HealthChecks`,
+`Tasks` and "`Managed`" annotations.  These annotations can be used to
+automatically register their respective [Dropwizard][1] components.  Read the
 [Dropwizard][1] documentation to find out more about the components.
 
 Spring Profiles
 ---
-You can annotate your components that have different implementations based on running environment with `Profile`. For
-example a component that runs in production can be annotated `@Profile("prod")` and a version of the component that runs
-in development can be annotated with `@Profile("dev")`. If a component is annotated with a profile than it will only be
-loaded if the profile matches any of the active profiles.
+You can annotate your components that have different implementations based on
+running environment with `Profile`. For example a component that runs in
+production can be annotated `@Profile("prod")` and a version of the component
+that runs in development can be annotated with `@Profile("dev")`. If
+a component is annotated with a profile than it will only be loaded if the
+profile matches any of the active profiles.
 
-The bundle sets the default active profile to be `prod`. The active profile can be changed by setting a
-command line environment.
+The bundle sets the default active profile to be `prod`. The active profile can
+be changed by setting a command line environment.
 
     java -Dspring.profiles.active=dev
 
 Read more about Spring [Profiles](http://blog.springsource.com/2011/02/14/spring-3-1-m1-introducing-profile/).
+
+Proxy Registration
+---
+Zapp allows registration of a resource or websocket listener with a centralized proxy.  To configure this auto-registration, set zapp.autoreg.host and zapp.autoreg.port as system variables pointing to the redis database for the proxy.  Then, set the proxy host and port in the proxy section of the Zapp's configuration.yaml. 
+
+<a name="event-bus-configuration"></a>Application Event Handling with Guava EventBus
+---
+Zapp provides two Guava EventBus spring beans, zapp::event-bus::sync and
+zapp::event-bus::async. The zapp::event-bus::sync bean provides a synchronous
+event handling system.  The zapp::event-bus::async provides an asynchronous
+event handling system.  Use appropriately.  See example autowiring and
+configuration below.
+
+### Synchronous EventBus Subscriber - Field based configuration
+
+    import com.google.common.eventbus.EventBus;
+    import com.google.common.eventbus.Subscribe;
+    
+    import org.springframework.beans.factory.annotation.Autowired;
+    import org.springframework.beans.factory.annotation.Qualifier;
+    import org.springframework.stereotype.Component;
+    
+    @Component
+    public class AnEventBusSubscriber
+    {
+        @Autowired
+        @Qualifer("zapp::event-bus::sync")
+        EventBus eventBus;
+    
+        @PostConstruct
+        public void registerSubscribers() {
+            eventBus.register( this);
+        }
+    
+        @Subscribe public void eventHandler( Object event) {
+            //do something with event
+        }
+    }
+
+### Asynchronous EventBus Subscriber - Constructor based configuration
+
+    import com.google.common.eventbus.EventBus;
+    import com.google.common.eventbus.Subscribe;
+    
+    import org.springframework.beans.factory.annotation.Autowired;
+    import org.springframework.beans.factory.annotation.Qualifier;
+    import org.springframework.stereotype.Component;
+    
+    @Component
+    class AnEventBusSubscriber
+    {
+        @Autowired
+        public AnEventBusSubscriber( @Qualifer("zapp::event-bus::async") EventBus eventBus) {
+            this.eventBus = eventBus;
+            this.eventBus.register( this);
+        }
+    
+        @Subscribe public void eventHandler( Object event) {
+            //do something with event
+        }
+    }
+
+Read more about Guava [EventBus](http://code.google.com/p/guava-libraries/wiki/EventBusExplained)
 
 Writing unit tests
 ---
@@ -250,18 +462,18 @@ use the zapp maven archetype to generate a zapp project skeleton.
 
 ### Zapp archetype
 A skeleton for a zapp project can be created using maven archetypes. To create a project type
-`mvn archetype:generate -DarchetypeArtifactId=java-simple -DarchetypeGroupId=org.zenoss.zapp.archetypes`. The archetype
-requires some properties to be entered:
-    * `groupId` - The group for you artifact, generally something like `org.zenoss.<group>`
-    * `artifactId` - The artifact id, e.g `helloworld-service`
-    * `apiname`: : name of the API where your business logic is contained e.g. `helloAPI`
+
+	mvn archetype:generate -DarchetypeArtifactId=java-simple -DarchetypeGroupId=org.zenoss.zapp.archetypes
+
+The archetype requires some properties to be entered:
+
+    * `groupId`: The group for you artifact, generally something like `org.zenoss.<group>`
+    * `artifactId`: The artifact id, e.g `helloworld-service`
+    * `apiname`: name of the API where your business logic is contained e.g. `helloAPI`
     * `apiurl`: url to access API via rest. e.g. `/helloworld`
     * `appname`: : Name of the app `helloapp`
     * `package`:  defaults to `org.zenoss.app.<appname>`.
 
-
-
 [1]: http://dropwizard.codahale.com/
 [2]: http://www.springsource.org/
 [3]: https://jersey.java.net/
-
