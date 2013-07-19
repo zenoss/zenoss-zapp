@@ -1,6 +1,6 @@
 logging:
   level: INFO
-proxy:
+proxyConfiguration:
   hostname: 10.87.110.247
   port: 8080
 http:
