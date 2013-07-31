@@ -1,3 +1,7 @@
+v0.0.7 - TBD
+    - Change Auto-registration env variables form zapp.autoreg.host and zapp.autoreg.port to ZAPP_AUTOREG_HOST and
+        ZAPP_AUTOREG_PORT since dots aren't valid on linux.
+
 v0.0.6 - 2013/07/19
 	- Auto-registration of Resource and WebSocketListener on a remote proxy
 	- Beans using either annotation @Resource or @WebSocketListener requires a 'name' parameter

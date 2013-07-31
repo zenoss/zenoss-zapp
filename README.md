@@ -321,7 +321,9 @@ Read more about Spring [Profiles](http://blog.springsource.com/2011/02/14/spring
 
 Proxy Registration
 ---
-Zapp allows registration of a resource or websocket listener with a centralized proxy.  To configure this auto-registration, set zapp.autoreg.host and zapp.autoreg.port as system variables pointing to the redis database for the proxy.  Then, set the proxy host and port in the proxy section of the Zapp's configuration.yaml. 
+Zapp allows registration of a resource or websocket listener with a centralized proxy.  To configure this
+auto-registration, set ZAPP_AUTOREG_HOST and g as environment variables pointing to the redis database
+for the proxy.  Then, set the proxy host and port in the proxy section of the Zapp's configuration.yaml.
 
 <a name="event-bus-configuration"></a>Application Event Handling with Guava EventBus
 ---

@@ -6,6 +6,7 @@ import java.util.Map;
 
 import javax.ws.rs.Path;
 
+import com.sun.tools.javac.comp.Check;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -34,8 +35,8 @@ import com.yammer.dropwizard.lifecycle.Managed;
 public class ProxyRegistration implements Managed {
 	private static final Logger log = LoggerFactory.getLogger(ProxyRegistration.class);
 	
-	private static final String REDIS_HOST_KEY = "zapp.autoreg.host";
-	private static final String REDIS_PORT_KEY = "zapp.autoreg.port";	
+	private static final String REDIS_HOST_KEY = "ZAPP_AUTOREG_HOST";
+	private static final String REDIS_PORT_KEY = "ZAPP_AUTOREG_PORT";
 	private static final String REDIS_SCRIPTS_KEY = "scripts";
 	private static final String REDIS_REGISTER_SCRIPT = "register";
 	private static final String REDIS_UNREGISTER_SCRIPT = "unregister";
