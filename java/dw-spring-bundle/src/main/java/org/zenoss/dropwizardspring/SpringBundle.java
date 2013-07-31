@@ -89,6 +89,7 @@ public final class SpringBundle implements ConfiguredBundle<Configuration> {
 
             // Register the dropwizard config as a bean
             beanFactory.registerSingleton("dropwizard", configuration);
+            beanFactory.registerSingleton("dropwizardEnvironment", environment);
 
             initializeEventBus(((SpringConfiguration) configuration).getEventBusConfiguration(), beanFactory, environment);
 
