@@ -1,6 +1,7 @@
 v0.0.7 - TBD
+        - Update example to include supervisord conf
 	- Update example to use mvn assembly 
-	- Update archetype to include mvn assembly goals
+	- Update archetype to include mvn assembly goals and supervisord conf
 
 v0.0.6 - 2013/07/19
 	- Auto-registration of Resource and WebSocketListener on a remote proxy
