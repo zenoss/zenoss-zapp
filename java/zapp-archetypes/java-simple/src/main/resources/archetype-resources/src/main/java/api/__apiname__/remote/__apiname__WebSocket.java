@@ -23,7 +23,7 @@ import javax.ws.rs.Path;
 import java.io.IOException;
 
 @Path("/ws/${apiurl}")
-@WebSocketListener
+@WebSocketListener(name="${apiname}")
 public class ${apiname}WebSocket {
 	
 	@Autowired
