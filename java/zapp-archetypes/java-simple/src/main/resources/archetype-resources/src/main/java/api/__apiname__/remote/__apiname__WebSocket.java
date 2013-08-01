@@ -25,14 +25,15 @@ import java.io.IOException;
 @Path("/ws/${apiurl}")
 @WebSocketListener(name="${apiname}")
 public class ${apiname}WebSocket {
-	
-	@Autowired
-	private ${apiname}API api;
-	
-	private ObjectMapper mapper = new ObjectMapper();
-	
-	@OnMessage
-	public void handleMessage(String data, Connection connection) throws IOException {
-		// TODO: Implement method
-	}
+    
+    @Autowired
+    private ${apiname}API api;
+    
+    private ObjectMapper mapper = new ObjectMapper();
+    
+    @OnMessage
+    public void handleMessage(String data, Connection connection) throws IOException {
+        // TODO: Implement method
+        mapper.readTree(data);
+    }
 }
