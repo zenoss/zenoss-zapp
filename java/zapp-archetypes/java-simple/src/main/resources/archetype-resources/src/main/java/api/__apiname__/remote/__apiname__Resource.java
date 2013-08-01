@@ -34,9 +34,9 @@ import javax.ws.rs.core.MediaType;
 @Path("/${apiurl}")
 @Produces(MediaType.APPLICATION_JSON)
 public class ${apiname}Resource {
-	
-	@Autowired
-	${apiname}API api;
-	
-	/* TODO: Implement methods here */
+    
+    @Autowired
+    ${apiname}API api;
+    
+    /* TODO: Implement methods here */
 }

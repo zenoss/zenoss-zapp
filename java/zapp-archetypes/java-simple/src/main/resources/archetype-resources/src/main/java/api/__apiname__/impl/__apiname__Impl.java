@@ -23,9 +23,9 @@ import ${package}.api.${apiname}.${apiname}Response;
  */
 @API //API annotation ensures it is loaded via Spring
 public class ${apiname}Impl implements ${apiname}API {
-	
-	@Autowired
-	${appname}Configuration config;
-	
-	/* TODO: Add implementation methods */
+    
+    @Autowired
+    ${appname}Configuration config;
+    
+    /* TODO: Add implementation methods */
 }
