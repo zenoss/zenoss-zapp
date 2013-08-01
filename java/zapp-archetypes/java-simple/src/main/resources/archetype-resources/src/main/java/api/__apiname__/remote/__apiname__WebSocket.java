@@ -33,6 +33,7 @@ public class ${apiname}WebSocket {
     
     @OnMessage
     public void handleMessage(String data, Connection connection) throws IOException {
+        // TODO: Implement method
         mapper.readTree(data);
     }
 }
