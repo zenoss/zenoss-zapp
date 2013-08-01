@@ -1,4 +1,5 @@
-v0.0.7 - TBD
+v0.0.7 - 2013/08/01
+        - Make Dropwizard environment available via spring
         - Update example to include supervisord conf
 	- Update example to use mvn assembly 
 	- Update archetype to include mvn assembly goals and supervisord conf
