@@ -166,13 +166,13 @@ public class ProxyRegistration implements Managed {
 	private void registerHTTP(Jedis j, Object resource) {
 		Resource r = resource.getClass().getAnnotation(Resource.class);
 		Path p = resource.getClass().getAnnotation(Path.class);
-		register(j, r.name(), getHttpServer() + p.value());
+		register(j, "/api/"+r.name(), getHttpServer() + p.value());
 	}
 	
 	private void registerWS(Jedis j, Object websocket) {
 		WebSocketListener w = websocket.getClass().getAnnotation(WebSocketListener.class);
 		Path p = websocket.getClass().getAnnotation(Path.class);
-		register(j, w.name(), getWsServer() + p.value());
+		register(j,"/ws/"+ w.name(), getWsServer() + p.value());
 	}
 		
 	@Override
