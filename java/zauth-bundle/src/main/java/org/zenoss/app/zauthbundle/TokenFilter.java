@@ -11,6 +11,7 @@ import org.slf4j.LoggerFactory;
 import javax.servlet.ServletRequest;
 import javax.servlet.ServletResponse;
 import javax.servlet.http.HttpServletRequest;
+import javax.servlet.http.HttpServletResponse;
 
 
 public class TokenFilter extends AuthenticatingFilter {
@@ -24,7 +25,6 @@ public class TokenFilter extends AuthenticatingFilter {
     protected AuthenticationToken createToken(ServletRequest request, ServletResponse response) throws Exception {
         HttpServletRequest httpRequest = WebUtils.toHttp(request);
         String token = httpRequest.getHeader(TOKEN_HEADER);
-        token = "test";
         if (token == null) {
             throw new InvalidTokenException( TOKEN_HEADER + " header is missing");
         }
@@ -38,10 +38,12 @@ public class TokenFilter extends AuthenticatingFilter {
     protected boolean onAccessDenied(ServletRequest request, ServletResponse response) throws Exception {
         try {
             boolean result = executeLogin(request, response);
-            System.out.println("Result of executeLogin " + result);
+            return result;
         }
         catch (InvalidTokenException e) {
             log.info("Unable to login " + e.getMessage());
+            // let the server know we are unauthorized
+            ((HttpServletResponse)response).setStatus(401);
         }
         catch (Exception e) {
             /**
@@ -58,16 +60,18 @@ public class TokenFilter extends AuthenticatingFilter {
         if (e != null){
             log.info(e.getMessage(), e);
         }
+        // let the server know we are unauthorized
+        ((HttpServletResponse)response).setStatus(401);
         return false;
     }
 
 
     /**
      * Override the parent implementation so we do not redirect to a login page.
-     * @param token
-     * @param subject
-     * @param request
-     * @param response
+     * @param token our AuthenticationToken
+     * @param subject the logged in user
+     * @param request ServletRequest
+     * @param response Http response back to the user
      * @return true, let the filter chain continue on
      * @throws Exception
      */
