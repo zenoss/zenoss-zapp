@@ -44,8 +44,10 @@ public class TokenFilter extends AuthenticatingFilter {
             log.info("Unable to login " + e.getMessage());
         }
         catch (Exception e) {
-            log.info(e.getMessage());
-            e.printStackTrace();
+            /**
+             * Catch all exception so that we don't miss any logic errors from our Realm impl.
+             */
+            log.error(e.getMessage(), e);
         }
         return false;
     }
@@ -53,8 +55,26 @@ public class TokenFilter extends AuthenticatingFilter {
 
     protected boolean onLoginFailure(AuthenticationToken token, AuthenticationException e,
                                      ServletRequest request, ServletResponse response) {
-        log.info(e.getMessage(), e);
+        if (e != null){
+            log.info(e.getMessage(), e);
+        }
         return false;
+    }
+
+
+    /**
+     * Override the parent implementation so we do not redirect to a login page.
+     * @param token
+     * @param subject
+     * @param request
+     * @param response
+     * @return true, let the filter chain continue on
+     * @throws Exception
+     */
+    protected boolean onLoginSuccess(AuthenticationToken token, Subject subject,
+                                     ServletRequest request, ServletResponse response) throws Exception {
+        // We logged in, let the original request continue on.
+        return true;
     }
 
 
