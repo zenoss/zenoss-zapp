@@ -12,6 +12,7 @@ import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 import org.zenoss.app.AppConfiguration;
+import org.zenoss.app.config.ProxyConfiguration;
 
 import java.io.IOException;
 
@@ -25,8 +26,11 @@ public class TokenRealm extends AuthenticatingRealm {
 
     private final String VALIDATE_URL = "/zauth/api/validate";
 
-    @Autowired
-    private AppConfiguration configuration;
+    static private ProxyConfiguration proxyConfig;
+
+    public static void setProxyConfiguration(ProxyConfiguration config) {
+        proxyConfig = config;
+    }
 
     private Class<? extends AuthenticationToken> authenticationTokenClass = StringAuthenticationToken.class;
     public Class getAuthenticationTokenClass() {
@@ -35,13 +39,12 @@ public class TokenRealm extends AuthenticatingRealm {
 
     @Override
     protected AuthenticationInfo doGetAuthenticationInfo(AuthenticationToken token) throws AuthenticationException {
-
         // get our principal from the token
         String zenossToken = (String)token.getPrincipal();
 
         // get the hostname and port from ProxyConfiguration
-        String hostname = configuration.getProxyConfiguration().getHostname();
-        int port = configuration.getProxyConfiguration().getPort();
+        String hostname = proxyConfig.getHostname();
+        int port = proxyConfig.getPort();
         log.debug("Attempting to validate token against hostname:port {}, {}", hostname, port);
         String url = "http://" + hostname + ":" + port + VALIDATE_URL;
         HttpClient client = new HttpClient();
@@ -49,6 +52,7 @@ public class TokenRealm extends AuthenticatingRealm {
         client.setTimeout(5);
         ContentExchange exchange = new ContentExchange(true);
         exchange.setURL(url + "?token=" + zenossToken);
+        System.out.println(url + "?token=" + zenossToken);
         // submit a request to zauth service to find out if the token is valid
         try{
             client.send(exchange);

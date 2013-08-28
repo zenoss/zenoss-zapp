@@ -5,6 +5,10 @@ import com.yammer.dropwizard.ConfiguredBundle;
 import com.yammer.dropwizard.config.Bootstrap;
 import com.yammer.dropwizard.config.Configuration;
 import com.yammer.dropwizard.config.Environment;
+import org.apache.shiro.SecurityUtils;
+import org.apache.shiro.mgt.*;
+import org.apache.shiro.mgt.SecurityManager;
+import org.apache.shiro.realm.Realm;
 import org.apache.shiro.web.env.EnvironmentLoaderListener;
 import org.apache.shiro.web.servlet.ShiroFilter;
 import org.eclipse.jetty.server.session.SessionHandler;
@@ -44,10 +48,10 @@ public class ZAuthBundle implements AutoConfiguredBundle {
                 }
                 environment.addServletListeners(new EnvironmentLoaderListener());
                 final String filterUrlPattern = config.getFilterUrlPattern();
-                log.debug("ShiroFilter will check URLs matching '{}'.", filterUrlPattern);
                 environment.addFilter(new ShiroFilter(), filterUrlPattern).setName("shiro-filter");
+                TokenRealm.setProxyConfiguration(proxyConfig);
             }else {
-                log.info("Shiro security is disabled");
+                log.info("ZAuth security is disabled");
             }
         }
 

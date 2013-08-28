@@ -53,8 +53,7 @@ public class TokenFilter extends AuthenticatingFilter {
 
     protected boolean onLoginFailure(AuthenticationToken token, AuthenticationException e,
                                      ServletRequest request, ServletResponse response) {
-        e.printStackTrace();
-        log.info(e.getMessage());
+        log.info(e.getMessage(), e);
         return false;
     }
 
