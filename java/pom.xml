@@ -27,6 +27,7 @@
         <module>dw-spring-bundle</module>
         <module>zapp-example</module>
         <module>zapp-archetypes</module>
+        <module>zauth-bundle</module>
     </modules>
 <build>
 <plugins>
@@ -52,15 +53,26 @@
 </plugins>
 </build>
     <repositories>
-        <repository>
-            <id>zenoss-nexus</id>
-            <name>Internal Zenoss Nexus</name>
-            <url>http://cmrepo.zenoss.loc/nexus/content/groups/public</url>
-            <snapshots>
-                <updatePolicy>always</updatePolicy>
-            </snapshots>
-        </repository>
+      <repository>
+        <id>zenoss-nexus</id>
+        <name>Internal Zenoss Nexus</name>
+        <url>http://cmrepo.zenoss.loc/nexus/content/groups/public</url>
+        <snapshots>
+          <updatePolicy>always</updatePolicy>
+        </snapshots>
+      </repository>
+      <repository>
+        <id>multifarious-snapshots</id>
+        <name>Multifarious, Inc. Snapshot Repository</name>
+        <url>http://repository-multifarious.forge.cloudbees.com/snapshot/</url>
+        <snapshots>
+          <enabled>true</enabled>
+        </snapshots>
+        <releases>
+          <enabled>false</enabled>
+        </releases>
+      </repository>
     </repositories>
-
+  
 
 </project>

@@ -61,9 +61,14 @@ public final class BundleLoader{
     }
 
     List<String> findBundles(String... packages) throws IOException {
+        for (String s : packages) {
+            System.out.println("Packages! " + s);
+        }
         BundleReporter br = new BundleReporter(Bundle.class);
         AnnotationDetector ad = new AnnotationDetector(br);
         ad.detect(packages);
+        System.out.println("Found Bundles!!!!");
+        System.out.println(br.foundClasses);
         return br.foundClasses;
     }
 
