@@ -13,6 +13,7 @@ package org.zenoss.app;
 
 import io.ifar.dropwizard.shiro.ShiroConfiguration;
 import org.zenoss.app.config.ProxyConfiguration;
+import org.zenoss.app.config.ZappShiroConfiguration;
 import org.zenoss.dropwizardspring.SpringConfiguration;
 import org.zenoss.dropwizardspring.eventbus.EventBusConfiguration;
 import org.zenoss.dropwizardspring.websockets.WebSocketConfiguration;
@@ -40,7 +41,7 @@ public abstract class AppConfiguration extends Configuration implements SpringCo
 
     @Valid
     @JsonProperty("shiro_configuration")
-    private ShiroConfiguration shiroConfiguration = new ShiroConfiguration();
+    private ShiroConfiguration shiroConfiguration = new ZappShiroConfiguration();
 
     public ShiroConfiguration getShiroConfiguration() {
         return shiroConfiguration;

@@ -1,4 +1,4 @@
-package org.zenoss.app.zauth;
+package org.zenoss.app.zauthbundle;
 
 import com.google.common.base.Optional;
 import com.yammer.dropwizard.ConfiguredBundle;
@@ -8,6 +8,7 @@ import io.ifar.dropwizard.shiro.ShiroConfiguration;
 import org.zenoss.app.AppConfiguration;
 import org.zenoss.app.annotations.Bundle;
 import org.zenoss.app.autobundle.AutoConfiguredBundle;
+
 
 @Bundle
 public class ZAuthBundle implements AutoConfiguredBundle {
