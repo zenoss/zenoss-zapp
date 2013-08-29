@@ -28,8 +28,6 @@ public class ZappShiroConfiguration  {
         return filterUrlPattern;
     }
 
-
-
     /**
      * Default is {@code true}.
      */
