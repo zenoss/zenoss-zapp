@@ -2,6 +2,9 @@ package org.zenoss.app.zauthbundle;
 
 import org.apache.shiro.authc.AuthenticationException;
 
+/**
+ * This exception is raised if we do not receive a ZAuth token in our http request.
+ */
 public class InvalidTokenException extends AuthenticationException {
 
     /**
