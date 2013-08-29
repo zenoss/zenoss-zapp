@@ -15,11 +15,10 @@ import com.google.common.base.Optional;
 import com.yammer.dropwizard.Bundle;
 import com.yammer.dropwizard.ConfiguredBundle;
 import com.yammer.dropwizard.config.Bootstrap;
-import com.yammer.dropwizard.config.Configuration;
 import org.junit.Assert;
 import org.junit.Test;
 
-import java.util.List;
+import java.util.Set;
 
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
@@ -39,9 +38,9 @@ public class BundleLoaderTest {
     public void testFindBundles() throws Exception {
 
         BundleLoader bl = new BundleLoader();
-        List<String> bundles = bl.findBundles("org.zenoss.app.autobundle");
+        Set<Class<?>> bundles = bl.findBundles("org.zenoss.app.autobundle");
         Assert.assertEquals(1, bundles.size());
-        Assert.assertEquals(FakeBundle.class.getName(), bundles.get(0));
+        Assert.assertTrue(bundles.contains(FakeBundle.class));
     }
 
     @Test()
