@@ -27,11 +27,6 @@
 		    <type>jar</type>
 		    <scope>compile</scope>
 		</dependency>
-        <dependency>
-           <groupId>eu.infomas</groupId>
-           <artifactId>annotation-detector</artifactId>
-           <version>3.0.1</version>
-        </dependency>
         <!--test dependencies-->
         <dependency>
             <groupId>junit</groupId>
