@@ -12,7 +12,7 @@ public class StringAuthenticationToken implements AuthenticationToken {
 
     /**
      * The ZAuthToken that identifies this subject.
-     * @param zenossToken String our zauth token.
+     * @param zenossToken String our zauthbundle token.
      */
     public StringAuthenticationToken(String zenossToken) {
         this.zenossToken = zenossToken;

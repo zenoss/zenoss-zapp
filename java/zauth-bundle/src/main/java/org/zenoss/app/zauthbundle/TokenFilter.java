@@ -22,7 +22,7 @@ import javax.servlet.http.HttpServletResponse;
 public class TokenFilter extends AuthenticatingFilter {
     private static final Logger log = LoggerFactory.getLogger(TokenFilter.class);
 
-    private final String TOKEN_HEADER =  "X-ZAuth-Token";
+    static final String TOKEN_HEADER =  "X-ZAuth-Token";
 
     /**
      * Create our token from the ZAuth Header.

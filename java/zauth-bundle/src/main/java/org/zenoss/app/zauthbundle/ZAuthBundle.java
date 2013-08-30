@@ -54,7 +54,7 @@ public class ZAuthBundle implements AutoConfiguredBundle {
                 }
                 // this allows individual zapps to specify a shiro.ini in their http section
                 // i.e. http -> ContextParameter -> shiroConfigListeners
-                // otherwise the default zauth bundle shir.ini is used.
+                // otherwise the default zauthbundle bundle shir.ini is used.
                 environment.addServletListeners(new EnvironmentLoaderListener());
                 final String filterUrlPattern = config.getFilterUrlPattern();
                 environment.addFilter(new ShiroFilter(), filterUrlPattern).setName("shiro-filter");
