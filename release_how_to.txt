@@ -1,0 +1,45 @@
+releasing a new version from a snapshot
+
+Check out the develop branch
+
+<release_name> is usually the next version eg. "0.0.3"
+This will start a new release branch
+> git flow release start <release_name>
+
+
+
+> mvn versions:set -DnewVersion=0.0.3
+
+Run tests; verify things still work
+
+> mvn verisions:commit
+
+Update any docs or release notes
+
+Commit everything
+
+> git commit....
+
+Don't push...
+
+> git flow release finish <release_name>
+
+You will be on the develop branch again.
+While on develop branch increment develop branch to the next snapshot
+
+> mvn versions:set -DnewVersion=0.0.4-SNAPSHOT
+> mvn versions:commit
+
+Verify tests etc...
+
+check in develop version bump...
+> git commit...
+
+push your develop branch
+> git push
+
+push the master branch which should have the new released version
+
+> git checkout master
+> git push
+
