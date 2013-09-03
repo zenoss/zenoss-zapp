@@ -25,7 +25,7 @@ public class TokenRealm extends AuthenticatingRealm {
 
     private static final Logger log = LoggerFactory.getLogger(TokenRealm.class);
 
-    private HttpClient httpClient = new HttpClient();
+    private HttpClient httpClient;
 
     /**
      * Sets the http client in use by this realm. This is for the unit tests
@@ -33,6 +33,21 @@ public class TokenRealm extends AuthenticatingRealm {
      */
     void setHttpClient(HttpClient client){
         this.httpClient = client;
+    }
+
+
+    /**
+     * Gets a new or set httpClient. Reuse the current httpClient by setting it via
+     * setHttpClient.
+     * @return HttpClient for connections to the ZAuth Service
+     */
+    HttpClient getHttpClient() {
+        // if nothing is has been set then return a new one.
+        if (httpClient == null) {
+            return new HttpClient();
+        }
+        // we wish to reuse the existing client (for example, in a unit test).
+        return httpClient;
     }
 
     /**
@@ -75,7 +90,7 @@ public class TokenRealm extends AuthenticatingRealm {
 
         // submit a request to zauthbundle service to find out if the token is valid
         try{
-            int statusCode = httpClient.executeMethod(method);
+            int statusCode = getHttpClient().executeMethod(method);
             return handleResponse(zenossToken, statusCode, method);
         } catch(IOException e) {
             log.error("IOException from ZAuthServer {} {}", e.getMessage(), e);
