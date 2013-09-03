@@ -29,10 +29,10 @@ public class TokenFilter extends AuthenticatingFilter {
      * @param request The http request.
      * @param response Unused, this is the http response.
      * @return StringAuthenticationToken representing the subject.
-     * @throws Exception InvalidTokenException if the header is missing.
+     * @throws InvalidTokenException if the header is missing.
      */
     @Override
-    protected AuthenticationToken createToken(ServletRequest request, ServletResponse response) throws Exception {
+    protected AuthenticationToken createToken(ServletRequest request, ServletResponse response) throws InvalidTokenException {
         HttpServletRequest httpRequest = WebUtils.toHttp(request);
         String token = httpRequest.getHeader(TOKEN_HEADER);
         if (token == null) {
@@ -43,15 +43,14 @@ public class TokenFilter extends AuthenticatingFilter {
 
     /**
      * This is the main hook into this class. It is called when a user attempts to access a resource
-     * and is not authenticated. We first check to see if we can login (executLogin as defined on the parent class)
+     * and is not authenticated. We first check to see if we can login (executeLogin as defined on the parent class)
      *
      * @param request The http request the client initiated.
      * @param response Http response, a 401 status code is set if the token is missing and a 500 is sent if there is an error
      * @return boolean true if the request can continue or false if it should be stopped (unauthorized or an error)
-     * @throws Exception required by the parent class
      */
     @Override
-    protected boolean onAccessDenied(ServletRequest request, ServletResponse response) throws Exception {
+    protected boolean onAccessDenied(ServletRequest request, ServletResponse response) {
         try {
             return executeLogin(request, response);
         }
@@ -86,10 +85,10 @@ public class TokenFilter extends AuthenticatingFilter {
             // not sure if we should log on general failures.
             log.debug(e.getMessage(), e);
         }
-        HttpServletResponse httpresponse = (HttpServletResponse)response;
+        HttpServletResponse httpResponse = WebUtils.toHttp(response);
         // let the client know we are unauthorized if we haven't set an error status already
-        if (httpresponse.getStatus() != HttpStatus.SC_INTERNAL_SERVER_ERROR) {
-            httpresponse.setStatus(HttpStatus.SC_UNAUTHORIZED);
+        if (httpResponse.getStatus() != HttpStatus.SC_INTERNAL_SERVER_ERROR) {
+            httpResponse.setStatus(HttpStatus.SC_UNAUTHORIZED);
         }
         return false;
     }

@@ -53,8 +53,8 @@ public class TokenRealm extends AuthenticatingRealm {
     /**
      * This tell the realm manager that we accept tokens of this type. It is required.
      */
-    private Class<? extends AuthenticationToken> authenticationTokenClass = StringAuthenticationToken.class;
-    public Class getAuthenticationTokenClass() {
+    private Class<StringAuthenticationToken> authenticationTokenClass = StringAuthenticationToken.class;
+    public Class<StringAuthenticationToken> getAuthenticationTokenClass() {
         return authenticationTokenClass;
     }
 
