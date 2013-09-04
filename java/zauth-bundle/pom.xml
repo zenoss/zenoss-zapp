@@ -9,17 +9,15 @@
     </parent>
     <modelVersion>4.0.0</modelVersion>
     <artifactId>zauth-bundle</artifactId>
+    <properties>
+        <shiro.version>1.2.2</shiro.version>
+    </properties>
 
     <dependencies>
         <dependency>
             <groupId>com.yammer.dropwizard</groupId>
             <artifactId>dropwizard-core</artifactId>
             <version>${dropwizard.version}</version>
-        </dependency>
-        <dependency>
-            <groupId>commons-httpclient</groupId>
-            <artifactId>commons-httpclient</artifactId>
-            <version>3.1</version>
         </dependency>
         <dependency>
             <groupId>org.springframework</groupId>
@@ -34,18 +32,24 @@
         <dependency>
             <groupId>org.apache.shiro</groupId>
             <artifactId>shiro-core</artifactId>
-            <version>1.2.2</version>
+            <version>${shiro.version}</version>
         </dependency>
         <dependency>
             <groupId>org.apache.shiro</groupId>
             <artifactId>shiro-web</artifactId>
-            <version>1.2.2</version>
+            <version>${shiro.version}</version>
         </dependency>
         <dependency>
             <groupId>org.zenoss.zapp</groupId>
             <artifactId>zenoss-app</artifactId>
             <version>${project.version}</version>
         </dependency>
+        <dependency>
+            <groupId>com.yammer.dropwizard</groupId>
+            <artifactId>dropwizard-client</artifactId>
+            <version>${dropwizard.version}</version>
+        </dependency>
+
         <!--test dependencies-->
         <dependency>
             <groupId>junit</groupId>

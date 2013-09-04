@@ -1,5 +1,11 @@
 package org.zenoss.app.zauthbundle;
 
+import javax.servlet.ServletRequest;
+import javax.servlet.ServletResponse;
+import javax.servlet.http.HttpServletRequest;
+import javax.servlet.http.HttpServletResponse;
+
+import org.apache.http.HttpStatus;
 import org.apache.shiro.authc.AuthenticationException;
 import org.apache.shiro.authc.AuthenticationToken;
 import org.apache.shiro.subject.Subject;
@@ -7,11 +13,6 @@ import org.apache.shiro.web.filter.authc.AuthenticatingFilter;
 import org.apache.shiro.web.util.WebUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.apache.commons.httpclient.HttpStatus;
-import javax.servlet.ServletRequest;
-import javax.servlet.ServletResponse;
-import javax.servlet.http.HttpServletRequest;
-import javax.servlet.http.HttpServletResponse;
 
 /**
  * This class intercepts all non-static http requests and extracts the ZAuth Token from the
@@ -22,6 +23,7 @@ import javax.servlet.http.HttpServletResponse;
 public class TokenFilter extends AuthenticatingFilter {
     private static final Logger log = LoggerFactory.getLogger(TokenFilter.class);
 
+    // Package private for testing
     static final String TOKEN_HEADER =  "X-ZAuth-Token";
 
     /**
@@ -36,7 +38,7 @@ public class TokenFilter extends AuthenticatingFilter {
         HttpServletRequest httpRequest = WebUtils.toHttp(request);
         String token = httpRequest.getHeader(TOKEN_HEADER);
         if (token == null) {
-            throw new InvalidTokenException( TOKEN_HEADER + " header is missing");
+            throw new InvalidTokenException(TOKEN_HEADER + " header is missing");
         }
         return new StringAuthenticationToken(token);
     }
@@ -50,24 +52,26 @@ public class TokenFilter extends AuthenticatingFilter {
      * @return boolean true if the request can continue or false if it should be stopped (unauthorized or an error)
      */
     @Override
-    protected boolean onAccessDenied(ServletRequest request, ServletResponse response) {
+    protected boolean onAccessDenied(ServletRequest request, ServletResponse response) throws Exception {
         try {
             return executeLogin(request, response);
         }
         catch (InvalidTokenException e) {
             log.info("Unable to login: " + e.getMessage());
             // let the client know we are unauthorized
-            ((HttpServletResponse)response).setStatus(HttpStatus.SC_UNAUTHORIZED);
+            WebUtils.toHttp(response).setStatus(HttpStatus.SC_UNAUTHORIZED);
+            return false;
         }
         /**
          * Catch all exception so that we don't miss any logic errors from our Realm impl.
          */
         catch (Exception e) {
-            // let the client know we have an unexpected error
-            ((HttpServletResponse)response).setStatus(HttpStatus.SC_INTERNAL_SERVER_ERROR);
+            // Record the exception
             log.error(e.getMessage(), e);
+            // Let Shiro handle this.
+            // It will do some stuff, then rethrow for the servlet container.
+            throw e;
         }
-        return false;
     }
 
 

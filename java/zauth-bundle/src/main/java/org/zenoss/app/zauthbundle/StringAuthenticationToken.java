@@ -6,9 +6,9 @@ import org.apache.shiro.authc.AuthenticationToken;
  * An implementation of AuthenticationToken that passes around our
  * ZAuthToken.
  */
-public class StringAuthenticationToken implements AuthenticationToken {
+public final class StringAuthenticationToken implements AuthenticationToken {
 
-    private String zenossToken;
+    private final String zenossToken;
 
     /**
      * The ZAuthToken that identifies this subject.
@@ -18,18 +18,18 @@ public class StringAuthenticationToken implements AuthenticationToken {
         this.zenossToken = zenossToken;
     }
 
-    @Override
     /**
      * The principal and credentials are both the token in our case
      */
+    @Override
     public Object getPrincipal() {
         return zenossToken;
     }
 
-    @Override
     /**
      * The principal and credentials are both the token in our case
      */
+    @Override
     public Object getCredentials() {
         return zenossToken;
     }
