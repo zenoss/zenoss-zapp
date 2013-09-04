@@ -3,11 +3,17 @@ package org.zenoss.app.zauthbundle;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
+import java.io.ByteArrayOutputStream;
+import java.io.OutputStream;
+import java.nio.charset.StandardCharsets;
+
 import com.yammer.dropwizard.client.HttpClientBuilder;
+import org.apache.http.HttpEntity;
 import org.apache.http.HttpResponse;
 import org.apache.http.HttpVersion;
 import org.apache.http.StatusLine;
 import org.apache.http.client.HttpClient;
+import org.apache.http.client.entity.UrlEncodedFormEntity;
 import org.apache.http.client.methods.HttpPost;
 import org.apache.http.conn.ClientConnectionManager;
 import org.apache.http.message.BasicHttpResponse;
@@ -52,10 +58,13 @@ public class TokenRealmTest {
     }
 
     @Test
-    public void testgetPostMethod() throws Exception{
+    public void testGetPostMethod() throws Exception {
         HttpPost method = realm.getPostMethod("test");
         // make sure we set our token we passed in into the params
-        assertEquals("test", method.getParams().getParameter("id"));
+        UrlEncodedFormEntity body = (UrlEncodedFormEntity)method.getEntity();
+        ByteArrayOutputStream out = new ByteArrayOutputStream();
+        body.writeTo(out);
+        assertEquals("id=test", out.toString(StandardCharsets.UTF_8.name()));
         assertEquals(true, method.getURI().toString().startsWith("http://"));
     }
 
