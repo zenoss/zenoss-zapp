@@ -37,6 +37,7 @@ public class TokenFilter extends AuthenticatingFilter {
     protected AuthenticationToken createToken(ServletRequest request, ServletResponse response) throws InvalidTokenException {
         HttpServletRequest httpRequest = WebUtils.toHttp(request);
         String token = httpRequest.getHeader(TOKEN_HEADER);
+        log.info("Created login token {}", token);
         if (token == null) {
             throw new InvalidTokenException(TOKEN_HEADER + " header is missing");
         }

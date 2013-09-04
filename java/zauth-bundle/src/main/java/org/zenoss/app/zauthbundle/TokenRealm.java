@@ -2,14 +2,20 @@ package org.zenoss.app.zauthbundle;
 
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
+import java.io.UnsupportedEncodingException;
 import java.nio.charset.StandardCharsets;
+import java.util.Collections;
+import java.util.List;
 
 import com.google.common.base.Preconditions;
 import com.yammer.dropwizard.client.HttpClientBuilder;
 import org.apache.http.HttpResponse;
 import org.apache.http.HttpStatus;
+import org.apache.http.NameValuePair;
 import org.apache.http.client.HttpClient;
+import org.apache.http.client.entity.UrlEncodedFormEntity;
 import org.apache.http.client.methods.HttpPost;
+import org.apache.http.message.BasicNameValuePair;
 import org.apache.http.params.BasicHttpParams;
 import org.apache.http.params.HttpParams;
 import org.apache.shiro.authc.AuthenticationException;
@@ -82,13 +88,14 @@ public class TokenRealm extends AuthenticatingRealm {
      */
     @Override
     protected AuthenticationInfo doGetAuthenticationInfo(AuthenticationToken token) throws AuthenticationException {
+        log.info("authenticating token: {}", token.getPrincipal());
         // get our principal from the token
         String zenossToken = (String)token.getPrincipal();
-        HttpPost method = getPostMethod(zenossToken);
 
         // submit a request to zauthbundle service to find out if the token is valid
         HttpClient client = httpClientBuilder.build();
         try{
+            HttpPost method = getPostMethod(zenossToken);
             HttpResponse response = client.execute(method);
             return handleResponse(zenossToken, response);
         } catch(IOException e) {
@@ -114,11 +121,12 @@ public class TokenRealm extends AuthenticatingRealm {
         int statusCode = response.getStatusLine().getStatusCode();
         // If debug is enabled, log the response body
         if (log.isDebugEnabled()) {
-            ByteArrayOutputStream os = new ByteArrayOutputStream();
-            response.getEntity().writeTo(os);
-            String responseBody = os.toString(StandardCharsets.UTF_8.name());
-            log.debug("Response status code {} received from the zauthbundle server. Content is {}",
-                    statusCode, responseBody);
+            try (ByteArrayOutputStream os = new ByteArrayOutputStream()) {
+                response.getEntity().writeTo(os);
+                String responseBody = os.toString(StandardCharsets.UTF_8.name());
+                log.debug("Response status code {} received from the zauthbundle server. Content is {}",
+                        statusCode, responseBody);
+            }
         }
         // Response of 200 means validation succeeded
         if (statusCode == HttpStatus.SC_OK) {
@@ -137,14 +145,13 @@ public class TokenRealm extends AuthenticatingRealm {
      * @param zenossToken token received from the ZAuth header
      * @return PostMethod for our http client
      */
-    HttpPost getPostMethod(String zenossToken) {
+    HttpPost getPostMethod(String zenossToken) throws UnsupportedEncodingException {
         String url = getValidateUrl();
         log.debug("Attempting to validate token {} against {} ", zenossToken, url);
-
-        HttpParams params = new BasicHttpParams();
-        params.setParameter("id", zenossToken);
         HttpPost method = new HttpPost(url);
-        method.setParams(params);
+        List<BasicNameValuePair> params = Collections.singletonList(new BasicNameValuePair("id", zenossToken));
+        method.setEntity(new UrlEncodedFormEntity(params));
+
         return method;
     }
 }
