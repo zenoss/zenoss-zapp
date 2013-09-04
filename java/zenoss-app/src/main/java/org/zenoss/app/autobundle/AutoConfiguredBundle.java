@@ -15,12 +15,14 @@ import com.google.common.base.Optional;
 import com.yammer.dropwizard.ConfiguredBundle;
 import com.yammer.dropwizard.config.Bootstrap;
 
+import org.zenoss.app.AppConfiguration;
+
 /**
  *
  * Interface for configuring a drop wizard bundle that can be automatically loaded.
  *
  */
-public interface AutoConfiguredBundle{
+public interface AutoConfiguredBundle<T extends AppConfiguration> {
 
     /**
      * Get the initializedbundle to be loaded.
@@ -34,6 +36,6 @@ public interface AutoConfiguredBundle{
      *
      * @return Class Configuration type expected by the bundle
      */
-    Optional<Class> getRequiredConfig();
+    Optional<Class<T>> getRequiredConfig();
 
 }
