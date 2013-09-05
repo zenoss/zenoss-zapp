@@ -30,13 +30,13 @@ import javax.ws.rs.core.MediaType;
  * @see <a href="http://dropwizard.codahale.com/manual/">http://dropwizard.codahale.com/manual/</a>
  *
  */
-@Resource //Annotation ensures it is loaded and registered via Spring
+@Resource(name="${apiname}") //Annotation ensures it is loaded and registered via Spring
 @Path("/${apiurl}")
 @Produces(MediaType.APPLICATION_JSON)
 public class ${apiname}Resource {
-	
-	@Autowired
-	${apiname}API api;
-	
-	/* TODO: Implement methods here */
+    
+    @Autowired
+    ${apiname}API api;
+    
+    /* TODO: Implement methods here */
 }

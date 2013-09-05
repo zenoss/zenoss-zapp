@@ -5,7 +5,7 @@
     <parent>
         <artifactId>zapp-parent</artifactId>
         <groupId>org.zenoss.zapp</groupId>
-        <version>0.0.6</version>
+        <version>0.0.8</version>
     </parent>
     <artifactId>zenoss-app</artifactId>
 
@@ -27,11 +27,6 @@
 		    <type>jar</type>
 		    <scope>compile</scope>
 		</dependency>
-        <dependency>
-           <groupId>eu.infomas</groupId>
-           <artifactId>annotation-detector</artifactId>
-           <version>3.0.1</version>
-        </dependency>
         <!--test dependencies-->
         <dependency>
             <groupId>junit</groupId>

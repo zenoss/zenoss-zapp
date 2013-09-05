@@ -1,5 +1,4 @@
 
-
  _   _           _       _        ___  ___     
 | | | |         | |     | |       |  \/  |     
 | | | |_ __   __| | __ _| |_ ___  | .  . | ___ 
@@ -9,3 +8,6 @@
       | |                                      
       |_|                                      
 
+
+Zapp: ${project.artifactId}
+Version: ${project.version}

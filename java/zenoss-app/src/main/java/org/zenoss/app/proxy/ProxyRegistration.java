@@ -166,13 +166,13 @@ public class ProxyRegistration implements Managed {
 	private void registerHTTP(Jedis j, Object resource) {
 		Resource r = resource.getClass().getAnnotation(Resource.class);
 		Path p = resource.getClass().getAnnotation(Path.class);
-		register(j, r.name(), getHttpServer() + p.value());
+		register(j, "/api/"+r.name(), getHttpServer() + p.value());
 	}
 	
 	private void registerWS(Jedis j, Object websocket) {
 		WebSocketListener w = websocket.getClass().getAnnotation(WebSocketListener.class);
 		Path p = websocket.getClass().getAnnotation(Path.class);
-		register(j, w.name(), getWsServer() + p.value());
+		register(j,"/ws/"+ w.name(), getWsServer() + p.value());
 	}
 		
 	@Override
@@ -218,13 +218,13 @@ public class ProxyRegistration implements Managed {
 	private void unregisterHTTP(Jedis j, Object resource) {
 		Resource r = resource.getClass().getAnnotation(Resource.class);
 		Path p = resource.getClass().getAnnotation(Path.class);
-		unregister(j, r.name(), getHttpServer() + p.value());
+		unregister(j, "/api/"+r.name(), getHttpServer() + p.value());
 	}
 	
 	private void unregisterWS(Jedis j, Object websocket) {
 		WebSocketListener w = websocket.getClass().getAnnotation(WebSocketListener.class);
 		Path p = websocket.getClass().getAnnotation(Path.class);
-		unregister(j, w.name(), getWsServer() + p.value());
+		unregister(j,"/ws/"+w.name(), getWsServer() + p.value());
 	}
 	
 	public ApplicationContext getApplicationContext() {

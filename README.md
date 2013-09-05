@@ -16,21 +16,21 @@ Getting Started
 To get started you need provide an implementation of `org.zenoss.app.AutowiredApp` and optionally an implementation of
 `org.zenoss.app.AppConfiguration` if you webservice needs to define configuration properties.
 
-	public class ExampleApp extends AutowiredApp<ExampleAppConfiguration> {
+    public class ExampleApp extends AutowiredApp<ExampleAppConfiguration> {
 
-    	public static void main(String[] args) throws Exception {
-        	new ExampleApp().run(args);
-    	}
+        public static void main(String[] args) throws Exception {
+            new ExampleApp().run(args);
+        }
 
-	    @Override
-    	public String getAppName() {
-        	return "Example App";
-    	}
+        @Override
+        public String getAppName() {
+            return "Example App";
+        }
 
-	    @Override
-    	protected Class<ExampleAppConfiguration> getConfigType() {
-        	return ExampleAppConfiguration.class;
-	}
+        @Override
+        protected Class<ExampleAppConfiguration> getConfigType() {
+            return ExampleAppConfiguration.class;
+    }
     }
 
 By default the `AutowiredApp` will scan `org.zenoss.app` and it's sub packages for any classes that need to be loaded
@@ -42,16 +42,16 @@ The first thing you will probably want to do is provide a REST resource. Here we
 resource and the `org.zenoss.dropwizardspring.annotations.Resource` annotation to automatically register the resource in
  [Dropwizard][1].  Note that `Resource` annotations requires a parameter `name=<ApplicationName>` which is used for auto-registering the zapp on a proxy server.
 
-	@Resource(name="ExampleApp") //Annotation ensures it is loaded and registered via Spring
-	@Path("/example")
-	@Produces(MediaType.APPLICATION_JSON)
-	public class ExampleResource {
-	
-	@Path("/hello")
-	@Timed
-	@GET
-	public String hello(){ return "hello";}
-	…
+    @Resource(name="ExampleApp") //Annotation ensures it is loaded and registered via Spring
+    @Path("/example")
+    @Produces(MediaType.APPLICATION_JSON)
+    public class ExampleResource {
+    
+    @Path("/hello")
+    @Timed
+    @GET
+    public String hello(){ return "hello";}
+    …
 
 Read the [Jersey][3] [documentation](https://jersey.java.net/nonav/documentation/2.0/index.html) to how to handle
 resource requests.
@@ -258,8 +258,9 @@ second parameter to the AssetBundle constructor controls the URL path that is ex
 announce the accessibility of these files as it does the resources after the startup banner, not does it seem to support
 indexing of the files if you perform an HTTP GET on the directory.
 
-It should be noted that for each dropwizard bundle you wish to register you will be required to create a new Java class that is annotated with `@Bundle` and implements the `AutoBundle` interface.
-
+It should be noted that for each dropwizard bundle you wish to register you will be required to create a new Java class that is annotated with `@Bundle` and implements the `AutoBundle` interface. Also note
+that the package for the AutoBundle must start with org.zenoss.app
+    package org.zenoss.app.myservice;
     import org.zenoss.app.annotations.Bundle;
     import org.zenoss.app.autobundle.AutoBundle;
     import com.google.common.base.Optional;
@@ -445,17 +446,17 @@ Building and running
 ---
 The example zapp contains examples of the mvn build plugins needed to create a zapp jar.  To build example app run the
 following in the zapp-example directory:
-	
-	mvn package
+    
+    mvn package
 
-To run the zapp-example run the following:
+To run the zapp-example run the following, replacing `<version>`:
 
-	java -jar target/zapp-example-0.0.1-SNAPSHOT.jar server configuration.yaml
-	
+    java -jar target/zapp-example-<version>.jar server target/conf/configuration.yaml
+    
 
 You can also run the example zapp without packaging directly via maven.
 
-	mvn compile exec:java
+    mvn compile exec:java
 
 To build your own zapp you can copy and modify the build plugins in the `pom.xml` in the zapp-example project or you can
 use the zapp maven archetype to generate a zapp project skeleton.
@@ -463,7 +464,7 @@ use the zapp maven archetype to generate a zapp project skeleton.
 ### Zapp archetype
 A skeleton for a zapp project can be created using maven archetypes. To create a project type
 
-	mvn archetype:generate -DarchetypeArtifactId=java-simple -DarchetypeGroupId=org.zenoss.zapp.archetypes
+    mvn archetype:generate -DarchetypeArtifactId=java-simple -DarchetypeGroupId=org.zenoss.zapp.archetypes
 
 The archetype requires some properties to be entered:
 

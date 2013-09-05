@@ -12,59 +12,33 @@
 package org.zenoss.app.autobundle;
 
 import com.google.common.base.Optional;
-import com.google.common.collect.Lists;
+import com.sun.jersey.core.spi.scanning.PackageNamesScanner;
+import com.sun.jersey.spi.scanning.AnnotationScannerListener;
 import com.yammer.dropwizard.ConfiguredBundle;
 import com.yammer.dropwizard.config.Bootstrap;
-import eu.infomas.annotation.AnnotationDetector;
-import eu.infomas.annotation.AnnotationDetector.TypeReporter;
 import org.zenoss.app.annotations.Bundle;
 
 import java.io.IOException;
-import java.lang.annotation.Annotation;
-import java.util.List;
+import java.util.Set;
 
 
 /**
- *
  * Scan packages for classes annotated with {@link Bundle} and load them into Dropwizard
- *
  */
-public final class BundleLoader{
-    private static class BundleReporter implements TypeReporter {
-
-        private List<String> foundClasses = Lists.newArrayList();
-
-        private final Class<? extends Annotation>[] annotations;
-
-        public BundleReporter(Class<? extends Annotation>... annotations) {
-            this.annotations = annotations;
-        }
-
-        @Override
-        public void reportTypeAnnotation(Class<? extends Annotation> aClass, String s) {
-            this.foundClasses.add(s);
-        }
-
-        @Override
-        public Class<? extends Annotation>[] annotations() {
-            return this.annotations;
-        }
-    }
-
+public final class BundleLoader {
 
     public void loadBundles(Bootstrap bootstrap, Class c, String... packages) throws Exception {
-        for (String clzName : this.findBundles(packages)) {
-            Class clz = Class.forName(clzName);
+        for (Class clz : this.findBundles(packages)) {
             Object o = clz.newInstance();
             registerBundle(o, bootstrap, c);
         }
     }
 
-    List<String> findBundles(String... packages) throws IOException {
-        BundleReporter br = new BundleReporter(Bundle.class);
-        AnnotationDetector ad = new AnnotationDetector(br);
-        ad.detect(packages);
-        return br.foundClasses;
+    Set<Class<?>> findBundles(String... packages) throws IOException {
+        PackageNamesScanner scanner = new PackageNamesScanner(packages);
+        AnnotationScannerListener listener = new AnnotationScannerListener(Bundle.class);
+        scanner.scan(listener);
+        return listener.getAnnotatedClasses();
     }
 
     void registerBundle(Object o, Bootstrap bootstrap, Class c) {

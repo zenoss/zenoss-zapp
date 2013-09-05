@@ -256,10 +256,10 @@ public class ProxyRegistrationTest {
 		doNothing().when(jedis).disconnect();
 		doReturn(SHA1).when(jedis).hget("scripts", "register");
 		doReturn(SHA1).when(jedis).hget("scripts", "unregister");
-		doReturn("/api/FakeResource").when(jedis).evalsha(SHA1, 1, "FakeResource", "http://localhost:8080/path/to/resource");
-		doReturn("/api/FakeResource").when(jedis).evalsha(SHA1, 1, "FakeResource", "https://localhost:8080/path/to/resource");
-		doReturn("/ws/FakeWebSocket").when(jedis).evalsha(SHA1, 1, "FakeWebSocket", "ws://localhost:8080/path/to/websocket");
-		doReturn("/ws/FakeWebSocket").when(jedis).evalsha(SHA1, 1, "FakeWebSocket", "wss://localhost:8080/path/to/websocket");
+		doReturn("/api/FakeResource").when(jedis).evalsha(SHA1, 1, "/api/FakeResource", "http://localhost:8080/path/to/resource");
+		doReturn("/api/FakeResource").when(jedis).evalsha(SHA1, 1, "/api/FakeResource", "https://localhost:8080/path/to/resource");
+		doReturn("/ws/FakeWebSocket").when(jedis).evalsha(SHA1, 1, "/ws/FakeWebSocket", "ws://localhost:8080/path/to/websocket");
+		doReturn("/ws/FakeWebSocket").when(jedis).evalsha(SHA1, 1, "/ws/FakeWebSocket", "wss://localhost:8080/path/to/websocket");
 		
 		ApplicationContext context = mock(ApplicationContext.class);
 		Map<String, Object> resources = new HashMap<String, Object>();

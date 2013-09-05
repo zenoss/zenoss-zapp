@@ -5,7 +5,7 @@
 
     <groupId>org.zenoss.zapp</groupId>
     <artifactId>zapp-parent</artifactId>
-    <version>0.0.6</version>
+    <version>0.0.8</version>
     <packaging>pom</packaging>
     <name>zapp-parent</name>
     <description/>
@@ -27,6 +27,7 @@
         <module>dw-spring-bundle</module>
         <module>zapp-example</module>
         <module>zapp-archetypes</module>
+        <module>zauth-bundle</module>
     </modules>
 <build>
 <plugins>
@@ -52,15 +53,15 @@
 </plugins>
 </build>
     <repositories>
-        <repository>
-            <id>zenoss-nexus</id>
-            <name>Internal Zenoss Nexus</name>
-            <url>http://cmrepo.zenoss.loc/nexus/content/groups/public</url>
-            <snapshots>
-                <updatePolicy>always</updatePolicy>
-            </snapshots>
-        </repository>
+      <repository>
+        <id>zenoss-nexus</id>
+        <name>Internal Zenoss Nexus</name>
+        <url>http://cmrepo.zenoss.loc/nexus/content/groups/public</url>
+        <snapshots>
+          <updatePolicy>always</updatePolicy>
+        </snapshots>
+      </repository>
     </repositories>
-
+  
 
 </project>
