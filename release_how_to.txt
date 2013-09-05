@@ -12,7 +12,7 @@ This will start a new release branch
 
 Run tests; verify things still work
 
-> mvn verisions:commit
+> mvn versions:commit
 
 Update any docs or release notes
 
