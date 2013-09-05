@@ -1,16 +1,18 @@
+v0.0.8 - 2013/09/05
+    - Add a zauth bundle that automatically authenticates all api and ws requests
 v0.0.7 - 2013/08/01
         - Make Dropwizard environment available via spring
         - Update example to include supervisord conf
-	- Update example to use mvn assembly 
-	- Update archetype to include mvn assembly goals and supervisord conf
+    - Update example to use mvn assembly 
+    - Update archetype to include mvn assembly goals and supervisord conf
 
 v0.0.6 - 2013/07/19
-	- Auto-registration of Resource and WebSocketListener on a remote proxy
-	- Beans using either annotation @Resource or @WebSocketListener requires a 'name' parameter
-	- Auto-registration requires SYSVARS $zapp.autoreg.host and $zapp.autoreg.port pointing to the proxy's redis server
-	- Also, the proxy server must be configured in the configuration.yaml
-	- include source jars
-	 
+    - Auto-registration of Resource and WebSocketListener on a remote proxy
+    - Beans using either annotation @Resource or @WebSocketListener requires a 'name' parameter
+    - Auto-registration requires SYSVARS $zapp.autoreg.host and $zapp.autoreg.port pointing to the proxy's redis server
+    - Also, the proxy server must be configured in the configuration.yaml
+    - include source jars
+     
 v0.0.5 - 2013/07/11
     - Websocket broadcaset support using Guava event bus.
 
