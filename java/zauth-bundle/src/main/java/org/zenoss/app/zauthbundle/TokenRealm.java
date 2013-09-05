@@ -9,15 +9,14 @@ import java.util.List;
 
 import com.google.common.base.Preconditions;
 import com.yammer.dropwizard.client.HttpClientBuilder;
+import com.yammer.dropwizard.client.HttpClientConfiguration;
+import com.yammer.dropwizard.util.Duration;
 import org.apache.http.HttpResponse;
 import org.apache.http.HttpStatus;
-import org.apache.http.NameValuePair;
 import org.apache.http.client.HttpClient;
 import org.apache.http.client.entity.UrlEncodedFormEntity;
 import org.apache.http.client.methods.HttpPost;
 import org.apache.http.message.BasicNameValuePair;
-import org.apache.http.params.BasicHttpParams;
-import org.apache.http.params.HttpParams;
 import org.apache.shiro.authc.AuthenticationException;
 import org.apache.shiro.authc.AuthenticationInfo;
 import org.apache.shiro.authc.AuthenticationToken;
@@ -61,7 +60,10 @@ public class TokenRealm extends AuthenticatingRealm {
     // Default constructor for Shiro reflection
     public TokenRealm() {
         // Let's hope the defaults in dropwizard are sensible.
-        this.httpClientBuilder = new HttpClientBuilder();
+        HttpClientConfiguration config = new HttpClientConfiguration();
+        config.setConnectionTimeout(Duration.seconds(10));
+        config.setTimeout(Duration.seconds(10));
+        this.httpClientBuilder = new HttpClientBuilder().using(config);
     }
 
     // Constructor when HttpClient configuration is desired.
