@@ -23,14 +23,16 @@ import org.zenoss.dropwizardspring.SpringBundle;
 import javax.servlet.Servlet;
 
 /**
- * Creates an App that uses Spring to scan and autowire objects.
+ * Creates an App that uses Spring to scan and autowire objects. By default will scan for the Spring components with
+ * profiles "prod" and "runtime".  The runtime profile should be used for classes that only need to be active during the
+ * running of the zapp i.e. not during tests.
  *
  * @param <T>
  */
 public abstract class AutowiredApp<T extends AppConfiguration> extends Service<T> {
 
     public static final String DEFAULT_SCAN = "org.zenoss.app";
-    public static final String DEFAULT_ACTIVE_PROFILE = "prod";
+    public static final String[] DEFAULT_ACTIVE_PROFILES = new String[]{"prod", "runtime"};
 
     /**
      * The app name
@@ -55,7 +57,7 @@ public abstract class AutowiredApp<T extends AppConfiguration> extends Service<T
      * @return String[] of profiles to activate.
      */
     protected String[] getActivateProfiles() {
-        return new String[]{DEFAULT_ACTIVE_PROFILE};
+        return DEFAULT_ACTIVE_PROFILES;
     }
 
 

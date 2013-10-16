@@ -6,6 +6,10 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 
 public class ProxyConfiguration {
 
+    @NotEmpty
+   	@JsonProperty
+   	private String protocol = "http";
+
 	@NotEmpty
 	@JsonProperty
 	private String hostname = "127.0.0.1";
@@ -21,5 +25,8 @@ public class ProxyConfiguration {
 	public int getPort() {
 		return port;
 	}
-	
+
+    public String getProtocol() {
+        return protocol;
+    }
 }

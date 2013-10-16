@@ -5,7 +5,7 @@
 
     <groupId>org.zenoss.zapp</groupId>
     <artifactId>zapp-parent</artifactId>
-    <version>0.0.8</version>
+    <version>0.0.9</version>
     <packaging>pom</packaging>
     <name>zapp-parent</name>
     <description/>
@@ -21,6 +21,7 @@
         <!--<jackson.version>2.1.4</jackson.version>-->
         <jetty.version>8.1.10.v20130312</jetty.version>
         <jedis.version>2.1.0</jedis.version>
+        <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
     </properties>
     <modules>
         <module>zenoss-app</module>
@@ -62,6 +63,6 @@
         </snapshots>
       </repository>
     </repositories>
-  
+
 
 </project>
