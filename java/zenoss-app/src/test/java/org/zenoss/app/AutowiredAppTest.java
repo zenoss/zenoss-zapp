@@ -68,7 +68,7 @@ public class AutowiredAppTest {
 
         };
 
-        Assert.assertArrayEquals(new String[]{AutowiredApp.DEFAULT_ACTIVE_PROFILE}, test.getActivateProfiles());
+        Assert.assertArrayEquals(AutowiredApp.DEFAULT_ACTIVE_PROFILES, test.getActivateProfiles());
 
 
     }
