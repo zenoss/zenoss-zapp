@@ -1,3 +1,6 @@
+v0.0.9 - 2013/10/16
+    - Add runtime spring profile
+    - Add protocol to ProxyConfiguration
 v0.0.8 - 2013/09/05
     - Add a zauth bundle that automatically authenticates all api and ws requests
 v0.0.7 - 2013/08/01
