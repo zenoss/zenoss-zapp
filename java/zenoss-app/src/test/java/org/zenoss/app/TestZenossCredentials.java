@@ -26,15 +26,11 @@ public class TestZenossCredentials {
     }
 
     @Test
-    public void testLoadPropertiesFile() {
-        try{
-            File globalConf = new File(ClassLoader.getSystemResource("global.conf").toURI());
-            Properties props = ZenossCredentials.getPropertiesFromFile(globalConf.toString());
-            Assert.assertEquals("MYPASSWORD", props.get("zauth-password"));
-            Assert.assertEquals("MYUSER", props.get("zauth-username"));
-        }catch (URISyntaxException e) {
-            throw new RuntimeException(e);
-        }
+    public void testLoadPropertiesFile() throws Exception{
+        File globalConf = new File(ClassLoader.getSystemResource("global.conf").toURI());
+        Properties props = ZenossCredentials.getPropertiesFromFile(globalConf.toString());
+        Assert.assertEquals("MYPASSWORD", props.get("zauth-password"));
+        Assert.assertEquals("MYUSER", props.get("zauth-username"));
     }
 
     @Test
@@ -44,16 +40,12 @@ public class TestZenossCredentials {
     }
 
     @Test
-    public void testZenossCredentialsYamlFile() {
+    public void testZenossCredentialsYamlFile() throws Exception{
         InputStream is = ClassLoader.getSystemResourceAsStream("testConfig.yaml");
         ObjectMapper objectMapper = new ObjectMapper( new YAMLFactory());
-        try {
-            MyApplicationConfiguration config = objectMapper.readValue(is, MyApplicationConfiguration.class);
-            ZenossCredentials creds = config.getZenossCredentials();
-            Assert.assertEquals("test", creds.getUsername());
-            Assert.assertEquals("test", creds.getPassword());
-        } catch (Exception e) {
-            throw new RuntimeException(e);
-        }
+        MyApplicationConfiguration config = objectMapper.readValue(is, MyApplicationConfiguration.class);
+        ZenossCredentials creds = config.getZenossCredentials();
+        Assert.assertEquals("myusername", creds.getUsername());
+        Assert.assertEquals("mypassword", creds.getPassword());
     }
 }
