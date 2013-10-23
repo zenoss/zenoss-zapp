@@ -35,6 +35,8 @@ public abstract class AppConfiguration extends Configuration implements SpringCo
     @JsonProperty
     private EventBusConfiguration eventBusConfiguration = new EventBusConfiguration();
 
+    private ZenossCredentials zenossCredentials;
+
 	public ProxyConfiguration getProxyConfiguration() {
 		return proxyConfiguration;
 	}
@@ -57,5 +59,13 @@ public abstract class AppConfiguration extends Configuration implements SpringCo
 
     public void setEventBusConfiguration(EventBusConfiguration eventBusConfiguration) {
         this.eventBusConfiguration = eventBusConfiguration;
+    }
+
+    public void setZenossCredentials(ZenossCredentials creds) {
+        this.zenossCredentials = creds;
+    }
+
+    public ZenossCredentials getZenossCredentials() {
+        return this.zenossCredentials;
     }
 }
