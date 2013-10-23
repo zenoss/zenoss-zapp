@@ -19,8 +19,8 @@ public class ZenossCredentials {
     private static final String PASSWORD = "zauth-password";
 
     // defaults
-    private static final String DEFAULT_USERNAME = "admin";
-    private static final String DEFAULT_PASSWORD = "zenoss";
+    static final String DEFAULT_USERNAME = "admin";
+    static final String DEFAULT_PASSWORD = "zenoss";
 
 
     @JsonProperty
@@ -46,34 +46,37 @@ public class ZenossCredentials {
         return password;
     }
 
-    /**
-     * Static factory method that creates a ZenossCredentials by
-     * reading the username and password from global.conf
-     * @return ZenossCredentials with the username and password set
-     */
-    static ZenossCredentials getFromGlobalConf() {
-        String globalConf = getZenHome() + "/etc/global.conf";
-        Properties props = ZenossCredentials.getPropertiesFromFile(globalConf);
-        return new ZenossCredentials(props.getProperty(USERNAME, DEFAULT_USERNAME),
-                props.getProperty(PASSWORD, DEFAULT_PASSWORD));
-    }
 
-    private static String getZenHome() {
-        String zenhome = System.getenv("ZENHOME");
-        if (zenhome != null) {
-            return zenhome;
+    static class Builder {
+        /**
+         * Static factory method that creates a ZenossCredentials by
+         * reading the username and password from global.conf
+         *
+         * @return ZenossCredentials with the username and password set
+         */
+        ZenossCredentials getFromGlobalConf() {
+            String globalConf = getZenHome() + "/etc/global.conf";
+            Properties props = getPropertiesFromFile(globalConf);
+            return new ZenossCredentials(props.getProperty(USERNAME, DEFAULT_USERNAME),
+                    props.getProperty(PASSWORD, DEFAULT_PASSWORD));
         }
-        return "/opt/zenoss";
-    }
 
-    static Properties getPropertiesFromFile(String fileName) {
-        Properties props = new Properties();
-        try {
-            props.load(new FileInputStream(fileName));
-        } catch(IOException e) {
-            log.error("Unable to read properties from " + fileName, e);
+        String getZenHome() {
+            String zenhome = System.getenv("ZENHOME");
+            if (zenhome != null) {
+                return zenhome;
+            }
+            return "/opt/zenoss";
         }
-        return props;
-    }
 
+        Properties getPropertiesFromFile(String fileName) {
+            Properties props = new Properties();
+            try {
+                props.load(new FileInputStream(fileName));
+            } catch (IOException e) {
+                log.error("Unable to read properties from " + fileName, e);
+            }
+            return props;
+        }
+    }
 }
