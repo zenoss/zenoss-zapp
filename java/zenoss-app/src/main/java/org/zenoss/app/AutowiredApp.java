@@ -12,11 +12,13 @@
 package org.zenoss.app;
 
 import com.fasterxml.jackson.databind.SerializationFeature;
+import com.yammer.dropwizard.ConfiguredBundle;
 import com.yammer.dropwizard.Service;
 import com.yammer.dropwizard.config.Bootstrap;
 import com.yammer.dropwizard.config.Environment;
 import com.yammer.metrics.reporting.HealthCheckServlet;
 import com.yammer.metrics.reporting.MetricsServlet;
+import org.zenoss.app.ZenossCredentials.Builder;
 import org.zenoss.app.autobundle.BundleLoader;
 import org.zenoss.dropwizardspring.SpringBundle;
 
@@ -66,6 +68,21 @@ public abstract class AutowiredApp<T extends AppConfiguration> extends Service<T
      */
     @Override
     public final void initialize(Bootstrap<T> bootstrap) {
+        ConfiguredBundle<AppConfiguration> cb = new ConfiguredBundle<AppConfiguration>() {
+            @Override
+            public void run(AppConfiguration configuration, Environment environment) throws Exception {
+                ZenossCredentials creds = configuration.getZenossCredentials();
+                if (creds == null || creds.getUsername() == null || creds.getUsername().isEmpty()) {
+                    configuration.setZenossCredentials(new Builder().getFromGlobalConf());
+                }
+            }
+
+            @Override
+            public void initialize(Bootstrap<?> bootstrap) {
+
+            }
+        };
+        bootstrap.addBundle(cb);
         bootstrap.setName(this.getAppName());
         SpringBundle sb = new SpringBundle(getScanPackages());
         sb.setDefaultProfiles(this.getActivateProfiles());
