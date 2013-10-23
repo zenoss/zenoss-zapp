@@ -1,5 +1,7 @@
 package org.zenoss.app;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.dataformat.yaml.YAMLFactory;
 import org.junit.Test;
 import org.junit.Assert;
 
@@ -9,6 +11,10 @@ import java.net.URISyntaxException;
 import java.net.URL;
 import java.util.Properties;
 
+
+class MyApplicationConfiguration extends AppConfiguration {
+
+}
 
 public class TestZenossCredentials {
 
@@ -35,5 +41,19 @@ public class TestZenossCredentials {
     public void testInvalidPropertiesFile() {
         Properties props = ZenossCredentials.getPropertiesFromFile("foo.bar");
         Assert.assertNull(props.get("zauth-password"));
+    }
+
+    @Test
+    public void testZenossCredentialsYamlFile() {
+        InputStream is = ClassLoader.getSystemResourceAsStream("testConfig.yaml");
+        ObjectMapper objectMapper = new ObjectMapper( new YAMLFactory());
+        try {
+            MyApplicationConfiguration config = objectMapper.readValue(is, MyApplicationConfiguration.class);
+            ZenossCredentials creds = config.getZenossCredentials();
+            Assert.assertEquals("test", creds.getUsername());
+            Assert.assertEquals("test", creds.getPassword());
+        } catch (Exception e) {
+            throw new RuntimeException(e);
+        }
     }
 }

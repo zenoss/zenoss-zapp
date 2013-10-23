@@ -8,6 +8,7 @@ import java.io.FileInputStream;
 import java.io.IOException;
 import java.util.Properties;
 
+
 /**
  * A class for storing the credentials necessary to post metrics.
  */
@@ -74,4 +75,5 @@ public class ZenossCredentials {
         }
         return props;
     }
+
 }
