@@ -1,5 +1,6 @@
 package org.zenoss.app;
 
+import com.fasterxml.jackson.annotation.JsonProperty;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -21,8 +22,15 @@ public class ZenossCredentials {
     private static final String DEFAULT_PASSWORD = "zenoss";
 
 
-    private final String username;
-    private final String password;
+    @JsonProperty
+    private String username = null;
+
+    @JsonProperty
+    private String password = null;
+
+    public ZenossCredentials() {
+
+    }
 
     public ZenossCredentials(String username, String password) {
         this.username = username;
