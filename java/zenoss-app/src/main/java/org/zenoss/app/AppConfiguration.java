@@ -35,6 +35,7 @@ public abstract class AppConfiguration extends Configuration implements SpringCo
     @JsonProperty
     private EventBusConfiguration eventBusConfiguration = new EventBusConfiguration();
 
+    @JsonProperty
     private ZenossCredentials zenossCredentials;
 
 	public ProxyConfiguration getProxyConfiguration() {

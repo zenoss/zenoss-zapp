@@ -3,9 +3,9 @@ package org.zenoss.app;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.io.BufferedReader;
+import java.io.FileInputStream;
 import java.io.IOException;
-import java.io.InputStreamReader;
+import java.util.Properties;
 
 /**
  * A class for storing the credentials necessary to post metrics.
@@ -13,12 +13,13 @@ import java.io.InputStreamReader;
 public class ZenossCredentials {
     private static final Logger log = LoggerFactory.getLogger(ZenossCredentials.class);
     // parameters
-    private static final String USERNAME="zauth-username";
-    private static final String PASSWORD="zauth-password";
+    private static final String USERNAME = "zauth-username";
+    private static final String PASSWORD = "zauth-password";
 
     // defaults
-    static final String DEFAULT_USERNAME="admin";
-    static final String DEFAULT_PASSWORD="zenoss";
+    private static final String DEFAULT_USERNAME = "admin";
+    private static final String DEFAULT_PASSWORD = "zenoss";
+
 
     private final String username;
     private final String password;
@@ -42,32 +43,27 @@ public class ZenossCredentials {
      * @return ZenossCredentials with the username and password set
      */
     static ZenossCredentials getFromGlobalConf() {
-        String username = ZenossCredentials.executeGlobalConf(USERNAME);
-        String password = ZenossCredentials.executeGlobalConf(PASSWORD);
-        return new ZenossCredentials(username, password);
+        String globalConf = getZenHome() + "/etc/global.conf";
+        Properties props = ZenossCredentials.getPropertiesFromFile(globalConf);
+        return new ZenossCredentials(props.getProperty(USERNAME, DEFAULT_USERNAME),
+                props.getProperty(PASSWORD, DEFAULT_PASSWORD));
     }
 
-    /**
-     * Executes zenglobalconf and returns the value
-     * @param param String the name of the parameter we want from global conf
-     * @return String either the value from global conf or the default for the parameter
-     */
-    static String executeGlobalConf(String param) {
-        try{
-            // this makes the assumption that $ZENHOME/bin/zenglobalconf is on the PATH
-            Process p  = Runtime.getRuntime().exec("zenglobalconf -p " + param);
-            BufferedReader in = new BufferedReader(new InputStreamReader(p.getInputStream()));
-            return in.readLine();
+    private static String getZenHome() {
+        String zenhome = System.getenv("ZENHOME");
+        if (zenhome != null) {
+            return zenhome;
         }
-        catch (IOException e) {
-            log.error("Error reading " + param + " from global conf", e);
-            if (param.equals(USERNAME)) {
-                return DEFAULT_USERNAME;
-            } else {
-                return DEFAULT_PASSWORD;
-            }
-        }
-
+        return "/opt/zenoss";
     }
 
+    static Properties getPropertiesFromFile(String fileName) {
+        Properties props = new Properties();
+        try {
+            props.load(new FileInputStream(fileName));
+        } catch(IOException e) {
+            log.error("Unable to read properties from " + fileName, e);
+        }
+        return props;
+    }
 }

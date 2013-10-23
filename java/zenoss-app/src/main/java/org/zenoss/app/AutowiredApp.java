@@ -70,7 +70,10 @@ public abstract class AutowiredApp<T extends AppConfiguration> extends Service<T
         ConfiguredBundle<AppConfiguration> cb = new ConfiguredBundle<AppConfiguration>() {
             @Override
             public void run(AppConfiguration configuration, Environment environment) throws Exception {
-                configuration.setZenossCredentials(ZenossCredentials.getFromGlobalConf());
+                ZenossCredentials creds = configuration.getZenossCredentials();
+                if (creds == null || creds.getUsername() == null || creds.getUsername().isEmpty()) {
+                    configuration.setZenossCredentials(ZenossCredentials.getFromGlobalConf());
+                }
             }
 
             @Override
