@@ -8,7 +8,7 @@ import org.slf4j.LoggerFactory;
 
 import java.io.PrintWriter;
 
-import static ch.qos.logback.classic.Level.*;
+import static ch.qos.logback.classic.Level.toLevel;
 import static java.lang.String.format;
 
 /**
@@ -31,11 +31,11 @@ public class LoggerLevelTask extends Task {
         String loggerName = getLoggerParam(parameters);
         String levelName = getLevelParam(parameters);
 
-        if (loggerName != null){
+        if (loggerName != null) {
             LOGGER.info("Setting level {} on logger {}", levelName, loggerName);
             setLevel(loggerName, levelName);
             output.print(format("Set level %s on logger %s", levelName, loggerName));
-        }else{
+        } else {
             LOGGER.info("Setting level {} on logger {}", levelName, loggerName);
             output.print(format("No logger specified"));
         }
