@@ -20,6 +20,8 @@ import com.yammer.metrics.reporting.HealthCheckServlet;
 import com.yammer.metrics.reporting.MetricsServlet;
 import org.zenoss.app.ZenossCredentials.Builder;
 import org.zenoss.app.autobundle.BundleLoader;
+import org.zenoss.app.tasks.DebugToggleTask;
+import org.zenoss.app.tasks.LoggerLevelTask;
 import org.zenoss.dropwizardspring.SpringBundle;
 
 import javax.servlet.Servlet;
@@ -110,6 +112,8 @@ public abstract class AutowiredApp<T extends AppConfiguration> extends Service<T
         Servlet healthcheck = new HealthCheckServlet();
         environment.addServlet(metrics, "/metrics");
         environment.addServlet(healthcheck, "/healthcheck");
+        environment.addTask(new LoggerLevelTask());
+        environment.addTask(new DebugToggleTask(this.getAppName(), configuration.getLoggingConfiguration()));
         environment.getObjectMapperFactory().enable(SerializationFeature.INDENT_OUTPUT);
     }
 }
