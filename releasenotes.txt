@@ -1,3 +1,6 @@
+v0.0.11 - 2013/12/13
+    - add dropwizard task to set logging level vis url
+    - add dropwizard task to toggle logging from default to debug and back
 v0.0.10 - 2013/10/23
     - added zenoss credentials to the app configuration. This is set either from the yaml or read from global.conf
 v0.0.9 - 2013/10/16
