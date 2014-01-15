@@ -1,3 +1,5 @@
+v0.0.12 - 2014/01/15
+    - add option to disable auth
 v0.0.11 - 2013/12/13
     - add dropwizard task to set logging level vis url
     - add dropwizard task to toggle logging from default to debug and back
