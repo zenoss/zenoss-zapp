@@ -5,7 +5,7 @@
     <parent>
         <artifactId>zapp-parent</artifactId>
         <groupId>org.zenoss.zapp</groupId>
-        <version>0.0.11</version>
+        <version>0.0.12</version>
     </parent>
     <modelVersion>4.0.0</modelVersion>
     <properties>
@@ -41,6 +41,11 @@
                 <targetPath>${project.build.directory}/etc</targetPath>
                 <filtering>true</filtering>
                 <directory>${basedir}/src/main/etc</directory>
+            </resource>
+            <resource>
+                <targetPath>${project.build.directory}/bin</targetPath>
+                <filtering>true</filtering>
+                <directory>${basedir}/src/main/bin</directory>
             </resource>
             <resource>
                 <filtering>true</filtering>

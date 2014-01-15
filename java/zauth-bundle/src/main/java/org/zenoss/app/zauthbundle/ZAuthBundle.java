@@ -39,18 +39,20 @@ public class ZAuthBundle implements AutoConfiguredBundle<AppConfiguration> {
         @Override
         public void run(AppConfiguration configuration, Environment environment) throws Exception {
             // get the proxy config so we can let the realm know where our host and port are.
-            ProxyConfiguration proxyConfig = configuration.getProxyConfiguration();
+            if (configuration.isAuthEnabled()) {
+                ProxyConfiguration proxyConfig = configuration.getProxyConfiguration();
 
-            if (environment.getSessionHandler() == null) {
-                environment.setSessionHandler(new SessionHandler());
+                if (environment.getSessionHandler() == null) {
+                    environment.setSessionHandler(new SessionHandler());
+                }
+
+                // this allows individual zapps to specify a shiro.ini in their http section
+                // i.e. http -> ContextParameter -> shiroConfigListeners
+                // otherwise the default zauthbundle bundle shiro.ini is used.
+                environment.addServletListeners(new EnvironmentLoaderListener());
+                environment.addFilter(new ShiroFilter(), URL_PATTERN).setName("shiro-filter");
+                TokenRealm.setProxyConfiguration(proxyConfig);
             }
-
-            // this allows individual zapps to specify a shiro.ini in their http section
-            // i.e. http -> ContextParameter -> shiroConfigListeners
-            // otherwise the default zauthbundle bundle shiro.ini is used.
-            environment.addServletListeners(new EnvironmentLoaderListener());
-            environment.addFilter(new ShiroFilter(), URL_PATTERN).setName("shiro-filter");
-            TokenRealm.setProxyConfiguration(proxyConfig);
         }
 
         @Override
