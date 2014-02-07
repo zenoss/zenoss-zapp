@@ -58,19 +58,15 @@ public final class SpringWebSocketServlet extends WebSocketServlet {
 
     @Override
     public WebSocket doWebSocketConnect(HttpServletRequest request, String protocol) {
-        LOGGER.info( "protocol: {}", protocol);
-        LOGGER.info( "parameters: {}", request.getParameterMap());
-        return new TextBinaryWebSocket(request, protocol);
+        return new TextBinaryWebSocket(request);
     }
 
     final class TextBinaryWebSocket implements OnTextMessage, OnBinaryMessage {
         private Connection connection;
-        private final String protocol;
         private final HttpServletRequest request;
 
-        TextBinaryWebSocket(HttpServletRequest request, String protocol) {
+        TextBinaryWebSocket(HttpServletRequest request) {
             this.request = request;
-            this.protocol = protocol;
         }
 
         @Override
