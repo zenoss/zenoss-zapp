@@ -16,6 +16,7 @@ import org.eclipse.jetty.websocket.WebSocket.Connection;
 import org.zenoss.dropwizardspring.websockets.annotations.OnMessage;
 import org.zenoss.dropwizardspring.websockets.annotations.WebSocketListener;
 
+import javax.servlet.http.HttpServletRequest;
 import javax.ws.rs.Path;
 
 
@@ -24,6 +25,6 @@ import javax.ws.rs.Path;
 public class TestWebSocket {
 
     @OnMessage
-    public void handleMsg(String data, Connection conn){}
+    public void handleMsg(String data, Connection conn, HttpServletRequest request){}
 
 }
