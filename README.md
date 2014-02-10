@@ -79,9 +79,9 @@ parameter is neither a String nor a byte array.  See examples below:
 #### OnMessage - Raw Text
 
     import com.fasterxml.jackson.databind.ObjectMapper;
-    import org.eclipse.jetty.websocket.WebSocket.WebSocketSession;
     import org.springframework.beans.factory.annotation.Autowired;
     import org.zenoss.dropwizardspring.websockets.annotations.OnMessage;
+    import org.zenoss.dropwizardsrping.websockets.WebSocket.WebSocketSession;
     import org.zenoss.dropwizardspring.websockets.annotations.WebSocketListener;
     import javax.servlet.http.HttpServletRequest;
 
@@ -103,9 +103,9 @@ parameter is neither a String nor a byte array.  See examples below:
 
 #### OnMessage - Raw Binary
 
-    import org.eclipse.jetty.websocket.WebSocket.WebSocketSession;
     import org.springframework.beans.factory.annotation.Autowired;
     import org.zenoss.dropwizardspring.websockets.annotations.OnMessage;
+    import org.zenoss.dropwizardsrping.websockets.WebSocket.WebSocketSession;
     import org.zenoss.dropwizardspring.websockets.annotations.WebSocketListener;
     import javax.servlet.http.HttpServletRequest;
 
@@ -125,9 +125,9 @@ parameter is neither a String nor a byte array.  See examples below:
 #### OnMessage - Json Marshalling - Json 2 Java
 
     import com.fasterxml.jackson.databind.ObjectMapper;
-    import org.eclipse.jetty.websocket.WebSocket.WebSocketSession;
     import org.springframework.beans.factory.annotation.Autowired;
     import org.zenoss.dropwizardspring.websockets.annotations.OnMessage;
+    import org.zenoss.dropwizardsrping.websockets.WebSocket.WebSocketSession;
     import org.zenoss.dropwizardspring.websockets.annotations.WebSocketListener;
     import javax.servlet.http.HttpServletRequest;
 
@@ -156,9 +156,9 @@ parameter is neither a String nor a byte array.  See examples below:
 #### OnMessage - Json Unmarshalling/Marshalling - Json 2 Java and Java 2 Json
 
     import com.fasterxml.jackson.databind.ObjectMapper;
-    import org.eclipse.jetty.websocket.WebSocket.WebSocketSession;
     import org.springframework.beans.factory.annotation.Autowired;
     import org.zenoss.dropwizardspring.websockets.annotations.OnMessage;
+    import org.zenoss.dropwizardsrping.websockets.WebSocket.WebSocketSession;
     import org.zenoss.dropwizardspring.websockets.annotations.WebSocketListener;
     import javax.servlet.http.HttpServletRequest;
 
