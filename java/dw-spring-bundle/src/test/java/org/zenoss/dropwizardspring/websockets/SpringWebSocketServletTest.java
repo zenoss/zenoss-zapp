@@ -278,7 +278,7 @@ public class SpringWebSocketServletTest {
         String data;
 
         @OnMessage
-        public void handle(String data, Connection c, HttpServletRequest request) {
+        public void handle(String data, WebSocketSession session) {
             this.data = data;
         }
     }
@@ -287,7 +287,7 @@ public class SpringWebSocketServletTest {
         byte[] data;
 
         @OnMessage
-        public void handle(byte[] data, Connection c, HttpServletRequest request) {
+        public void handle(byte[] data, WebSocketSession session) {
             this.data = data;
         }
     }
@@ -296,7 +296,7 @@ public class SpringWebSocketServletTest {
         Pojo data;
 
         @OnMessage
-        public void handle(Pojo data, Connection c, HttpServletRequest request) {
+        public void handle(Pojo data, WebSocketSession session) {
             this.data = data;
         }
     }
@@ -304,7 +304,7 @@ public class SpringWebSocketServletTest {
     public static class JsonHandlerWithInputError {
 
         @OnMessage
-        public void handle(InvalidPojo data, Connection c, HttpServletRequest request) {
+        public void handle(InvalidPojo data, WebSocketSession session) {
         }
     }
 
@@ -312,7 +312,7 @@ public class SpringWebSocketServletTest {
         Pojo data;
 
         @OnMessage
-        public Pojo handle(Pojo data, Connection c, HttpServletRequest request) {
+        public Pojo handle(Pojo data, WebSocketSession session) {
             this.data = data;
             return new Pojo();
         }
@@ -322,7 +322,7 @@ public class SpringWebSocketServletTest {
         Pojo data;
 
         @OnMessage
-        public InvalidPojo handle(Pojo data, Connection c, HttpServletRequest request) {
+        public InvalidPojo handle(Pojo data, WebSocketSession session) {
             this.data = data;
             return new InvalidPojo(1);
         }

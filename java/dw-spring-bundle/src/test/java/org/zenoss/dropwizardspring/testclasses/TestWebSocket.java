@@ -12,7 +12,7 @@
 package org.zenoss.dropwizardspring.testclasses;
 
 
-import org.eclipse.jetty.websocket.WebSocket.Connection;
+import org.zenoss.dropwizardspring.websockets.WebSocketSession;
 import org.zenoss.dropwizardspring.websockets.annotations.OnMessage;
 import org.zenoss.dropwizardspring.websockets.annotations.WebSocketListener;
 
@@ -25,6 +25,7 @@ import javax.ws.rs.Path;
 public class TestWebSocket {
 
     @OnMessage
-    public void handleMsg(String data, Connection conn, HttpServletRequest request){}
+    public void handleMsg(String data, WebSocketSession session) {
+    }
 
 }

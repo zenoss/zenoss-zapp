@@ -63,7 +63,9 @@ Websockets
 Websocket listeners can be registered automatically using [Spring][2].  Any
 class annotated with the
 `org.zenoss.dropwizardspring.websocket.annotations.WebSocketListener` will be
-registered to listen on the path defined by the `@Path` annotation.  `WebSocketListener` requires a parameter `name=<ApplicationName>` which is used for auto-registering the zapp on a proxy server.
+registered to listen on the path defined by the `@Path` annotation.
+`WebSocketListener` requires a parameter `name=<ApplicationName>` which is
+used for auto-registering the zapp on a proxy server.
 Additionally the `org.zenoss.dropwizardsrping.annotations.OnMessage`
 annotations is needed to define the method that will handle websocket messages.
 The OnMessage annotation supports raw data (text or binary) and automatic
@@ -77,7 +79,7 @@ parameter is neither a String nor a byte array.  See examples below:
 #### OnMessage - Raw Text
 
     import com.fasterxml.jackson.databind.ObjectMapper;
-    import org.eclipse.jetty.websocket.WebSocket.Connection;
+    import org.eclipse.jetty.websocket.WebSocket.WebSocketSession;
     import org.springframework.beans.factory.annotation.Autowired;
     import org.zenoss.dropwizardspring.websockets.annotations.OnMessage;
     import org.zenoss.dropwizardspring.websockets.annotations.WebSocketListener;
@@ -93,7 +95,7 @@ parameter is neither a String nor a byte array.  See examples below:
         private ObjectMapper mapper = new ObjectMapper();
 
         @OnMessage
-        public void echo(String data, Connection connection, HttpServletRequest request) throws IOException {
+        public void echo(String data, WebSocketSession session) throws IOException {
             ArrayList<String> input = mapper.readValue(data, new TypeReference<ArrayList<String>>() {});
             connection.sendMessage(mapper.writeValueAsString(input));
         }
@@ -101,7 +103,7 @@ parameter is neither a String nor a byte array.  See examples below:
 
 #### OnMessage - Raw Binary
 
-    import org.eclipse.jetty.websocket.WebSocket.Connection;
+    import org.eclipse.jetty.websocket.WebSocket.WebSocketSession;
     import org.springframework.beans.factory.annotation.Autowired;
     import org.zenoss.dropwizardspring.websockets.annotations.OnMessage;
     import org.zenoss.dropwizardspring.websockets.annotations.WebSocketListener;
@@ -115,7 +117,7 @@ parameter is neither a String nor a byte array.  See examples below:
     public class ExampleWebSocket {
 
         @OnMessage
-        public void echo(byte[] data, Connection connection, HttpServletRequest request) throws IOException {
+        public void echo(byte[] data, WebSocketSession session) throws IOException {
             connection.sendMessage(data);
         }
     }
@@ -123,7 +125,7 @@ parameter is neither a String nor a byte array.  See examples below:
 #### OnMessage - Json Marshalling - Json 2 Java
 
     import com.fasterxml.jackson.databind.ObjectMapper;
-    import org.eclipse.jetty.websocket.WebSocket.Connection;
+    import org.eclipse.jetty.websocket.WebSocket.WebSocketSession;
     import org.springframework.beans.factory.annotation.Autowired;
     import org.zenoss.dropwizardspring.websockets.annotations.OnMessage;
     import org.zenoss.dropwizardspring.websockets.annotations.WebSocketListener;
@@ -146,7 +148,7 @@ parameter is neither a String nor a byte array.  See examples below:
         }
 
         @OnMessage
-        public void echo(Pojo pojo, Connection connection, HttpServletRequest request) throws IOException {
+        public void echo(Pojo pojo, WebSocketSession session) throws IOException {
             connection.sendMessage(mapper.writeValueAsString(pojo.getMessage()));
         }
     }
@@ -154,7 +156,7 @@ parameter is neither a String nor a byte array.  See examples below:
 #### OnMessage - Json Unmarshalling/Marshalling - Json 2 Java and Java 2 Json
 
     import com.fasterxml.jackson.databind.ObjectMapper;
-    import org.eclipse.jetty.websocket.WebSocket.Connection;
+    import org.eclipse.jetty.websocket.WebSocket.WebSocketSession;
     import org.springframework.beans.factory.annotation.Autowired;
     import org.zenoss.dropwizardspring.websockets.annotations.OnMessage;
     import org.zenoss.dropwizardspring.websockets.annotations.WebSocketListener;
@@ -175,7 +177,7 @@ parameter is neither a String nor a byte array.  See examples below:
         }
 
         @OnMessage
-        public Pojo echo(Pojo pojo, Connection connection, HttpServletRequest request) throws IOException {
+        public Pojo echo(Pojo pojo, WebSocketSession session) throws IOException {
             return new Pojo( pojo.message);
         }
     }
@@ -198,7 +200,7 @@ examples.
         EventBus eventBus
 
         @OnMessage
-        public void broadcast(String message, Connection connection, HttpServerletRequest request) throws IOException {
+        public void broadcast(String message, WebSocketSession session) throws IOException {
             WebSocketBroadcast.Message wsMessage = WebSocketBroadcast.newMessage( ExampleWebSocket.class, message);
             eventBus.post( wsMessage);
         }
@@ -215,7 +217,7 @@ examples.
         EventBus eventBus
 
         @OnMessage
-        public void broadcast(String message, Connection connection, HttpServletRequest request) throws IOException {
+        public void broadcast(String message, WebSocketSession) throws IOException {
             WebSocketBroadcast.Message wsMessage = WebSocketBroadcast.newMessage( ExampleWebSocket.class, new byte[] {...});
             eventBus.post( wsMessage);
         }
@@ -240,7 +242,7 @@ examples.
         }
 
         @OnMessage
-        public void broadcast(Pojo pojo, Connection connection, HttpServletRequest request) throws IOException {
+        public void broadcast(Pojo pojo, WebSocketSession) throws IOException {
             WebSocketBroadcast.Message wsMessage = WebSocketBroadcast.newMessage( ExampleWebSocket.class, pojo);
             eventBus.post( wsMessage);
         }
