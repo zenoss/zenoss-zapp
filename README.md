@@ -217,7 +217,7 @@ examples.
         EventBus eventBus
 
         @OnMessage
-        public void broadcast(String message, WebSocketSession) throws IOException {
+        public void broadcast(String message, WebSocketSession session) throws IOException {
             WebSocketBroadcast.Message wsMessage = WebSocketBroadcast.newMessage( ExampleWebSocket.class, new byte[] {...});
             eventBus.post( wsMessage);
         }
@@ -242,7 +242,7 @@ examples.
         }
 
         @OnMessage
-        public void broadcast(Pojo pojo, WebSocketSession) throws IOException {
+        public void broadcast(Pojo pojo, WebSocketSession session) throws IOException {
             WebSocketBroadcast.Message wsMessage = WebSocketBroadcast.newMessage( ExampleWebSocket.class, pojo);
             eventBus.post( wsMessage);
         }
