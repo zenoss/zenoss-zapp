@@ -58,16 +58,22 @@ public final class SpringWebSocketServlet extends WebSocketServlet {
 
     @Override
     public WebSocket doWebSocketConnect(HttpServletRequest request, String protocol) {
-        return new TextBinaryWebSocket();
+        return new TextBinaryWebSocket(request);
     }
 
     final class TextBinaryWebSocket implements OnTextMessage, OnBinaryMessage {
         private Connection connection;
+        private WebSocketSession session;
+        private final HttpServletRequest request;
+
+        TextBinaryWebSocket(HttpServletRequest request) {
+            this.request = request;
+        }
 
         @Override
         public void onMessage(String data) {
             try {
-                ((TextListenerProxy) listener).onMessage(data, this.connection);
+                ((TextListenerProxy) listener).onMessage(data, this.session);
             } catch (ClassCastException e) {
                 throw new RuntimeException("No text listeners are provided", e);
             }
@@ -77,7 +83,7 @@ public final class SpringWebSocketServlet extends WebSocketServlet {
         public void onMessage(byte[] data, int offset, int length) {
             final byte[] msgData = Arrays.copyOfRange(data, offset, length + offset);
             try {
-                ((BinaryListenerProxy) listener).onMessage(msgData, this.connection);
+                ((BinaryListenerProxy) listener).onMessage(msgData, this.session);
             } catch (ClassCastException e) {
                 throw new RuntimeException("No binary listeners are provided", e);
             }
@@ -87,6 +93,7 @@ public final class SpringWebSocketServlet extends WebSocketServlet {
         public void onOpen(Connection connection) {
             LOGGER.info("onOpen( connection={})", connection);
             this.connection = connection;
+            this.session = new WebSocketSession(request, connection);
             syncEventBus.register(this);
             asyncEventBus.register(this);
         }
@@ -141,7 +148,7 @@ public final class SpringWebSocketServlet extends WebSocketServlet {
         Class<?> returnClass = call.getReturnType();
         Class<?>[] params = call.getParameterTypes();
         if (params.length == 2) {
-            if (Connection.class.isAssignableFrom(params[1])) {
+            if (WebSocketSession.class.isAssignableFrom(params[1])) {
                 if (String.class.isAssignableFrom(params[0])) {
                     proxy = new StringListenerProxy(object, call);
                 } else if (byte[].class.isAssignableFrom(params[0])) {
@@ -170,9 +177,9 @@ public final class SpringWebSocketServlet extends WebSocketServlet {
             this.call = call;
         }
 
-        Object invoke(Object data, Connection connection) {
+        Object invoke(Object data, WebSocketSession session) {
             try {
-                return call.invoke(obj, data, connection);
+                return call.invoke(obj, data, session);
             } catch (IllegalAccessException | InvocationTargetException e) {
                 throw new RuntimeException(e);
             }
@@ -189,7 +196,7 @@ public final class SpringWebSocketServlet extends WebSocketServlet {
             super(listener, call);
         }
 
-        abstract void onMessage(String data, Connection connection);
+        abstract void onMessage(String data, WebSocketSession session);
     }
 
     /**
@@ -200,8 +207,8 @@ public final class SpringWebSocketServlet extends WebSocketServlet {
             super(listener, m);
         }
 
-        void onMessage(String data, Connection connection) {
-            invoke(data, connection);
+        void onMessage(String data, WebSocketSession session) {
+            invoke(data, session);
         }
     }
 
@@ -213,8 +220,8 @@ public final class SpringWebSocketServlet extends WebSocketServlet {
             super(listener, m);
         }
 
-        void onMessage(byte[] data, Connection connection) {
-            invoke(data, connection);
+        void onMessage(byte[] data, WebSocketSession session) {
+            invoke(data, session);
         }
     }
 
@@ -229,10 +236,10 @@ public final class SpringWebSocketServlet extends WebSocketServlet {
             this.pojoClass = pojoClass;
         }
 
-        void onMessage(String data, Connection connection) {
+        void onMessage(String data, WebSocketSession session) {
             try {
                 Object pojo = mapper.readValue(data, pojoClass);
-                invoke(pojo, connection);
+                invoke(pojo, session);
             } catch (IOException ex) {
                 LOGGER.error("Exception deserializing data: {} into pojoClass: {}", data, ex);
                 LOGGER.error(" with exception", ex);
@@ -254,7 +261,7 @@ public final class SpringWebSocketServlet extends WebSocketServlet {
             this.returnClass = returnClass;
         }
 
-        void onMessage(String data, Connection connection) {
+        void onMessage(String data, WebSocketSession session) {
             Object pojo;
             try {
                 pojo = mapper.readValue(data, pojoClass);
@@ -263,10 +270,10 @@ public final class SpringWebSocketServlet extends WebSocketServlet {
                 LOGGER.error(" with exception", ex);
                 throw new RuntimeException(ex);
             }
-            Object result = invoke(pojo, connection);
+            Object result = invoke(pojo, session);
             try {
                 String value = mapper.writeValueAsString(result);
-                connection.sendMessage(value);
+                session.sendMessage(value);
             } catch (IOException ex) {
                 LOGGER.error("Exception serializing return pojo: {} from pojoClass", result, returnClass);
                 LOGGER.error(" with exception", ex);

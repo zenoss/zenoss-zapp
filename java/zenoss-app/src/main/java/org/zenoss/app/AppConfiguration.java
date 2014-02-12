@@ -26,10 +26,10 @@ import com.yammer.dropwizard.config.Configuration;
  */
 
 public abstract class AppConfiguration extends Configuration implements SpringConfiguration {
-	@JsonProperty
-	private ProxyConfiguration proxyConfiguration = new ProxyConfiguration();
+    @JsonProperty
+    private ProxyConfiguration proxyConfiguration = new ProxyConfiguration();
 
-	@JsonProperty
+    @JsonProperty
     private WebSocketConfiguration webSocketConfiguration = new WebSocketConfiguration();
 
     @JsonProperty
@@ -38,9 +38,12 @@ public abstract class AppConfiguration extends Configuration implements SpringCo
     @JsonProperty
     private ZenossCredentials zenossCredentials;
 
-	public ProxyConfiguration getProxyConfiguration() {
-		return proxyConfiguration;
-	}
+    @JsonProperty
+    private boolean authEnabled = true;
+
+    public ProxyConfiguration getProxyConfiguration() {
+        return proxyConfiguration;
+    }
 
     public WebSocketConfiguration getWebSocketConfiguration() {
         return webSocketConfiguration;
@@ -49,9 +52,9 @@ public abstract class AppConfiguration extends Configuration implements SpringCo
     public EventBusConfiguration getEventBusConfiguration() {
         return eventBusConfiguration;
     }
-    
+
     public void setProxyConfiguration(ProxyConfiguration proxyConfiguration) {
-    	this.proxyConfiguration = proxyConfiguration;
+        this.proxyConfiguration = proxyConfiguration;
     }
 
     public void setWebSocketConfiguration(WebSocketConfiguration webSocketConfiguration) {
@@ -68,5 +71,13 @@ public abstract class AppConfiguration extends Configuration implements SpringCo
 
     public ZenossCredentials getZenossCredentials() {
         return this.zenossCredentials;
+    }
+
+    public boolean isAuthEnabled() {
+        return authEnabled;
+    }
+
+    public void setAuthEnabled(boolean authEnabled) {
+        this.authEnabled = authEnabled;
     }
 }
