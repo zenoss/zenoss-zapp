@@ -1,15 +1,23 @@
+v0.0.13 - 2014/01/15
+    - websocket onmessage passes in a Websocket Session with a Connection and Http Servlet Request object
+
 v0.0.12 - 2014/01/15
     - add option to disable auth
+
 v0.0.11 - 2013/12/13
     - add dropwizard task to set logging level vis url
     - add dropwizard task to toggle logging from default to debug and back
+
 v0.0.10 - 2013/10/23
     - added zenoss credentials to the app configuration. This is set either from the yaml or read from global.conf
+
 v0.0.9 - 2013/10/16
     - Add runtime spring profile
     - Add protocol to ProxyConfiguration
+
 v0.0.8 - 2013/09/05
     - Add a zauth bundle that automatically authenticates all api and ws requests
+
 v0.0.7 - 2013/08/01
         - Make Dropwizard environment available via spring
         - Update example to include supervisord conf
