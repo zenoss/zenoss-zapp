@@ -1,3 +1,6 @@
+v0.0.14 - 2014/03/4
+    - ability to configure websocket servlet -- maxTextMessageSize, maxBinaryMessage, minVersion, maxIdleTime, and buffer size
+
 v0.0.13 - 2014/01/15
     - websocket onmessage passes in a Websocket Session with a Connection and Http Servlet Request object
 
