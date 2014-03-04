@@ -18,6 +18,7 @@ import com.yammer.dropwizard.ConfiguredBundle;
 import com.yammer.dropwizard.config.Bootstrap;
 import com.yammer.dropwizard.config.Configuration;
 import com.yammer.dropwizard.config.Environment;
+import com.yammer.dropwizard.config.ServletBuilder;
 import com.yammer.dropwizard.lifecycle.Managed;
 import com.yammer.dropwizard.tasks.Task;
 import com.yammer.metrics.core.HealthCheck;
@@ -158,7 +159,23 @@ public final class SpringBundle implements ConfiguredBundle<Configuration> {
             }
 
             SpringWebSocketServlet wss = new SpringWebSocketServlet(listener, executorService, syncEventBus, asyncEventBus, path.value());
-            environment.addServlet(wss, path.value());
+            ServletBuilder servletConfig = environment.addServlet(wss, path.value());
+
+            if (config.getMaxTextMessageSize() != null) {
+                servletConfig.setInitParam("maxTextMessageSize", String.valueOf(config.getMaxTextMessageSize()));
+            }
+            if (config.getMaxBinaryMessageSize() != null) {
+                servletConfig.setInitParam("maxBinaryMessageSize", String.valueOf(config.getMaxBinaryMessageSize()));
+            }
+            if (config.getBufferSize() != null) {
+                servletConfig.setInitParam("bufferSize", String.valueOf(config.getBufferSize()));
+            }
+            if (config.getMinVersion() != null) {
+                servletConfig.setInitParam("minVersion", String.valueOf(config.getMinVersion()));
+            }
+            if (config.getMaxIdleTime() != null) {
+                servletConfig.setInitParam("maxIdleTime", String.valueOf(config.getMaxIdleTime()));
+            }
         }
     }
 }
