@@ -5,7 +5,7 @@
     <parent>
         <artifactId>zapp-parent</artifactId>
         <groupId>org.zenoss.zapp</groupId>
-        <version>0.0.14</version>
+        <version>0.0.15-SNAPSHOT</version>
     </parent>
     <artifactId>zenoss-app</artifactId>
 
