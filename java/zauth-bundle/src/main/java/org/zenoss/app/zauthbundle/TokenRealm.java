@@ -1,16 +1,10 @@
 package org.zenoss.app.zauthbundle;
 
-import java.io.ByteArrayOutputStream;
-import java.io.IOException;
-import java.io.UnsupportedEncodingException;
-import java.nio.charset.StandardCharsets;
-import java.util.Collections;
-import java.util.List;
-
 import com.google.common.base.Preconditions;
 import com.yammer.dropwizard.client.HttpClientBuilder;
 import com.yammer.dropwizard.client.HttpClientConfiguration;
 import com.yammer.dropwizard.util.Duration;
+import org.apache.http.Header;
 import org.apache.http.HttpResponse;
 import org.apache.http.HttpStatus;
 import org.apache.http.client.HttpClient;
@@ -20,13 +14,19 @@ import org.apache.http.message.BasicNameValuePair;
 import org.apache.shiro.authc.AuthenticationException;
 import org.apache.shiro.authc.AuthenticationInfo;
 import org.apache.shiro.authc.AuthenticationToken;
-import org.apache.shiro.authc.SimpleAccount;
 import org.apache.shiro.realm.AuthenticatingRealm;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-
 import org.zenoss.app.config.ProxyConfiguration;
+import org.zenoss.app.security.ZenossTenant;
+import org.zenoss.app.security.ZenossToken;
 
+import java.io.ByteArrayOutputStream;
+import java.io.IOException;
+import java.io.UnsupportedEncodingException;
+import java.nio.charset.StandardCharsets;
+import java.util.Collections;
+import java.util.List;
 
 /**
  * This is our Shiro Realm that validates the token received from TokenFilter against the
@@ -38,6 +38,7 @@ public class TokenRealm extends AuthenticatingRealm {
     private static final Logger log = LoggerFactory.getLogger(TokenRealm.class);
     private static Class<StringAuthenticationToken> authenticationTokenClass = StringAuthenticationToken.class;
     private static final String VALIDATE_URL = "/zauth/api/validate";
+
     /**
      * This is static so we can set it when building our bundle and it is available for all instances.
      */
@@ -84,26 +85,28 @@ public class TokenRealm extends AuthenticatingRealm {
      * ZAuthService. IF that call fails or we receive a non-200 response from the service our validation fails.
      * The caller of this function expects an AuthenticationInfo class if the login is successful or an
      * AuthenticationException if the login fails
+     *
      * @param token StringAuthenticationToken instance that has our ZAuthToken
      * @return AuthenticationInfo if the login is successful
      * @throws AuthenticationException on any login failure
      */
     @Override
     protected AuthenticationInfo doGetAuthenticationInfo(AuthenticationToken token) throws AuthenticationException {
-        log.info("authenticating token: {}", token.getPrincipal());
+        log.debug("authenticating token: {}", token.getPrincipal());
         // get our principal from the token
-        String zenossToken = (String)token.getPrincipal();
+        String zenossToken = (String) token.getPrincipal();
 
         // submit a request to zauthbundle service to find out if the token is valid
         HttpClient client = httpClientBuilder.build();
-        try{
+        try {
             HttpPost method = getPostMethod(zenossToken);
             HttpResponse response = client.execute(method);
+
             return handleResponse(zenossToken, response);
-        } catch(IOException e) {
+        } catch (IOException e) {
             log.error("IOException from ZAuthServer {} {}", e.getMessage(), e);
             throw new AuthenticationException(e);
-        } finally{
+        } finally {
             // When HttpClient instance is no longer needed,
             // shut down the connection manager to ensure
             // immediate deallocation of all system resources
@@ -113,13 +116,13 @@ public class TokenRealm extends AuthenticatingRealm {
 
     /**
      * Interpret the http response from the post to the zauth service
-     * @param zenossToken string representing the token we wanted to verify
+     *
      * @param response HttpStatus code from our resposne
      * @return AuthenticationToken or an AuthenticationException
-     * @throws IOException if there was an error validating the token
+     * @throws IOException             if there was an error validating the token
      * @throws AuthenticationException if the token wasn't valid
      */
-    AuthenticationInfo handleResponse(String zenossToken, HttpResponse response) throws IOException, AuthenticationException {
+    AuthenticationInfo handleResponse(String token, HttpResponse response) throws IOException, AuthenticationException {
         int statusCode = response.getStatusLine().getStatusCode();
         // If debug is enabled, log the response body
         if (log.isDebugEnabled()) {
@@ -130,10 +133,18 @@ public class TokenRealm extends AuthenticatingRealm {
                         statusCode, responseBody);
             }
         }
+
         // Response of 200 means validation succeeded
         if (statusCode == HttpStatus.SC_OK) {
-            log.debug("Creating a new account info based on token  {}", zenossToken);
-            AuthenticationInfo info = new SimpleAccount(zenossToken, zenossToken, "TokenRealm");
+            String tokenId = getHeaderValue(ZenossToken.ID_HTTP_HEADER, response);
+            String tokenExp = getHeaderValue(ZenossToken.EXPIRES_HTTP_HEADER, response);
+            String tenantId = getHeaderValue(ZenossTenant.ID_HTTP_HEADER, response);
+            log.debug("Validated request: token={}, token expires={}, tenant={}", tokenId, tokenExp, tenantId);
+
+            ZenossAuthenticationInfo info = new ZenossAuthenticationInfo(token, TokenRealm.class.toString());
+            info.addTenant(tenantId, TokenRealm.class.toString());
+            info.addToken(tokenId, Double.valueOf(tokenExp), TokenRealm.class.toString());
+
             return info;
         } else {
             log.debug("Login unsuccessful");
@@ -144,6 +155,7 @@ public class TokenRealm extends AuthenticatingRealm {
     /**
      * Creates a new Post method based on the proxy config and the passed in token that we
      * want to verify.
+     *
      * @param zenossToken token received from the ZAuth header
      * @return PostMethod for our http client
      */
@@ -155,5 +167,13 @@ public class TokenRealm extends AuthenticatingRealm {
         method.setEntity(new UrlEncodedFormEntity(params));
 
         return method;
+    }
+
+    String getHeaderValue(String header, HttpResponse response) {
+        Header[] headers = response.getHeaders(header);
+        if (headers == null || headers.length <= 0) {
+            throw new AuthenticationException("Missing response header: " + header);
+        }
+        return headers[0].getValue();
     }
 }

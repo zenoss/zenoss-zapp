@@ -6,6 +6,7 @@ import javax.servlet.http.HttpServletResponse;
 import org.apache.http.HttpStatus;
 import org.apache.shiro.authc.AuthenticationException;
 import org.apache.shiro.authc.AuthenticationToken;
+import org.apache.shiro.subject.Subject;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
@@ -18,12 +19,14 @@ import static org.mockito.Mockito.*;
 
 public class TokenFilterTest {
 
+    Subject subject;
     HttpServletRequest request;
     HttpServletResponse response;
     TokenFilter filt;
 
     @Before
     public void setup() {
+        this.subject = mock(Subject.class);
         this.request = mock(HttpServletRequest.class);
         this.response = mock(HttpServletResponse.class);
         this.filt = new TokenFilter();
@@ -67,7 +70,10 @@ public class TokenFilterTest {
 
     @Test
     public void testOnLoginSuccessReturnsTrue() throws Exception {
-        boolean result = filt.onLoginSuccess(null, null, request, response);
+        Object principle = new Object();
+        when(subject.getPrincipal()).thenReturn(principle);
+
+        boolean result = filt.onLoginSuccess(null, subject, request, response);
         assertTrue(result);
     }
 

@@ -15,6 +15,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.common.base.Preconditions;
 import com.google.common.eventbus.EventBus;
 import com.google.common.eventbus.Subscribe;
+import org.apache.shiro.subject.Subject;
 import org.eclipse.jetty.websocket.WebSocket;
 import org.eclipse.jetty.websocket.WebSocket.Connection;
 import org.eclipse.jetty.websocket.WebSocket.OnBinaryMessage;
@@ -93,7 +94,11 @@ public final class SpringWebSocketServlet extends WebSocketServlet {
         public void onOpen(Connection connection) {
             LOGGER.info("onOpen( connection={})", connection);
             this.connection = connection;
-            this.session = new WebSocketSession(request, connection);
+
+            //XXX grab the subject object on connect, the zauth bundle adds the attribute
+            //    this needs to be done before onMessage because the attribute disappears
+            Subject subject = (Subject) request.getAttribute( "zenoss-subject");
+            this.session = new WebSocketSession(subject, request, connection);
             syncEventBus.register(this);
             asyncEventBus.register(this);
         }

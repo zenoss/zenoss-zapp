@@ -27,6 +27,12 @@
             <version>${jetty.version}</version>
         </dependency>
 
+        <dependency>
+            <groupId>org.apache.shiro</groupId>
+            <artifactId>shiro-core</artifactId>
+            <version>${shiro.version}</version>
+        </dependency>
+
         <!--test dependencies-->
         <dependency>
             <groupId>junit</groupId>
