@@ -5,13 +5,10 @@
     <parent>
         <artifactId>zapp-parent</artifactId>
         <groupId>org.zenoss.zapp</groupId>
-        <version>0.0.14</version>
+        <version>0.0.15</version>
     </parent>
     <modelVersion>4.0.0</modelVersion>
     <artifactId>zauth-bundle</artifactId>
-    <properties>
-        <shiro.version>1.2.2</shiro.version>
-    </properties>
 
     <dependencies>
         <dependency>

@@ -1,14 +1,6 @@
 package org.zenoss.app.zauthbundle;
 
-import javax.servlet.http.HttpServletRequest;
-import javax.servlet.http.HttpServletResponse;
-
-import java.io.ByteArrayOutputStream;
-import java.io.OutputStream;
-import java.nio.charset.StandardCharsets;
-
 import com.yammer.dropwizard.client.HttpClientBuilder;
-import org.apache.http.HttpEntity;
 import org.apache.http.HttpResponse;
 import org.apache.http.HttpVersion;
 import org.apache.http.StatusLine;
@@ -23,11 +15,18 @@ import org.apache.shiro.authc.AuthenticationInfo;
 import org.apache.shiro.authc.AuthenticationToken;
 import org.junit.Before;
 import org.junit.Test;
-
 import org.zenoss.app.config.ProxyConfiguration;
+import org.zenoss.app.security.ZenossTenant;
+import org.zenoss.app.security.ZenossToken;
+
+import javax.servlet.http.HttpServletRequest;
+import javax.servlet.http.HttpServletResponse;
+import java.io.ByteArrayOutputStream;
+import java.nio.charset.StandardCharsets;
 
 import static junit.framework.Assert.assertEquals;
 import static junit.framework.Assert.assertFalse;
+import static org.junit.Assert.fail;
 import static org.mockito.Mockito.*;
 
 public class TokenRealmTest {
@@ -61,7 +60,7 @@ public class TokenRealmTest {
     public void testGetPostMethod() throws Exception {
         HttpPost method = realm.getPostMethod("test");
         // make sure we set our token we passed in into the params
-        UrlEncodedFormEntity body = (UrlEncodedFormEntity)method.getEntity();
+        UrlEncodedFormEntity body = (UrlEncodedFormEntity) method.getEntity();
         ByteArrayOutputStream out = new ByteArrayOutputStream();
         body.writeTo(out);
         assertEquals("id=test", out.toString(StandardCharsets.UTF_8.name()));
@@ -71,14 +70,27 @@ public class TokenRealmTest {
     @Test
     public void testSuccessfulResponse() throws Exception {
         HttpResponse response = getOkResponse();
-        AuthenticationInfo info = realm.handleResponse("test", response);
+        response.addHeader(ZenossTenant.ID_HTTP_HEADER, "id");
+        response.addHeader(ZenossToken.ID_HTTP_HEADER, "id");
+        response.addHeader(ZenossToken.EXPIRES_HTTP_HEADER, "0");
+        AuthenticationInfo info = realm.handleResponse("token", response);
         assertFalse(info.getPrincipals().isEmpty());
-        assertEquals(info.getCredentials().toString(), "test");
+
+        ZenossToken token = info.getPrincipals().oneByType(ZenossToken.class);
+        assertEquals(0.0, token.expires());
+        assertEquals("id", token.id());
+
+        ZenossTenant tenant = info.getPrincipals().oneByType(ZenossTenant.class);
+        assertEquals("id", tenant.id());
+
+        //these should be the same...
+        assertEquals("token", info.getCredentials());
     }
 
     private HttpResponse getOkResponse() {
         StatusLine status = new BasicStatusLine(HttpVersion.HTTP_1_1, 200, "OK");
-        return new BasicHttpResponse(status);
+        BasicHttpResponse response = new BasicHttpResponse(status);
+        return response;
     }
 
     @Test(expected = AuthenticationException.class)
@@ -90,10 +102,24 @@ public class TokenRealmTest {
 
     @Test
     public void testDoGetAuthorization() throws Exception {
-        when(this.mockClient.execute(any(HttpPost.class))).thenReturn(getOkResponse());
+        HttpResponse response = getOkResponse();
+        response.addHeader(ZenossTenant.ID_HTTP_HEADER, "id");
+        response.addHeader(ZenossToken.ID_HTTP_HEADER, "id");
+        response.addHeader(ZenossToken.EXPIRES_HTTP_HEADER, "0");
+        when(this.mockClient.execute(any(HttpPost.class))).thenReturn(response);
         AuthenticationToken token = new StringAuthenticationToken("test");
         AuthenticationInfo results = realm.doGetAuthenticationInfo(token);
-        assertEquals(results.getCredentials().toString(), "test");
+        assertEquals( "test", results.getCredentials());
+    }
+
+
+    @Test(expected = AuthenticationException.class)
+    public void testDoGetAuthorizationMissingTenantId() throws Exception {
+        HttpResponse response = getOkResponse();
+        when(this.mockClient.execute(any(HttpPost.class))).thenReturn(response);
+        AuthenticationToken token = new StringAuthenticationToken("test");
+        realm.doGetAuthenticationInfo(token);
+        fail();
     }
 
 }
