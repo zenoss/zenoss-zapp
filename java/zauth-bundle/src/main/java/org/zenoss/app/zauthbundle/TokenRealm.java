@@ -92,7 +92,7 @@ public class TokenRealm extends AuthenticatingRealm {
      */
     @Override
     protected AuthenticationInfo doGetAuthenticationInfo(AuthenticationToken token) throws AuthenticationException {
-        log.debug("authenticating token: {}", token.getPrincipal());
+        log.debug("authenticating token - aka token validation");
         // get our principal from the token
         String zenossToken = (String) token.getPrincipal();
 
@@ -129,6 +129,12 @@ public class TokenRealm extends AuthenticatingRealm {
             try (ByteArrayOutputStream os = new ByteArrayOutputStream()) {
                 response.getEntity().writeTo(os);
                 String responseBody = os.toString(StandardCharsets.UTF_8.name());
+
+                //avoid printing token id
+                if (statusCode >= 200 && statusCode < 300) {
+                    responseBody = "Success!";
+                }
+
                 log.debug("Response status code {} received from the zauthbundle server. Content is {}",
                         statusCode, responseBody);
             }
@@ -139,7 +145,7 @@ public class TokenRealm extends AuthenticatingRealm {
             String tokenId = getHeaderValue(ZenossToken.ID_HTTP_HEADER, response);
             String tokenExp = getHeaderValue(ZenossToken.EXPIRES_HTTP_HEADER, response);
             String tenantId = getHeaderValue(ZenossTenant.ID_HTTP_HEADER, response);
-            log.debug("Validated request: token={}, token expires={}, tenant={}", tokenId, tokenExp, tenantId);
+            log.debug("Validated request: token='********', token expires={}, tenant={}", tokenExp, tenantId);
 
             ZenossAuthenticationInfo info = new ZenossAuthenticationInfo(token, TokenRealm.class.toString());
             info.addTenant(tenantId, TokenRealm.class.toString());

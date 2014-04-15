@@ -6,17 +6,9 @@ import org.apache.shiro.subject.PrincipalCollection;
 import org.apache.shiro.subject.SimplePrincipalCollection;
 import org.zenoss.app.security.ZenossTenant;
 import org.zenoss.app.security.ZenossToken;
-import org.zenoss.app.security.ZenossUser;
 
 /**
- *
- * Shiro authentication information
- *
- * Created with IntelliJ IDEA.
- * User: scleveland
- * Date: 4/3/14
- * Time: 11:30 AM
- * To change this template use File | Settings | File Templates.
+ * Shiro authentication information.  Supports realm based token and tenant shiro principles.
  */
 public class ZenossAuthenticationInfo implements AuthenticationInfo {
 
@@ -24,11 +16,6 @@ public class ZenossAuthenticationInfo implements AuthenticationInfo {
         Preconditions.checkNotNull(token);
         this.token = token;
         this.principles.add( token, realm);
-    }
-
-    public void addUser( String username, String password, String realm) {
-        Object principle = new ZenossUser( username, password);
-        this.principles.add( principle, realm);
     }
 
     public void addToken( String id, double expires, String realm) {

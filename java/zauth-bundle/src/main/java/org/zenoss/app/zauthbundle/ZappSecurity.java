@@ -5,12 +5,8 @@ import org.apache.shiro.subject.Subject;
 import org.springframework.stereotype.Component;
 
 /**
- * Zapp security utility class
- * User: scleveland
- * Date: 4/8/14
- * Time: 10:48 AM
+ * Bean to assist grabbing shiro subject.
  */
-
 @Component
 public class ZappSecurity {
 

@@ -51,7 +51,7 @@ public class ZenossToken {
     @Override
     public String toString() {
         return "ZenossToken{" +
-                "id='" + id + '\'' +
+                "id='********'" +
                 ", expires=" + expires +
                 '}';
     }

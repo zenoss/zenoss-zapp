@@ -37,7 +37,7 @@ public class TokenFilter extends AuthenticatingFilter {
     protected AuthenticationToken createToken(ServletRequest request, ServletResponse response) throws InvalidTokenException {
         HttpServletRequest httpRequest = WebUtils.toHttp(request);
         String token = httpRequest.getHeader(TOKEN_HEADER);
-        log.debug("Created login token {}", token);
+        log.debug("Created login token");
         if (token == null) {
             throw new InvalidTokenException(TOKEN_HEADER + " header is missing");
         }
@@ -114,7 +114,7 @@ public class TokenFilter extends AuthenticatingFilter {
     protected boolean onLoginSuccess(AuthenticationToken token, Subject subject,
                                      ServletRequest request, ServletResponse response) throws Exception {
         // We logged in, let the original request continue on.
-        log.debug( "onLoginSuccess(): subject.principle={}", subject.getPrincipal());
+        log.debug( "onLoginSuccess(): setting servlet-request subject");
         request.setAttribute( "zenoss-subject", subject);
         return true;
     }
