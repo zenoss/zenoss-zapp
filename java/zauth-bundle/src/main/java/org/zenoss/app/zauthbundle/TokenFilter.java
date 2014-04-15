@@ -37,7 +37,7 @@ public class TokenFilter extends AuthenticatingFilter {
     protected AuthenticationToken createToken(ServletRequest request, ServletResponse response) throws InvalidTokenException {
         HttpServletRequest httpRequest = WebUtils.toHttp(request);
         String token = httpRequest.getHeader(TOKEN_HEADER);
-        log.info("Created login token {}", token);
+        log.debug("Created login token");
         if (token == null) {
             throw new InvalidTokenException(TOKEN_HEADER + " header is missing");
         }
@@ -58,7 +58,7 @@ public class TokenFilter extends AuthenticatingFilter {
             return executeLogin(request, response);
         }
         catch (InvalidTokenException e) {
-            log.info("Unable to login: " + e.getMessage());
+            log.error("Unable to login: " + e.getMessage());
             // let the client know we are unauthorized
             WebUtils.toHttp(response).setStatus(HttpStatus.SC_UNAUTHORIZED);
             return false;
@@ -84,6 +84,7 @@ public class TokenFilter extends AuthenticatingFilter {
      * @param response HttpResponse, a 401 status is set.
      * @return boolean false if the login fails we should not continue the filter chain
      */
+    @Override
     protected boolean onLoginFailure(AuthenticationToken token, AuthenticationException e,
                                      ServletRequest request, ServletResponse response) {
         if (e != null){
@@ -109,9 +110,12 @@ public class TokenFilter extends AuthenticatingFilter {
      * @return true, let the filter chain continue on
      * @throws Exception
      */
+    @Override
     protected boolean onLoginSuccess(AuthenticationToken token, Subject subject,
                                      ServletRequest request, ServletResponse response) throws Exception {
         // We logged in, let the original request continue on.
+        log.debug( "onLoginSuccess(): setting servlet-request subject");
+        request.setAttribute( "zenoss-subject", subject);
         return true;
     }
 }
