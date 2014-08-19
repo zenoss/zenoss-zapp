@@ -123,7 +123,10 @@ public class ProxyRegistration implements Managed {
 	public void start() throws Exception {
 		setUp();
 		if (!isEnabled()) {
-			log.warn("Unable to register with the proxy.  Please check your redis and proxy settings");
+            /**
+             * TODO: Enable this once we start using autoregistration
+             * log.warn("Unable to register with the proxy.  Please check your redis and proxy settings");
+             */
 			return;
 		}
 		
