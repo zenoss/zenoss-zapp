@@ -1,6 +1,13 @@
 releasing a new version from a snapshot
 
+Check out the master branch and make sure to have latest master
+
+> git checkout master
+> git pull origin master
+
 Check out the develop branch
+
+> git checkout develop
 
 <release_name> is usually the next version eg. "0.0.3"
 This will start a new release branch
