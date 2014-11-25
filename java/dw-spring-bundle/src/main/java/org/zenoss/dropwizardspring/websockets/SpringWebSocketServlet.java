@@ -177,16 +177,28 @@ public final class SpringWebSocketServlet extends WebSocketServlet {
                 if (WebSocketSession.class.isAssignableFrom(params[1])) {
                     if (String.class.isAssignableFrom(params[0])) {
                         proxy = new StringListenerProxy(object, call);
+                        if (proxies.containsKey(ListenerType.STRINGLISTENER)) {
+                            throw new IllegalArgumentException("Only one string listener is supported per class: " + object.getClass());
+                        }
                         proxies.put(ListenerType.STRINGLISTENER, proxy);
                     } else if (byte[].class.isAssignableFrom(params[0])) {
                         proxy = new BinaryListenerProxy(object, call);
+                        if (proxies.containsKey(ListenerType.BYTELISTENER)) {
+                            throw new IllegalArgumentException("Only one byte listener is supported per class: " + object.getClass());
+                        }
                         proxies.put(ListenerType.BYTELISTENER, proxy);
                     } else if (void.class.equals(returnClass)) {
                         proxy = new JsonListenerProxy(object, call, params[0]);
+                        if (proxies.containsKey(ListenerType.STRINGLISTENER)) {
+                            throw new IllegalArgumentException("Only one string listener is supported per class: " + object.getClass());
+                        }
                         proxies.put(ListenerType.STRINGLISTENER, proxy);
 
                     } else {
                         proxy = new JsonListenerProxyWithResponse(object, call, params[0], returnClass);
+                        if (proxies.containsKey(ListenerType.STRINGLISTENER)) {
+                            throw new IllegalArgumentException("Only one string listener is supported per class: " + object.getClass());
+                        }
                         proxies.put(ListenerType.STRINGLISTENER, proxy);
                     }
                 }
