@@ -81,21 +81,25 @@ public final class SpringWebSocketServlet extends WebSocketServlet {
         @Override
         public void onMessage(String data) {
             ListenerProxy listener = listeners.get(ListenerType.STRINGLISTENER);
-            try {
-                ((TextListenerProxy) listener).onMessage(data, this.session);
-            } catch (ClassCastException e) {
-                throw new RuntimeException("No text listeners are provided", e);
+            if (null != listener) {
+                try {
+                    ((TextListenerProxy) listener).onMessage(data, this.session);
+                } catch (ClassCastException e) {
+                    throw new RuntimeException("No text listeners are provided", e);
+                }
             }
         }
 
         @Override
         public void onMessage(byte[] data, int offset, int length) {
             ListenerProxy listener = listeners.get(ListenerType.BYTELISTENER);
-            final byte[] msgData = Arrays.copyOfRange(data, offset, length + offset);
-            try {
-                ((BinaryListenerProxy) listener).onMessage(msgData, this.session);
-            } catch (ClassCastException e) {
-                throw new RuntimeException("No binary listeners are provided", e);
+            if (null != listener) {
+                final byte[] msgData = Arrays.copyOfRange(data, offset, length + offset);
+                try {
+                    ((BinaryListenerProxy) listener).onMessage(msgData, this.session);
+                } catch (ClassCastException e) {
+                    throw new RuntimeException("No binary listeners are provided", e);
+                }
             }
         }
 
