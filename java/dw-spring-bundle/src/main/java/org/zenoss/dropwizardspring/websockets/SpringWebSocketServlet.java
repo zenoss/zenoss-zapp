@@ -17,7 +17,6 @@ import com.google.common.eventbus.EventBus;
 import com.google.common.eventbus.Subscribe;
 import org.apache.shiro.subject.Subject;
 import org.eclipse.jetty.websocket.WebSocket;
-import org.eclipse.jetty.websocket.WebSocket.Connection;
 import org.eclipse.jetty.websocket.WebSocket.OnBinaryMessage;
 import org.eclipse.jetty.websocket.WebSocket.OnTextMessage;
 import org.eclipse.jetty.websocket.WebSocketServlet;
@@ -29,7 +28,11 @@ import javax.servlet.http.HttpServletRequest;
 import java.io.IOException;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
+import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 import java.util.concurrent.ExecutorService;
 
 /**
@@ -42,8 +45,11 @@ public final class SpringWebSocketServlet extends WebSocketServlet {
     private final ExecutorService executorService;
     private final EventBus syncEventBus;
     private final EventBus asyncEventBus;
-    private final ListenerProxy listener;
+    private final Map<ListenerType, ListenerProxy> listeners;
     private final String path;
+
+
+    enum ListenerType {STRINGLISTENER, BYTELISTENER}
 
     public SpringWebSocketServlet(Object listener, ExecutorService executorService, EventBus syncEventBus, EventBus asyncEventBus, String path) {
         Preconditions.checkNotNull(path);
@@ -54,7 +60,8 @@ public final class SpringWebSocketServlet extends WebSocketServlet {
         this.executorService = executorService;
         this.syncEventBus = syncEventBus;
         this.asyncEventBus = asyncEventBus;
-        this.listener = createListenerProxy(listener);
+        this.listeners = createListenerProxies(listener);
+
     }
 
     @Override
@@ -73,20 +80,26 @@ public final class SpringWebSocketServlet extends WebSocketServlet {
 
         @Override
         public void onMessage(String data) {
-            try {
-                ((TextListenerProxy) listener).onMessage(data, this.session);
-            } catch (ClassCastException e) {
-                throw new RuntimeException("No text listeners are provided", e);
+            ListenerProxy listener = listeners.get(ListenerType.STRINGLISTENER);
+            if (null != listener) {
+                try {
+                    ((TextListenerProxy) listener).onMessage(data, this.session);
+                } catch (ClassCastException e) {
+                    throw new RuntimeException("No text listeners are provided", e);
+                }
             }
         }
 
         @Override
         public void onMessage(byte[] data, int offset, int length) {
-            final byte[] msgData = Arrays.copyOfRange(data, offset, length + offset);
-            try {
-                ((BinaryListenerProxy) listener).onMessage(msgData, this.session);
-            } catch (ClassCastException e) {
-                throw new RuntimeException("No binary listeners are provided", e);
+            ListenerProxy listener = listeners.get(ListenerType.BYTELISTENER);
+            if (null != listener) {
+                final byte[] msgData = Arrays.copyOfRange(data, offset, length + offset);
+                try {
+                    ((BinaryListenerProxy) listener).onMessage(msgData, this.session);
+                } catch (ClassCastException e) {
+                    throw new RuntimeException("No binary listeners are provided", e);
+                }
             }
         }
 
@@ -97,7 +110,7 @@ public final class SpringWebSocketServlet extends WebSocketServlet {
 
             //XXX grab the subject object on connect, the zauth bundle adds the attribute
             //    this needs to be done before onMessage because the attribute disappears
-            Subject subject = (Subject) request.getAttribute( "zenoss-subject");
+            Subject subject = (Subject) request.getAttribute("zenoss-subject");
             this.session = new WebSocketSession(subject, request, connection);
             syncEventBus.register(this);
             asyncEventBus.register(this);
@@ -113,6 +126,8 @@ public final class SpringWebSocketServlet extends WebSocketServlet {
         @Subscribe
         @SuppressWarnings({"unused"})
         public void handle(final WebSocketBroadcast.Message event) {
+            //either binary or string proxy will work in this case as they are proxying the same object
+            ListenerProxy listener = listeners.values().iterator().next();
             if (listener.webSocketEndPoint() == event.webSocketEndPoint()) {
                 executorService.execute(new Runnable() {
                     @Override
@@ -136,41 +151,64 @@ public final class SpringWebSocketServlet extends WebSocketServlet {
         }
     }
 
-    private ListenerProxy createListenerProxy(Object object) {
-        Method call = null;
+    private Map<ListenerType, ListenerProxy> createListenerProxies(Object object) {
+        Map<ListenerType, ListenerProxy> proxies = new HashMap<>(2);
+        List<Method> calls = new ArrayList<Method>(2);
         for (Method m : object.getClass().getMethods()) {
             if (m.getAnnotation(OnMessage.class) != null) {
-                call = m;
-                break;
+                calls.add(m);
             }
         }
-        if (call == null) {
+        if (calls.size() == 0) {
             throw new IllegalArgumentException("Object does not have listener method: " + object.getClass());
         }
 
-        //identify which proxy method to call
-        ListenerProxy proxy = null;
-        Class<?> returnClass = call.getReturnType();
-        Class<?>[] params = call.getParameterTypes();
-        if (params.length == 2) {
-            if (WebSocketSession.class.isAssignableFrom(params[1])) {
-                if (String.class.isAssignableFrom(params[0])) {
-                    proxy = new StringListenerProxy(object, call);
-                } else if (byte[].class.isAssignableFrom(params[0])) {
-                    proxy = new BinaryListenerProxy(object, call);
-                } else if (void.class.equals(returnClass)) {
-                    proxy = new JsonListenerProxy(object, call, params[0]);
-                } else {
-                    proxy = new JsonListenerProxyWithResponse(object, call, params[0], returnClass);
-                }
-            }
-        }
-        if (proxy == null) {
-            throw new IllegalArgumentException("Object does not have valid listener method: " + object.getClass());
+        if (calls.size() > 2) {
+            throw new IllegalArgumentException("Only to OnMessage annotations supported per class: " + object.getClass());
         }
 
-        LOGGER.info("WebSocket Endpoint registered on {} using handler {}:{}", path, object.getClass(), call.getName());
-        return proxy;
+
+        for (Method call : calls) {
+            //identify which proxy method to call
+            ListenerProxy proxy = null;
+            Class<?> returnClass = call.getReturnType();
+            Class<?>[] params = call.getParameterTypes();
+            if (params.length == 2) {
+                if (WebSocketSession.class.isAssignableFrom(params[1])) {
+                    if (String.class.isAssignableFrom(params[0])) {
+                        proxy = new StringListenerProxy(object, call);
+                        if (proxies.containsKey(ListenerType.STRINGLISTENER)) {
+                            throw new IllegalArgumentException("Only one string listener is supported per class: " + object.getClass());
+                        }
+                        proxies.put(ListenerType.STRINGLISTENER, proxy);
+                    } else if (byte[].class.isAssignableFrom(params[0])) {
+                        proxy = new BinaryListenerProxy(object, call);
+                        if (proxies.containsKey(ListenerType.BYTELISTENER)) {
+                            throw new IllegalArgumentException("Only one byte listener is supported per class: " + object.getClass());
+                        }
+                        proxies.put(ListenerType.BYTELISTENER, proxy);
+                    } else if (void.class.equals(returnClass)) {
+                        proxy = new JsonListenerProxy(object, call, params[0]);
+                        if (proxies.containsKey(ListenerType.STRINGLISTENER)) {
+                            throw new IllegalArgumentException("Only one string listener is supported per class: " + object.getClass());
+                        }
+                        proxies.put(ListenerType.STRINGLISTENER, proxy);
+
+                    } else {
+                        proxy = new JsonListenerProxyWithResponse(object, call, params[0], returnClass);
+                        if (proxies.containsKey(ListenerType.STRINGLISTENER)) {
+                            throw new IllegalArgumentException("Only one string listener is supported per class: " + object.getClass());
+                        }
+                        proxies.put(ListenerType.STRINGLISTENER, proxy);
+                    }
+                }
+            }
+            if (proxy == null) {
+                throw new IllegalArgumentException("Object does not have valid listener method: " + object.getClass());
+            }
+            LOGGER.info("WebSocket Endpoint registered on {} using handler {}:{}", path, object.getClass(), call.getName());
+        }
+        return proxies;
     }
 
     private abstract class ListenerProxy {
