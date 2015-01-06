@@ -124,15 +124,18 @@ public final class SpringWebSocketServlet extends WebSocketServlet {
         @Override
         public void onClose(int closeCode, String message) {
             LOGGER.info("onClose( closeCode={}, message={})", connection, message);
-            if (null != closeListener) {
-                closeListener.onClose(closeCode, message, this.session);
+            try {
+                if (null != closeListener) {
+                    closeListener.onClose(closeCode, message, this.session);
+                }
+            } finally {
+                if (this.session != null) {
+                    this.session.close();
+                    this.session = null;
+                }
+                syncEventBus.unregister(this);
+                asyncEventBus.unregister(this);
             }
-            if (this.session != null) {
-                this.session.close();
-                this.session = null;
-            }
-            syncEventBus.unregister(this);
-            asyncEventBus.unregister(this);
         }
 
         @Subscribe
