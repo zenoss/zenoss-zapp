@@ -9,7 +9,9 @@ Check out the develop branch
 
 > git checkout develop
 
-<release_name> is usually the next version eg. "0.0.3"
+<release_name> is usually the next version.  e.g., if the version 
+  in develop is "0.0.3-SNAPSHOT" and in master "0.0.2", then the 
+  <release_name> will be the new version in master, "0.0.3".
 This will start a new release branch
 Make sure you have the latest develop
 > git pull origin develop
