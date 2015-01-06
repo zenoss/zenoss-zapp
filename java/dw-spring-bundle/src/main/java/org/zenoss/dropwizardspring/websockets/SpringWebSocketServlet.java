@@ -25,6 +25,7 @@ import org.eclipse.jetty.websocket.WebSocket.OnTextMessage;
 import org.eclipse.jetty.websocket.WebSocketServlet;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.zenoss.dropwizardspring.websockets.annotations.OnClose;
 import org.zenoss.dropwizardspring.websockets.annotations.OnMessage;
 
 import javax.servlet.http.HttpServletRequest;
@@ -49,6 +50,7 @@ public final class SpringWebSocketServlet extends WebSocketServlet {
     private final EventBus syncEventBus;
     private final EventBus asyncEventBus;
     private final Map<ListenerType, ListenerProxy> listeners;
+    private final CloseListenerProxy closeListener;
     private final String path;
 
 
@@ -64,7 +66,7 @@ public final class SpringWebSocketServlet extends WebSocketServlet {
         this.syncEventBus = syncEventBus;
         this.asyncEventBus = asyncEventBus;
         this.listeners = createListenerProxies(listener);
-
+        this.closeListener = createCloseListenerProxy(listener);
     }
 
     @Override
@@ -122,6 +124,9 @@ public final class SpringWebSocketServlet extends WebSocketServlet {
         @Override
         public void onClose(int closeCode, String message) {
             LOGGER.info("onClose( closeCode={}, message={})", connection, message);
+            if (null != closeListener) {
+                closeListener.onClose(closeCode, message, this.session);
+            }
             syncEventBus.unregister(this);
             asyncEventBus.unregister(this);
         }
@@ -154,6 +159,32 @@ public final class SpringWebSocketServlet extends WebSocketServlet {
         }
     }
 
+    private CloseListenerProxy createCloseListenerProxy(Object object) {
+        Method call = null;
+        for (Method m : object.getClass().getMethods()) {
+            if (m.getAnnotation(OnClose.class) != null) {
+                if (call == null) {
+                    call = m;
+                } else {
+                    throw new IllegalArgumentException("Only one OnClose annotation supported per class: " + object.getClass());
+                }
+            }
+        }
+        if (call == null) {
+            return null;
+        }
+        Class<?>[] params = call.getParameterTypes();
+        if (params.length == 3 &&
+                Integer.class.isAssignableFrom(params[0]) &&
+                String.class.isAssignableFrom(params[1]) &&
+                WebSocketSession.class.isAssignableFrom(params[2])) {
+            LOGGER.info("WebSocket OnClose listener registered on {} using handler {}:{}", path, object.getClass(), call.getName());
+            return new CloseListenerProxy(object, call);
+        } else {
+            throw new IllegalArgumentException("OnClose-annotated method must have signature: (int, String, WebSocketConnection)");
+        }
+    }
+
     private Map<ListenerType, ListenerProxy> createListenerProxies(Object object) {
         Map<ListenerType, ListenerProxy> proxies = new HashMap<>(2);
         List<Method> calls = new ArrayList<Method>(2);
@@ -167,7 +198,7 @@ public final class SpringWebSocketServlet extends WebSocketServlet {
         }
 
         if (calls.size() > 2) {
-            throw new IllegalArgumentException("Only to OnMessage annotations supported per class: " + object.getClass());
+            throw new IllegalArgumentException("Only two OnMessage annotations supported per class: " + object.getClass());
         }
 
 
@@ -212,6 +243,24 @@ public final class SpringWebSocketServlet extends WebSocketServlet {
             LOGGER.info("WebSocket Endpoint registered on {} using handler {}:{}", path, object.getClass(), call.getName());
         }
         return proxies;
+    }
+
+    private final class CloseListenerProxy {
+        final Object obj;
+        final Method call;
+
+        CloseListenerProxy(Object listener, Method call) {
+            this.obj = listener;
+            this.call = call;
+        }
+
+        void onClose(int closeCode, String message, WebSocketSession session) {
+            try {
+                call.invoke(obj, closeCode, message, session);
+            } catch (IllegalAccessException | InvocationTargetException e) {
+                throw new RuntimeException(e);
+            }
+        }
     }
 
     private abstract class ListenerProxy {
@@ -317,13 +366,21 @@ public final class SpringWebSocketServlet extends WebSocketServlet {
                 throw new RuntimeException(ex);
             }
             Object result = invoke(pojo, session);
+            String value;
             try {
-                String value = mapper.writeValueAsString(result);
-                session.sendMessage(value);
+                value = mapper.writeValueAsString(result);
             } catch (IOException ex) {
                 LOGGER.error("Exception serializing return pojo: {} from pojoClass", result, returnClass);
                 LOGGER.error(" with exception", ex);
                 throw new RuntimeException(ex);
+            }
+            try {
+                session.sendMessage(value);
+            } catch (IOException ex) {
+                LOGGER.debug("Exception while sending response: " + ex.getMessage());
+                if (!ex.getMessage().contains("Broken pipe")) {
+                    throw new RuntimeException(ex);
+                }
             }
         }
     }
