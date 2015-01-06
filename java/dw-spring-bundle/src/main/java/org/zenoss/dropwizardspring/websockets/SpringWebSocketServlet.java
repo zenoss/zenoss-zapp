@@ -127,6 +127,10 @@ public final class SpringWebSocketServlet extends WebSocketServlet {
             if (null != closeListener) {
                 closeListener.onClose(closeCode, message, this.session);
             }
+            if (this.session != null) {
+                this.session.close();
+                this.session = null;
+            }
             syncEventBus.unregister(this);
             asyncEventBus.unregister(this);
         }
