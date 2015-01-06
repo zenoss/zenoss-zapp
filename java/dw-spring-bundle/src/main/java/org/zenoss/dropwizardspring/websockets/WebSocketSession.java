@@ -25,9 +25,9 @@ import java.io.IOException;
  * Session data object for WebSockets.  This object contains the shiro subject, http request and connection objects.
  */
 public class WebSocketSession {
-    private final Subject subject;
-    private final HttpServletRequest request;
-    private final WebSocket.Connection connection;
+    private Subject subject;
+    private HttpServletRequest request;
+    private WebSocket.Connection connection;
 
 
     public WebSocketSession(Subject subject, HttpServletRequest request, Connection connection) {
@@ -94,5 +94,11 @@ public class WebSocketSession {
 
     public Subject getSubject() {
         return subject;
+    }
+
+    public void close() {
+        this.subject = null;
+        this.request = null;
+        this.connection = null;
     }
 }

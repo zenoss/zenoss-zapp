@@ -33,6 +33,7 @@ Commit everything
 Don't push...
 
 > git flow release finish <release_name>
+> git push origin --tags
 
 You will be on the develop branch again.
 While on develop branch increment develop branch to the next snapshot
