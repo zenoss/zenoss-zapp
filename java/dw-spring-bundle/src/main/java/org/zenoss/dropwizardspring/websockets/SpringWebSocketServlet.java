@@ -14,6 +14,7 @@
 
 package org.zenoss.dropwizardspring.websockets;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.common.base.Preconditions;
 import com.google.common.eventbus.EventBus;
@@ -310,7 +311,23 @@ public final class SpringWebSocketServlet extends WebSocketServlet {
         }
 
         void onMessage(String data, WebSocketSession session) {
-            invoke(data, session);
+            Object result = invoke(data, session);
+            if (result != null) {
+                String value;
+                try {
+                    value = mapper.writeValueAsString(result);
+                } catch (JsonProcessingException ex) {
+                    value = result.toString();
+                }
+                try {
+                    session.sendMessage(value);
+                } catch (IOException ex) {
+                    LOGGER.debug("Exception while sending response: " + ex.getMessage());
+                    if (!ex.getMessage().contains("Broken pipe")) {
+                        throw new RuntimeException(ex);
+                    }
+                }
+            }
         }
     }
 
@@ -323,7 +340,23 @@ public final class SpringWebSocketServlet extends WebSocketServlet {
         }
 
         void onMessage(byte[] data, WebSocketSession session) {
-            invoke(data, session);
+            Object result = invoke(data, session);
+            if (result != null) {
+                String value;
+                try {
+                    value = mapper.writeValueAsString(result);
+                } catch (JsonProcessingException ex) {
+                    value = result.toString();
+                }
+                try {
+                    session.sendMessage(value);
+                } catch (IOException ex) {
+                    LOGGER.debug("Exception while sending response: " + ex.getMessage());
+                    if (!ex.getMessage().contains("Broken pipe")) {
+                        throw new RuntimeException(ex);
+                    }
+                }
+            }
         }
     }
 
