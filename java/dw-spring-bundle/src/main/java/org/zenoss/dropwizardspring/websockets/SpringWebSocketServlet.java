@@ -113,6 +113,7 @@ public final class SpringWebSocketServlet extends WebSocketServlet {
         public void onOpen(Connection connection) {
             LOGGER.info("onOpen( connection={})", connection);
             this.connection = connection;
+            this.connection.setMaxBinaryMessageSize(67108864); // 64 MB
 
             //XXX grab the subject object on connect, the zauth bundle adds the attribute
             //    this needs to be done before onMessage because the attribute disappears
