@@ -97,7 +97,7 @@ parameter is neither a String nor a byte array.  See examples below:
         @OnMessage
         public void echo(String data, WebSocketSession session) throws IOException {
             ArrayList<String> input = mapper.readValue(data, new TypeReference<ArrayList<String>>() {});
-            connection.sendMessage(mapper.writeValueAsString(input));
+            session.sendMessage(mapper.writeValueAsString(input));
         }
     }
 
@@ -118,7 +118,7 @@ parameter is neither a String nor a byte array.  See examples below:
 
         @OnMessage
         public void echo(byte[] data, WebSocketSession session) throws IOException {
-            connection.sendMessage(data);
+            session.sendMessage(data);
         }
     }
 
@@ -149,7 +149,7 @@ parameter is neither a String nor a byte array.  See examples below:
 
         @OnMessage
         public void echo(Pojo pojo, WebSocketSession session) throws IOException {
-            connection.sendMessage(mapper.writeValueAsString(pojo.getMessage()));
+            session.sendMessage(mapper.writeValueAsString(pojo.getMessage()));
         }
     }
 
@@ -457,7 +457,7 @@ following in the zapp-example directory:
 
 To run the zapp-example run the following, replacing `<version>`:
 
-    java -jar target/zapp-example-<version>.jar server target/conf/configuration.yaml
+    java -jar target/zapp-example-<version>.jar server target/etc/configuration.yaml
     
 
 You can also run the example zapp without packaging directly via maven.
