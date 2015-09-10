@@ -464,6 +464,14 @@ You can also run the example zapp without packaging directly via maven.
 
     mvn compile exec:java
 
+Once the server runs successfully, it returns a random number between 0 and 10 at /example/rand\_int.
+
+    curl -k "https://localhost:8443/example/rand_int"
+    
+The server is configured to use the SSL and the port number of 8443 in this case. You can generate a random number in a different range as follows:
+
+    curl -k "https://localhost:8443/example/rand_int?min=0&max=100"
+
 To build your own zapp you can copy and modify the build plugins in the `pom.xml` in the zapp-example project or you can
 use the zapp maven archetype to generate a zapp project skeleton.
 
