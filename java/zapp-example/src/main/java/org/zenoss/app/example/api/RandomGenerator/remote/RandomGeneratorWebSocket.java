@@ -17,7 +17,7 @@ import java.io.IOException;
 
 import javax.ws.rs.Path;
 
-import org.eclipse.jetty.websocket.WebSocket.Connection;
+import org.zenoss.dropwizardspring.websockets.WebSocketSession;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.zenoss.app.example.api.RandomGenerator.RandomGeneratorAPI;
 import org.zenoss.app.example.api.RandomGenerator.RandomResponse;
@@ -37,13 +37,13 @@ public class RandomGeneratorWebSocket {
     private ObjectMapper mapper = new ObjectMapper();
 
     @OnMessage
-    public void handleMessage(String data, Connection connection) throws IOException {
+    public void handleMessage(String data, WebSocketSession session) throws IOException {
 
         RandomRequest request = mapper.readValue(data, RandomRequest.class);
 
         RandomResponse x = api.random(Optional.fromNullable(request.getMin()), Optional.fromNullable(request.getMax()));
 
-        connection.sendMessage(mapper.writeValueAsString(x));
+        session.sendMessage(mapper.writeValueAsString(x));
 
     }
 
