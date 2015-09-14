@@ -81,7 +81,7 @@ parameter is neither a String nor a byte array.  See examples below:
     import com.fasterxml.jackson.databind.ObjectMapper;
     import org.springframework.beans.factory.annotation.Autowired;
     import org.zenoss.dropwizardspring.websockets.annotations.OnMessage;
-    import org.zenoss.dropwizardsrping.websockets.WebSocket.WebSocketSession;
+    import org.zenoss.dropwizardsrping.websockets.WebSocketSession;
     import org.zenoss.dropwizardspring.websockets.annotations.WebSocketListener;
     import javax.servlet.http.HttpServletRequest;
 
@@ -105,7 +105,7 @@ parameter is neither a String nor a byte array.  See examples below:
 
     import org.springframework.beans.factory.annotation.Autowired;
     import org.zenoss.dropwizardspring.websockets.annotations.OnMessage;
-    import org.zenoss.dropwizardsrping.websockets.WebSocket.WebSocketSession;
+    import org.zenoss.dropwizardsrping.websockets.WebSocketSession;
     import org.zenoss.dropwizardspring.websockets.annotations.WebSocketListener;
     import javax.servlet.http.HttpServletRequest;
 
@@ -127,7 +127,7 @@ parameter is neither a String nor a byte array.  See examples below:
     import com.fasterxml.jackson.databind.ObjectMapper;
     import org.springframework.beans.factory.annotation.Autowired;
     import org.zenoss.dropwizardspring.websockets.annotations.OnMessage;
-    import org.zenoss.dropwizardsrping.websockets.WebSocket.WebSocketSession;
+    import org.zenoss.dropwizardsrping.websockets.WebSocketSession;
     import org.zenoss.dropwizardspring.websockets.annotations.WebSocketListener;
     import javax.servlet.http.HttpServletRequest;
 
@@ -158,7 +158,7 @@ parameter is neither a String nor a byte array.  See examples below:
     import com.fasterxml.jackson.databind.ObjectMapper;
     import org.springframework.beans.factory.annotation.Autowired;
     import org.zenoss.dropwizardspring.websockets.annotations.OnMessage;
-    import org.zenoss.dropwizardsrping.websockets.WebSocket.WebSocketSession;
+    import org.zenoss.dropwizardsrping.websockets.WebSocketSession;
     import org.zenoss.dropwizardspring.websockets.annotations.WebSocketListener;
     import javax.servlet.http.HttpServletRequest;
 
