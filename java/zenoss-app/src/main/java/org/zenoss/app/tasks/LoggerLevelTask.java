@@ -16,7 +16,7 @@ package org.zenoss.app.tasks;
 import ch.qos.logback.classic.Level;
 import ch.qos.logback.classic.Logger;
 import com.google.common.collect.ImmutableMultimap;
-import com.yammer.dropwizard.tasks.Task;
+import io.dropwizard.servlets.tasks.Task;
 import org.slf4j.LoggerFactory;
 
 import java.io.PrintWriter;

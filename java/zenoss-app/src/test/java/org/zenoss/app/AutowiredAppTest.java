@@ -14,10 +14,11 @@
 
 package org.zenoss.app;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.SerializationFeature;
-import com.yammer.dropwizard.config.Bootstrap;
-import com.yammer.dropwizard.config.Environment;
-import com.yammer.dropwizard.json.ObjectMapperFactory;
+import io.dropwizard.setup.AdminEnvironment;
+import io.dropwizard.setup.Bootstrap;
+import io.dropwizard.setup.Environment;
 import org.junit.Assert;
 import org.junit.Test;
 import org.zenoss.app.autobundle.FakeAppConfig;
@@ -79,12 +80,16 @@ public class AutowiredAppTest {
     @Test
     public void testRun() throws Exception {
         final Environment environment = mock(Environment.class);
+        final AdminEnvironment adminEnvironment = mock(AdminEnvironment.class);
 
-        ObjectMapperFactory omf = mock(ObjectMapperFactory.class);
-        when(environment.getObjectMapperFactory()).thenReturn(omf);
+        final ObjectMapper om = mock(ObjectMapper.class);
+
+        when(environment.getObjectMapper()).thenReturn(om);
+        when(environment.admin()).thenReturn(adminEnvironment);
+
         TestApp ta = new TestApp();
         ta.run(new FakeAppConfig(), environment);
-        verify(omf).enable(SerializationFeature.INDENT_OUTPUT);
+        verify(om).enable(SerializationFeature.INDENT_OUTPUT);
 
     }
 
@@ -93,8 +98,8 @@ public class AutowiredAppTest {
         final Environment environment = mock(Environment.class);
         Bootstrap bootstrap = mock(Bootstrap.class);
 
-        ObjectMapperFactory omf = mock(ObjectMapperFactory.class);
-        when(environment.getObjectMapperFactory()).thenReturn(omf);
+        ObjectMapper om = mock(ObjectMapper.class);
+        when(environment.getObjectMapper()).thenReturn(om);
         TestApp ta = new TestApp();
         ta.initialize(bootstrap);
 

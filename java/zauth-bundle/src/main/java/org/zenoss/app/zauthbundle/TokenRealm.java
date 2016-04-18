@@ -14,15 +14,13 @@
 package org.zenoss.app.zauthbundle;
 
 import com.google.common.base.Preconditions;
-import com.yammer.dropwizard.client.HttpClientBuilder;
-import com.yammer.dropwizard.client.HttpClientConfiguration;
-import com.yammer.dropwizard.util.Duration;
 import org.apache.http.Header;
 import org.apache.http.HttpResponse;
 import org.apache.http.HttpStatus;
-import org.apache.http.client.HttpClient;
 import org.apache.http.client.entity.UrlEncodedFormEntity;
+import org.apache.http.client.methods.CloseableHttpResponse;
 import org.apache.http.client.methods.HttpPost;
+import org.apache.http.impl.client.CloseableHttpClient;
 import org.apache.http.message.BasicNameValuePair;
 import org.apache.shiro.authc.AuthenticationException;
 import org.apache.shiro.authc.AuthenticationInfo;
@@ -56,9 +54,11 @@ public class TokenRealm extends AuthenticatingRealm {
      * This is static so we can set it when building our bundle and it is available for all instances.
      */
     private static ProxyConfiguration proxyConfig;
+    private static CloseableHttpClient httpClient;
 
-    static void setProxyConfiguration(ProxyConfiguration config) {
+    static void init(ProxyConfiguration config, CloseableHttpClient httpClient) {
         proxyConfig = config;
+        TokenRealm.httpClient = httpClient;
     }
 
     private static String getValidateUrl() {
@@ -69,20 +69,8 @@ public class TokenRealm extends AuthenticatingRealm {
         return "http://" + hostname + ":" + port + VALIDATE_URL;
     }
 
-    private final HttpClientBuilder httpClientBuilder;
-
     // Default constructor for Shiro reflection
     public TokenRealm() {
-        // Let's hope the defaults in dropwizard are sensible.
-        HttpClientConfiguration config = new HttpClientConfiguration();
-        config.setConnectionTimeout(Duration.seconds(10));
-        config.setTimeout(Duration.seconds(10));
-        this.httpClientBuilder = new HttpClientBuilder().using(config);
-    }
-
-    // Constructor when HttpClient configuration is desired.
-    public TokenRealm(HttpClientBuilder httpClientBuilder) {
-        this.httpClientBuilder = httpClientBuilder;
     }
 
     /**
@@ -110,20 +98,14 @@ public class TokenRealm extends AuthenticatingRealm {
         String zenossToken = (String) token.getPrincipal();
 
         // submit a request to zauthbundle service to find out if the token is valid
-        HttpClient client = httpClientBuilder.build();
         try {
             HttpPost method = getPostMethod(zenossToken);
-            HttpResponse response = client.execute(method);
+            CloseableHttpResponse response = httpClient.execute(method);
 
             return handleResponse(zenossToken, response);
         } catch (IOException e) {
             log.error("IOException from ZAuthServer {} {}", e.getMessage(), e);
             throw new AuthenticationException(e);
-        } finally {
-            // When HttpClient instance is no longer needed,
-            // shut down the connection manager to ensure
-            // immediate deallocation of all system resources
-            client.getConnectionManager().shutdown();
         }
     }
 
@@ -135,39 +117,43 @@ public class TokenRealm extends AuthenticatingRealm {
      * @throws IOException             if there was an error validating the token
      * @throws AuthenticationException if the token wasn't valid
      */
-    AuthenticationInfo handleResponse(String token, HttpResponse response) throws IOException, AuthenticationException {
-        int statusCode = response.getStatusLine().getStatusCode();
-        // If debug is enabled, log the response body
-        if (log.isDebugEnabled()) {
-            try (ByteArrayOutputStream os = new ByteArrayOutputStream()) {
-                response.getEntity().writeTo(os);
-                String responseBody = os.toString(StandardCharsets.UTF_8.name());
+    AuthenticationInfo handleResponse(String token, CloseableHttpResponse response) throws IOException, AuthenticationException {
+        try {
+            int statusCode = response.getStatusLine().getStatusCode();
+            // If debug is enabled, log the response body
+            if (log.isDebugEnabled()) {
+                try (ByteArrayOutputStream os = new ByteArrayOutputStream()) {
+                    response.getEntity().writeTo(os);
+                    String responseBody = os.toString(StandardCharsets.UTF_8.name());
 
-                //avoid printing token id
-                if (statusCode >= 200 && statusCode < 300) {
-                    responseBody = "Success!";
+                    //avoid printing token id
+                    if (statusCode >= 200 && statusCode < 300) {
+                        responseBody = "Success!";
+                    }
+
+                    log.debug("Response status code {} received from the zauthbundle server. Content is {}",
+                            statusCode, responseBody);
                 }
-
-                log.debug("Response status code {} received from the zauthbundle server. Content is {}",
-                        statusCode, responseBody);
             }
-        }
 
-        // Response of 200 means validation succeeded
-        if (statusCode == HttpStatus.SC_OK) {
-            String tokenId = getHeaderValue(ZenossToken.ID_HTTP_HEADER, response);
-            String tokenExp = getHeaderValue(ZenossToken.EXPIRES_HTTP_HEADER, response);
-            String tenantId = getHeaderValue(ZenossTenant.ID_HTTP_HEADER, response);
-            log.debug("Validated request: token='********', token expires={}, tenant={}", tokenExp, tenantId);
+            // Response of 200 means validation succeeded
+            if (statusCode == HttpStatus.SC_OK) {
+                String tokenId = getHeaderValue(ZenossToken.ID_HTTP_HEADER, response);
+                String tokenExp = getHeaderValue(ZenossToken.EXPIRES_HTTP_HEADER, response);
+                String tenantId = getHeaderValue(ZenossTenant.ID_HTTP_HEADER, response);
+                log.debug("Validated request: token='********', token expires={}, tenant={}", tokenExp, tenantId);
 
-            ZenossAuthenticationInfo info = new ZenossAuthenticationInfo(token, TokenRealm.class.toString());
-            info.addTenant(tenantId, TokenRealm.class.toString());
-            info.addToken(tokenId, Double.valueOf(tokenExp), TokenRealm.class.toString());
+                ZenossAuthenticationInfo info = new ZenossAuthenticationInfo(token, TokenRealm.class.toString());
+                info.addTenant(tenantId, TokenRealm.class.toString());
+                info.addToken(tokenId, Double.valueOf(tokenExp), TokenRealm.class.toString());
 
-            return info;
-        } else {
-            log.debug("Login unsuccessful");
-            throw new AuthenticationException("Unable to validate token");
+                return info;
+            } else {
+                log.debug("Login unsuccessful");
+                throw new AuthenticationException("Unable to validate token");
+            }
+        } finally {
+            response.close();
         }
     }
 

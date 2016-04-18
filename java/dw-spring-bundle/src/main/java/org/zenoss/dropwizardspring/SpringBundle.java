@@ -14,28 +14,26 @@
 
 package org.zenoss.dropwizardspring;
 
+import com.codahale.metrics.health.HealthCheck;
 import com.google.common.base.Strings;
 import com.google.common.eventbus.AsyncEventBus;
 import com.google.common.eventbus.EventBus;
-import com.yammer.dropwizard.ConfiguredBundle;
-import com.yammer.dropwizard.config.Bootstrap;
-import com.yammer.dropwizard.config.Configuration;
-import com.yammer.dropwizard.config.Environment;
-import com.yammer.dropwizard.config.ServletBuilder;
-import com.yammer.dropwizard.lifecycle.Managed;
-import com.yammer.dropwizard.tasks.Task;
-import com.yammer.metrics.core.HealthCheck;
+import io.dropwizard.Configuration;
+import io.dropwizard.ConfiguredBundle;
+import io.dropwizard.lifecycle.Managed;
+import io.dropwizard.servlets.tasks.Task;
+import io.dropwizard.setup.Bootstrap;
+import io.dropwizard.setup.Environment;
+import io.dropwizard.util.Duration;
 import org.springframework.beans.factory.config.ConfigurableListableBeanFactory;
 import org.springframework.context.annotation.AnnotationConfigApplicationContext;
 import org.zenoss.dropwizardspring.annotations.Resource;
 import org.zenoss.dropwizardspring.eventbus.EventBusConfiguration;
-import org.zenoss.dropwizardspring.websockets.SpringWebSocketServlet;
 import org.zenoss.dropwizardspring.websockets.WebSocketConfiguration;
 
 import javax.ws.rs.Path;
 import java.util.Map;
 import java.util.concurrent.ExecutorService;
-import java.util.concurrent.TimeUnit;
 
 
 /**
@@ -115,7 +113,11 @@ public final class SpringBundle implements ConfiguredBundle<Configuration> {
         int minThreads = config.getMinEventBusThreads();
         int maxThreads = config.getMaxEventBusThreads();
         int keepAliveMillis = config.getEventBusThreadKeepAliveMillis();
-        ExecutorService executorService = environment.managedExecutorService("EventBusExecutorService", minThreads, maxThreads, keepAliveMillis, TimeUnit.MILLISECONDS);
+        ExecutorService executorService = environment.lifecycle().executorService("EventBusExecutorService")
+                .minThreads(minThreads)
+                .maxThreads(maxThreads)
+                .keepAliveTime(Duration.milliseconds(keepAliveMillis))
+                .build();
         asyncEventBus = new AsyncEventBus(executorService);
         beanFactory.registerSingleton("zapp::event-bus::async", asyncEventBus);
     }
@@ -124,28 +126,28 @@ public final class SpringBundle implements ConfiguredBundle<Configuration> {
     private void addResources(Environment environment) {
         final Map<String, Object> resources = applicationContext.getBeansWithAnnotation(Resource.class);
         for (final Object resource : resources.values()) {
-            environment.addResource(resource);
+            environment.jersey().register(resource);
         }
     }
 
     private void addHealthChecks(Environment environment) {
         final Map<String, HealthCheck> healthChecks = applicationContext.getBeansOfType(HealthCheck.class);
         for (final HealthCheck healthCheck : healthChecks.values()) {
-            environment.addHealthCheck(healthCheck);
+            environment.healthChecks().register(healthCheck.getClass().toString(), healthCheck);
         }
     }
 
     private void addTasks(Environment environment) {
         final Map<String, Task> tasks = applicationContext.getBeansOfType(Task.class);
         for (final Task task : tasks.values()) {
-            environment.addTask(task);
+            environment.admin().addTask(task);
         }
     }
 
     private void addManaged(Environment environment) {
         final Map<String, Managed> manageds = applicationContext.getBeansOfType(Managed.class);
         for (final Managed managed : manageds.values()) {
-            environment.manage(managed);
+            environment.lifecycle().manage(managed);
         }
     }
 
@@ -154,31 +156,35 @@ public final class SpringBundle implements ConfiguredBundle<Configuration> {
         int minThreads = config.getMinBroadcastThreads();
         int maxThreads = config.getMaxBroadcastThreads();
         int keepAliveMillis = config.getBroadcastThreadKeepAliveMillis();
-        ExecutorService executorService = environment.managedExecutorService("WebSocketBroadcastExecutorService", minThreads, maxThreads, keepAliveMillis, TimeUnit.MILLISECONDS);
+        ExecutorService executorService = environment.lifecycle().executorService(" WebSocketBroadcastExecutorService")
+                .minThreads(minThreads)
+                .maxThreads(maxThreads)
+                .keepAliveTime(Duration.milliseconds(keepAliveMillis))
+                .build();
         for (final Object listener : listeners.values()) {
             Path path = listener.getClass().getAnnotation(Path.class);
             if (path == null || Strings.isNullOrEmpty(path.value())) {
                 throw new IllegalStateException("Path must be defined: " + listener.getClass());
             }
-
-            SpringWebSocketServlet wss = new SpringWebSocketServlet(listener, executorService, syncEventBus, asyncEventBus, path.value());
-            ServletBuilder servletConfig = environment.addServlet(wss, path.value());
-
-            if (config.getMaxTextMessageSize() != null) {
-                servletConfig.setInitParam("maxTextMessageSize", String.valueOf(config.getMaxTextMessageSize()));
-            }
-            if (config.getMaxBinaryMessageSize() != null) {
-                servletConfig.setInitParam("maxBinaryMessageSize", String.valueOf(config.getMaxBinaryMessageSize()));
-            }
-            if (config.getBufferSize() != null) {
-                servletConfig.setInitParam("bufferSize", String.valueOf(config.getBufferSize()));
-            }
-            if (config.getMinVersion() != null) {
-                servletConfig.setInitParam("minVersion", String.valueOf(config.getMinVersion()));
-            }
-            if (config.getMaxIdleTime() != null) {
-                servletConfig.setInitParam("maxIdleTime", String.valueOf(config.getMaxIdleTime()));
-            }
+//
+//            SpringWebSocketServlet wss = new SpringWebSocketServlet(listener, executorService, syncEventBus, asyncEventBus, path.value());
+//            ServletBuilder servletConfig = environment.addServlet(wss, path.value());
+//
+//            if (config.getMaxTextMessageSize() != null) {
+//                servletConfig.setInitParam("maxTextMessageSize", String.valueOf(config.getMaxTextMessageSize()));
+//            }
+//            if (config.getMaxBinaryMessageSize() != null) {
+//                servletConfig.setInitParam("maxBinaryMessageSize", String.valueOf(config.getMaxBinaryMessageSize()));
+//            }
+//            if (config.getBufferSize() != null) {
+//                servletConfig.setInitParam("bufferSize", String.valueOf(config.getBufferSize()));
+//            }
+//            if (config.getMinVersion() != null) {
+//                servletConfig.setInitParam("minVersion", String.valueOf(config.getMinVersion()));
+//            }
+//            if (config.getMaxIdleTime() != null) {
+//                servletConfig.setInitParam("maxIdleTime", String.valueOf(config.getMaxIdleTime()));
+//            }
         }
     }
 }

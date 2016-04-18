@@ -15,15 +15,12 @@
 package org.zenoss.app.autobundle;
 
 import com.google.common.base.Optional;
-import com.yammer.dropwizard.ConfiguredBundle;
-import com.yammer.dropwizard.config.Bootstrap;
-
+import io.dropwizard.ConfiguredBundle;
+import io.dropwizard.setup.Bootstrap;
 import org.zenoss.app.AppConfiguration;
 
 /**
- *
  * Interface for configuring a drop wizard bundle that can be automatically loaded.
- *
  */
 public interface AutoConfiguredBundle<T extends AppConfiguration> {
 

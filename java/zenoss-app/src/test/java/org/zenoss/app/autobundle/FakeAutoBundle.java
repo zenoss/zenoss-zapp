@@ -15,7 +15,7 @@
 package org.zenoss.app.autobundle;
 
 import com.google.common.base.Optional;
-import com.yammer.dropwizard.Bundle;
+import io.dropwizard.Bundle;
 
 public class FakeAutoBundle implements AutoBundle {
     @Override

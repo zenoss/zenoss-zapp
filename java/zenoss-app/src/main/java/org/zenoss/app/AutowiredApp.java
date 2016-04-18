@@ -15,19 +15,15 @@
 package org.zenoss.app;
 
 import com.fasterxml.jackson.databind.SerializationFeature;
-import com.yammer.dropwizard.ConfiguredBundle;
-import com.yammer.dropwizard.Service;
-import com.yammer.dropwizard.config.Bootstrap;
-import com.yammer.dropwizard.config.Environment;
-import com.yammer.metrics.reporting.HealthCheckServlet;
-import com.yammer.metrics.reporting.MetricsServlet;
+import io.dropwizard.Application;
+import io.dropwizard.ConfiguredBundle;
+import io.dropwizard.setup.Bootstrap;
+import io.dropwizard.setup.Environment;
 import org.zenoss.app.ZenossCredentials.Builder;
 import org.zenoss.app.autobundle.BundleLoader;
 import org.zenoss.app.tasks.DebugToggleTask;
 import org.zenoss.app.tasks.LoggerLevelTask;
 import org.zenoss.dropwizardspring.SpringBundle;
-
-import javax.servlet.Servlet;
 
 /**
  * Creates an App that uses Spring to scan and autowire objects. By default will scan for the Spring components with
@@ -36,7 +32,7 @@ import javax.servlet.Servlet;
  *
  * @param <T>
  */
-public abstract class AutowiredApp<T extends AppConfiguration> extends Service<T> {
+public abstract class AutowiredApp<T extends AppConfiguration> extends Application<T> {
 
     public static final String DEFAULT_SCAN = "org.zenoss.app";
     public static final String[] DEFAULT_ACTIVE_PROFILES = new String[]{"prod", "runtime"};
@@ -88,7 +84,6 @@ public abstract class AutowiredApp<T extends AppConfiguration> extends Service<T
             }
         };
         bootstrap.addBundle(cb);
-        bootstrap.setName(this.getAppName());
         SpringBundle sb = new SpringBundle(getScanPackages());
         sb.setDefaultProfiles(this.getActivateProfiles());
         bootstrap.addBundle(sb);
@@ -111,12 +106,8 @@ public abstract class AutowiredApp<T extends AppConfiguration> extends Service<T
      */
     @Override
     public final void run(T configuration, Environment environment) throws Exception {
-        Servlet metrics = new MetricsServlet();
-        Servlet healthcheck = new HealthCheckServlet();
-        environment.addServlet(metrics, "/metrics");
-        environment.addServlet(healthcheck, "/healthcheck");
-        environment.addTask(new LoggerLevelTask());
-        environment.addTask(new DebugToggleTask(this.getAppName(), configuration.getLoggingConfiguration()));
-        environment.getObjectMapperFactory().enable(SerializationFeature.INDENT_OUTPUT);
+        environment.admin().addTask(new LoggerLevelTask());
+        environment.admin().addTask(new DebugToggleTask());
+        environment.getObjectMapper().enable(SerializationFeature.INDENT_OUTPUT);
     }
 }
