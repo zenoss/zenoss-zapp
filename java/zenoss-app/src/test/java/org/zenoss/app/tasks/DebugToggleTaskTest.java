@@ -33,7 +33,7 @@ public class DebugToggleTaskTest {
 
         assertFalse(logger.isDebugEnabled());
 
-        DebugToggleTask task = new DebugToggleTask("blam");
+        DebugToggleTask task = new DebugToggleTask();
         StringWriter sw = new StringWriter();
         task.execute(null, new PrintWriter(sw));
         assertEquals("Set logs to debug", sw.toString());
