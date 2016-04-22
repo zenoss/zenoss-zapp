@@ -1,4 +1,4 @@
-// Copyright 2014 The Serviced Authors.
+// Copyright 2014, 2016 The Serviced Authors.
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
 // You may obtain a copy of the License at
@@ -15,7 +15,6 @@
 package org.zenoss.dropwizardspring;
 
 import com.codahale.metrics.health.HealthCheck;
-import com.google.common.base.Strings;
 import com.google.common.eventbus.AsyncEventBus;
 import com.google.common.eventbus.EventBus;
 import io.dropwizard.Configuration;
@@ -25,13 +24,19 @@ import io.dropwizard.servlets.tasks.Task;
 import io.dropwizard.setup.Bootstrap;
 import io.dropwizard.setup.Environment;
 import io.dropwizard.util.Duration;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.config.ConfigurableListableBeanFactory;
 import org.springframework.context.annotation.AnnotationConfigApplicationContext;
 import org.zenoss.dropwizardspring.annotations.Resource;
 import org.zenoss.dropwizardspring.eventbus.EventBusConfiguration;
 import org.zenoss.dropwizardspring.websockets.WebSocketConfiguration;
 
-import javax.ws.rs.Path;
+import java.lang.reflect.InvocationTargetException;
+import java.lang.reflect.Method;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ExecutorService;
 
@@ -49,6 +54,9 @@ import java.util.concurrent.ExecutorService;
 
 public final class SpringBundle implements ConfiguredBundle<Configuration> {
 
+    private static final Logger log = LoggerFactory.getLogger(SpringBundle.class);
+
+
     AnnotationConfigApplicationContext applicationContext;
     private final String[] basePackages;
     private String[] profiles = new String[]{"prod"};
@@ -64,24 +72,28 @@ public final class SpringBundle implements ConfiguredBundle<Configuration> {
         this.basePackages = packages;
     }
 
+    public AnnotationConfigApplicationContext getApplicationContext() {
+        return applicationContext;
+    }
+
     public void setDefaultProfiles(String... profiles) {
         this.profiles = profiles;
     }
 
     @Override
     public void initialize(Bootstrap<?> bootstrap) {
+
     }
 
     @Override
-    public void run(Configuration configuration, Environment environment) throws Exception {
+    public void run(final Configuration configuration, final Environment environment) throws Exception {
+        log.info("_____spring scanning________*******************");
         initializeSpring(configuration, environment);
-
         // Do the dropwizard registrations
         addResources(environment);
         addHealthChecks(environment);
         addTasks(environment);
         addManaged(environment);
-        addWebSockets(environment, ((SpringConfiguration) configuration).getWebSocketConfiguration());
     }
 
     private void initializeSpring(Configuration configuration, Environment environment) {
@@ -101,7 +113,9 @@ public final class SpringBundle implements ConfiguredBundle<Configuration> {
             }
 
             // Look for annotated things
-            applicationContext.scan(basePackages);
+            List<String> scanPackages = new ArrayList<>(Arrays.asList(basePackages));
+            scanPackages.add("org.zenoss.dropwizardspring");
+            applicationContext.scan(scanPackages.toArray(new String[]{}));
             applicationContext.refresh();
         }
     }
@@ -148,43 +162,6 @@ public final class SpringBundle implements ConfiguredBundle<Configuration> {
         final Map<String, Managed> manageds = applicationContext.getBeansOfType(Managed.class);
         for (final Managed managed : manageds.values()) {
             environment.lifecycle().manage(managed);
-        }
-    }
-
-    private void addWebSockets(Environment environment, WebSocketConfiguration config) {
-        final Map<String, Object> listeners = applicationContext.getBeansWithAnnotation(org.zenoss.dropwizardspring.websockets.annotations.WebSocketListener.class);
-        int minThreads = config.getMinBroadcastThreads();
-        int maxThreads = config.getMaxBroadcastThreads();
-        int keepAliveMillis = config.getBroadcastThreadKeepAliveMillis();
-        ExecutorService executorService = environment.lifecycle().executorService(" WebSocketBroadcastExecutorService")
-                .minThreads(minThreads)
-                .maxThreads(maxThreads)
-                .keepAliveTime(Duration.milliseconds(keepAliveMillis))
-                .build();
-        for (final Object listener : listeners.values()) {
-            Path path = listener.getClass().getAnnotation(Path.class);
-            if (path == null || Strings.isNullOrEmpty(path.value())) {
-                throw new IllegalStateException("Path must be defined: " + listener.getClass());
-            }
-//
-//            SpringWebSocketServlet wss = new SpringWebSocketServlet(listener, executorService, syncEventBus, asyncEventBus, path.value());
-//            ServletBuilder servletConfig = environment.addServlet(wss, path.value());
-//
-//            if (config.getMaxTextMessageSize() != null) {
-//                servletConfig.setInitParam("maxTextMessageSize", String.valueOf(config.getMaxTextMessageSize()));
-//            }
-//            if (config.getMaxBinaryMessageSize() != null) {
-//                servletConfig.setInitParam("maxBinaryMessageSize", String.valueOf(config.getMaxBinaryMessageSize()));
-//            }
-//            if (config.getBufferSize() != null) {
-//                servletConfig.setInitParam("bufferSize", String.valueOf(config.getBufferSize()));
-//            }
-//            if (config.getMinVersion() != null) {
-//                servletConfig.setInitParam("minVersion", String.valueOf(config.getMinVersion()));
-//            }
-//            if (config.getMaxIdleTime() != null) {
-//                servletConfig.setInitParam("maxIdleTime", String.valueOf(config.getMaxIdleTime()));
-//            }
         }
     }
 }

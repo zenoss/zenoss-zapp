@@ -32,6 +32,11 @@
             <type>jar</type>
             <scope>compile</scope>
         </dependency>
+        <dependency>
+          <groupId>be.tomcools</groupId>
+          <artifactId>dropwizard-websocket-jee7-bundle</artifactId>
+          <version>1.0.0</version>
+        </dependency>
         <!--test dependencies-->
         <dependency>
             <groupId>junit</groupId>

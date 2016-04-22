@@ -21,11 +21,8 @@ import javax.ws.rs.Path;
 
 
 @Path("/test")
-@WebSocketListener(name="test")
-public class TestWebSocket {
+@WebSocketListener(name = "test")
+public class TestWebSocket  {
 
-//    @OnMessage
-//    public void handleMsg(String data, WebSocketSession session) {
-//    }
 
 }

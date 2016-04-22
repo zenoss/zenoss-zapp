@@ -14,14 +14,16 @@
 package org.zenoss.app.example.api.RandomGenerator.remote;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.google.common.base.Optional;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.zenoss.app.example.api.RandomGenerator.RandomGeneratorAPI;
-import org.zenoss.dropwizardspring.websockets.annotations.WebSocketListener;
+import org.zenoss.app.example.api.RandomGenerator.RandomResponse;
 
-import javax.ws.rs.Path;
+import javax.websocket.OnMessage;
+import javax.websocket.Session;
+import javax.websocket.server.ServerEndpoint;
 
-@Path("/ws/example")
-@WebSocketListener(name="RandomGenerator")
+@ServerEndpoint("/ws/random")
 public class RandomGeneratorWebSocket {
 
     @Autowired
@@ -29,15 +31,18 @@ public class RandomGeneratorWebSocket {
 
     private ObjectMapper mapper = new ObjectMapper();
 
-//    @OnMessage
-//    public void handleMessage(String data, WebSocketSession session) throws IOException {
-//
-//        RandomRequest request = mapper.readValue(data, RandomRequest.class);
-//
-//        RandomResponse x = api.random(Optional.fromNullable(request.getMin()), Optional.fromNullable(request.getMax()));
-//
-//        session.sendMessage(mapper.writeValueAsString(x));
-//
-//    }
+    public RandomGeneratorWebSocket() {
+        System.out.println("***************RandomGeneratorWebSocket***********");
+    }
+
+    @OnMessage
+    public void handleTextMessage( String data, Session session) throws Exception {
+        RandomRequest request = mapper.readValue(data, RandomRequest.class);
+
+        RandomResponse x = api.random(Optional.fromNullable(request.getMin()), Optional.fromNullable(request.getMax()));
+
+        session.getBasicRemote().sendText(mapper.writeValueAsString(x));
+
+    }
 
 }

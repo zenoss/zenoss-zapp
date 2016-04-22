@@ -28,12 +28,12 @@
             <scope>test</scope>
         </dependency>
         <!--runtime-->
-        <dependency>
-            <groupId>com.sun.jersey</groupId>
-            <artifactId>jersey-server</artifactId>
-            <version>1.15</version>
-            <scope>runtime</scope>
-        </dependency>
+        <!--<dependency>-->
+            <!--<groupId>com.sun.jersey</groupId>-->
+            <!--<artifactId>jersey-server</artifactId>-->
+            <!--<version>1.15</version>-->
+            <!--<scope>runtime</scope>-->
+        <!--</dependency>-->
     </dependencies>
     <build>
         <resources>
@@ -158,6 +158,18 @@
                         </goals>
                     </execution>
                 </executions>
+            </plugin>
+            <plugin>
+                <groupId>org.codehaus.mojo</groupId>
+                <artifactId>exec-maven-plugin</artifactId>
+                <version>1.2.1</version>
+                <configuration>
+                    <mainClass>org.zenoss.app.example.ExampleApp</mainClass>
+                    <arguments>
+                        <argument>server</argument>
+                        <argument>${project.build.directory}/etc/configuration.yaml</argument>
+                    </arguments>
+                </configuration>
             </plugin>
         </plugins>
     </build>

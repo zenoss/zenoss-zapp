@@ -3,14 +3,14 @@ logging:
 proxyConfiguration:
   hostname: 10.87.110.247
   port: 8080
-http:
-  connectorType: nonblocking+ssl
-  port: 8443
-  ssl:
-      #Example is using a java keystore in the target directory.
-      keyStore: ${ssl.cert.dir}/ssl.pfx
-      keyStorePassword: zapp_pass
-      keyStoreType: pkcs12
-  requestLog:
-    console:
-      enabled: false
+#http:
+#  connectorType: nonblocking+ssl
+#  port: 8443
+#  ssl:
+#      #Example is using a java keystore in the target directory.
+#      keyStore: ${ssl.cert.dir}/ssl.pfx
+#      keyStorePassword: zapp_pass
+#      keyStoreType: pkcs12
+#  requestLog:
+#    console:
+#      enabled: false

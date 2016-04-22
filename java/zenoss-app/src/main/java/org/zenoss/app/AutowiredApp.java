@@ -14,16 +14,26 @@
 
 package org.zenoss.app;
 
+import be.tomcools.dropwizard.websocket.WebsocketBundle;
 import com.fasterxml.jackson.databind.SerializationFeature;
 import io.dropwizard.Application;
 import io.dropwizard.ConfiguredBundle;
 import io.dropwizard.setup.Bootstrap;
 import io.dropwizard.setup.Environment;
+import org.glassfish.jersey.server.ResourceFinder;
+import org.glassfish.jersey.server.internal.scanning.AnnotationAcceptingListener;
+import org.glassfish.jersey.server.internal.scanning.PackageNamesScanner;
 import org.zenoss.app.ZenossCredentials.Builder;
 import org.zenoss.app.autobundle.BundleLoader;
 import org.zenoss.app.tasks.DebugToggleTask;
 import org.zenoss.app.tasks.LoggerLevelTask;
 import org.zenoss.dropwizardspring.SpringBundle;
+
+import javax.websocket.server.ServerEndpoint;
+import java.io.IOException;
+import java.io.InputStream;
+import java.lang.annotation.Annotation;
+import java.util.Set;
 
 /**
  * Creates an App that uses Spring to scan and autowire objects. By default will scan for the Spring components with
@@ -36,6 +46,9 @@ public abstract class AutowiredApp<T extends AppConfiguration> extends Applicati
 
     public static final String DEFAULT_SCAN = "org.zenoss.app";
     public static final String[] DEFAULT_ACTIVE_PROFILES = new String[]{"prod", "runtime"};
+    private SpringBundle sb;
+    private WebsocketBundle websocket = new WebsocketBundle();
+
 
     /**
      * The app name
@@ -84,9 +97,12 @@ public abstract class AutowiredApp<T extends AppConfiguration> extends Applicati
             }
         };
         bootstrap.addBundle(cb);
-        SpringBundle sb = new SpringBundle(getScanPackages());
+        sb = new SpringBundle(getScanPackages());
         sb.setDefaultProfiles(this.getActivateProfiles());
         bootstrap.addBundle(sb);
+        websocket = new WebsocketBundle();
+        bootstrap.addBundle(websocket);
+
         Class configType = getConfigType();
         try {
             new BundleLoader().loadBundles(bootstrap, configType, getScanPackages());
@@ -97,6 +113,7 @@ public abstract class AutowiredApp<T extends AppConfiguration> extends Applicati
 
     /**
      * return the generic type of this class.
+     *
      * @return Class of parametrized type
      */
     protected abstract Class<T> getConfigType();
@@ -109,5 +126,26 @@ public abstract class AutowiredApp<T extends AppConfiguration> extends Applicati
         environment.admin().addTask(new LoggerLevelTask());
         environment.admin().addTask(new DebugToggleTask());
         environment.getObjectMapper().enable(SerializationFeature.INDENT_OUTPUT);
+        //find websockets and register them.
+        //TODO: find websockets via spring as well
+        Set<Class<?>> websockets = findWS(ServerEndpoint.class, getScanPackages());
+        for (Class ws : websockets) {
+            websocket.addEndpoint(ws);
+        }
+
+    }
+
+    Set<Class<?>> findWS(final Class<? extends Annotation> klazz, String... packages) throws IOException {
+        final AnnotationAcceptingListener aal = new AnnotationAcceptingListener(klazz);
+        ResourceFinder rf = new PackageNamesScanner(packages, true);
+        while (rf.hasNext()) {
+            final String next = rf.next();
+            if (aal.accept(next)) {
+                final InputStream in = rf.open();
+                aal.process(next, in);
+                in.close();
+            }
+        }
+        return aal.getAnnotatedClasses();
     }
 }
