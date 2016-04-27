@@ -27,13 +27,6 @@
             <version>${junit.version}</version>
             <scope>test</scope>
         </dependency>
-        <!--runtime-->
-        <!--<dependency>-->
-            <!--<groupId>com.sun.jersey</groupId>-->
-            <!--<artifactId>jersey-server</artifactId>-->
-            <!--<version>1.15</version>-->
-            <!--<scope>runtime</scope>-->
-        <!--</dependency>-->
     </dependencies>
     <build>
         <resources>

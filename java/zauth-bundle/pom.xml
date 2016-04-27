@@ -21,11 +21,6 @@
             <artifactId>spring-context</artifactId>
             <version>${spring.version}</version>
         </dependency>
-        <!--<dependency>-->
-            <!--<groupId>org.eclipse.jetty</groupId>-->
-            <!--<artifactId>jetty-websocket</artifactId>-->
-            <!--<version>${jetty.version}</version>-->
-        <!--</dependency>-->
         <dependency>
             <groupId>org.apache.shiro</groupId>
             <artifactId>shiro-core</artifactId>
@@ -46,7 +41,6 @@
             <artifactId>dropwizard-client</artifactId>
             <version>${dropwizard.version}</version>
         </dependency>
-
         <!--test dependencies-->
         <dependency>
             <groupId>junit</groupId>
