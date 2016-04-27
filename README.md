@@ -62,191 +62,53 @@ Websockets
 ### Registering a websocket listener
 Websocket listeners can be registered automatically using [Spring][2].  Any
 class annotated with the
-`org.zenoss.dropwizardspring.websocket.annotations.WebSocketListener` will be
-registered to listen on the path defined by the `@Path` annotation.
-`WebSocketListener` requires a parameter `name=<ApplicationName>` which is
-used for auto-registering the zapp on a proxy server.
-Additionally the `org.zenoss.dropwizardsrping.annotations.OnMessage`
-annotations is needed to define the method that will handle websocket messages.
-The OnMessage annotation supports raw data (text or binary) and automatic
-marshalling of Java POJOs using Jackson.  Automatic marshalling from JSON to
-Java occurs when the annotated method's first argument is neither a String
-object nor a byte array.  Additionally, the WebSocket listener will marshall
-a Java POJO into JSON.  Return marshalling from Java to JSON occurs when the
-annotated method's return type is non-void and the annotated method's first
-parameter is neither a String nor a byte array.  See examples below:
+`org.springframework.stereotype.Component` and `javax.websocket.server.ServerEndpoint`  will be
+registered to listen on the path defined by the `@ServerEndpoint` annotation.
+The implementation of the websocket needs to use the `javax.websocket.OnMessage` annotation. The implementation of the
+websocket should follow regular `javax.websocket` conventions.
 
-#### OnMessage - Raw Text
+#### WebSocket Example
 
-    import com.fasterxml.jackson.databind.ObjectMapper;
-    import org.springframework.beans.factory.annotation.Autowired;
-    import org.zenoss.dropwizardspring.websockets.annotations.OnMessage;
-    import org.zenoss.dropwizardsrping.websockets.WebSocket.WebSocketSession;
-    import org.zenoss.dropwizardspring.websockets.annotations.WebSocketListener;
-    import javax.servlet.http.HttpServletRequest;
+package org.zenoss.app.example.api.RandomGenerator.remote;
 
-    import javax.ws.rs.Path;
-    import java.io.IOException;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.google.common.base.Optional;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.config.ConfigurableBeanFactory;
+import org.springframework.context.annotation.Scope;
+import org.springframework.stereotype.Component;
+import org.zenoss.app.example.api.RandomGenerator.RandomGeneratorAPI;
+import org.zenoss.app.example.api.RandomGenerator.RandomResponse;
 
-    @Path("/ws/example")
-    @WebSocketListener(name="ExampleApp")
-    public class ExampleWebSocket {
+import javax.websocket.OnMessage;
+import javax.websocket.Session;
+import javax.websocket.server.ServerEndpoint;
 
-        private ObjectMapper mapper = new ObjectMapper();
+@Component("exampleWS")
+@Scope(ConfigurableBeanFactory.SCOPE_PROTOTYPE)
+@ServerEndpoint("/ws/random")
+public class RandomGeneratorWebSocket {
 
-        @OnMessage
-        public void echo(String data, WebSocketSession session) throws IOException {
-            ArrayList<String> input = mapper.readValue(data, new TypeReference<ArrayList<String>>() {});
-            connection.sendMessage(mapper.writeValueAsString(input));
-        }
+    @Autowired
+    private RandomGeneratorAPI api;
+
+    private ObjectMapper mapper = new ObjectMapper();
+    
+    @OnMessage
+    public void handleTextMessage(String data, Session session) throws Exception {
+        RandomRequest request = mapper.readValue(data, RandomRequest.class);
+
+        RandomResponse x = api.random(Optional.fromNullable(request.getMin()), Optional.fromNullable(request.getMax()));
+
+        session.getBasicRemote().sendText(mapper.writeValueAsString(x));
+
     }
 
-#### OnMessage - Raw Binary
-
-    import org.springframework.beans.factory.annotation.Autowired;
-    import org.zenoss.dropwizardspring.websockets.annotations.OnMessage;
-    import org.zenoss.dropwizardsrping.websockets.WebSocket.WebSocketSession;
-    import org.zenoss.dropwizardspring.websockets.annotations.WebSocketListener;
-    import javax.servlet.http.HttpServletRequest;
-
-    import javax.ws.rs.Path;
-    import java.io.IOException;
-
-    @Path("/ws/example")
-    @WebSocketListener(name="ExampleApp")
-    public class ExampleWebSocket {
-
-        @OnMessage
-        public void echo(byte[] data, WebSocketSession session) throws IOException {
-            connection.sendMessage(data);
-        }
-    }
-
-#### OnMessage - Json Marshalling - Json 2 Java
-
-    import com.fasterxml.jackson.databind.ObjectMapper;
-    import org.springframework.beans.factory.annotation.Autowired;
-    import org.zenoss.dropwizardspring.websockets.annotations.OnMessage;
-    import org.zenoss.dropwizardsrping.websockets.WebSocket.WebSocketSession;
-    import org.zenoss.dropwizardspring.websockets.annotations.WebSocketListener;
-    import javax.servlet.http.HttpServletRequest;
-
-    import javax.ws.rs.Path;
-    import java.io.IOException;
-
-    @Path("/ws/example")
-    @WebSocketListener(name="ExampleApp")
-    public class ExampleWebSocket {
-        private ObjectMapper mapper = new ObjectMapper();
-
-        class Pojo {
-            private String message;
-            public void setMessage(String message) { this.message = message; }
-            public String getMessage() { return message;}
-            public Pojo(String message) { this.message = message; }
-            public Pojo() { }
-        }
-
-        @OnMessage
-        public void echo(Pojo pojo, WebSocketSession session) throws IOException {
-            connection.sendMessage(mapper.writeValueAsString(pojo.getMessage()));
-        }
-    }
-
-#### OnMessage - Json Unmarshalling/Marshalling - Json 2 Java and Java 2 Json
-
-    import com.fasterxml.jackson.databind.ObjectMapper;
-    import org.springframework.beans.factory.annotation.Autowired;
-    import org.zenoss.dropwizardspring.websockets.annotations.OnMessage;
-    import org.zenoss.dropwizardsrping.websockets.WebSocket.WebSocketSession;
-    import org.zenoss.dropwizardspring.websockets.annotations.WebSocketListener;
-    import javax.servlet.http.HttpServletRequest;
-
-    import javax.ws.rs.Path;
-    import java.io.IOException;
-
-    @Path("/ws/example")
-    @WebSocketListener(name="ExampleApp")
-    public class ExampleWebSocket {
-        class Pojo {
-            private String message;
-            public void setMessage(String message) { this.message = message; }
-            public String getMessage() { return message;}
-            public Pojo(String message) { this.message = message; }
-            public Pojo() { }
-        }
-
-        @OnMessage
-        public Pojo echo(Pojo pojo, WebSocketSession session) throws IOException {
-            return new Pojo( pojo.message);
-        }
-    }
+}
 
 ### WebSocket Message Broadcast
-Zapp WebSockets support listener based message broadcasting.  In other words, a
-Zapp can broadcast a message to all connections assigned to a WebSocketListener.
-Broadcasting supports String, binary, and Json messages.  Message broadcasts is
-supported through the [EventBus] (#event-bus-configuration).  See below for
-examples.
-
-#### Broadcast String Message
-
-    @Path("/ws/example")
-    @WebSocketListener(name="ExampleApp")
-    public class ExampleWebSocket {
-
-        @AutoWired
-        @Qualifer("zapp::event-bus::async")
-        EventBus eventBus
-
-        @OnMessage
-        public void broadcast(String message, WebSocketSession session) throws IOException {
-            WebSocketBroadcast.Message wsMessage = WebSocketBroadcast.newMessage( ExampleWebSocket.class, message);
-            eventBus.post( wsMessage);
-        }
-    }
-
-#### Broadcast Binary Message
-
-    @Path("/ws/example")
-    @WebSocketListener(name="ExampleApp")
-    public class ExampleWebSocket {
-
-        @AutoWired
-        @Qualifer("zapp::event-bus::async")
-        EventBus eventBus
-
-        @OnMessage
-        public void broadcast(String message, WebSocketSession session) throws IOException {
-            WebSocketBroadcast.Message wsMessage = WebSocketBroadcast.newMessage( ExampleWebSocket.class, new byte[] {...});
-            eventBus.post( wsMessage);
-        }
-    }
-
-#### Broadcast Pojo 
-
-    @Path("/ws/example")
-    @WebSocketListener(name="ExampleApp")
-    public class ExampleWebSocket {
-
-        @AutoWired
-        @Qualifer("zapp::event-bus::async")
-        EventBus eventBus
-
-        class Pojo {
-            private String message;
-            public void setMessage(String message) { this.message = message; }
-            public String getMessage() { return message;}
-            public Pojo(String message) { this.message = message; }
-            public Pojo() { }
-        }
-
-        @OnMessage
-        public void broadcast(Pojo pojo, WebSocketSession session) throws IOException {
-            WebSocketBroadcast.Message wsMessage = WebSocketBroadcast.newMessage( ExampleWebSocket.class, pojo);
-            eventBus.post( wsMessage);
-        }
-    }
+Built in websocket message broadcast has not yet been implemented in the latest Zapp. Implementation should be trivial using the
+built in `getOpenSessions` method on the `javax.websocket.Session` class.
     
 Registering Dropwizard Bundles
 ---
@@ -325,10 +187,6 @@ be changed by setting a command line environment.
     java -Dspring.profiles.active=dev
 
 Read more about Spring [Profiles](http://blog.springsource.com/2011/02/14/spring-3-1-m1-introducing-profile/).
-
-Proxy Registration
----
-Zapp allows registration of a resource or websocket listener with a centralized proxy.  To configure this auto-registration, set zapp.autoreg.host and zapp.autoreg.port as system variables pointing to the redis database for the proxy.  Then, set the proxy host and port in the proxy section of the Zapp's configuration.yaml. 
 
 <a name="event-bus-configuration"></a>Application Event Handling with Guava EventBus
 ---

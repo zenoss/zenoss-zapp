@@ -36,10 +36,6 @@ public class RandomGeneratorWebSocket {
 
     private ObjectMapper mapper = new ObjectMapper();
 
-    public RandomGeneratorWebSocket() {
-        System.out.println("***************RandomGeneratorWebSocket***********");
-    }
-
     @OnMessage
     public void handleTextMessage(String data, Session session) throws Exception {
         RandomRequest request = mapper.readValue(data, RandomRequest.class);
