@@ -52,7 +52,7 @@ import java.util.concurrent.ExecutorService;
  * Instantiate this class and register as a bundle in the initialize method in your Dropwizard main class.
  */
 
-public final class SpringBundle implements ConfiguredBundle<Configuration> {
+public final class SpringBundle implements ConfiguredBundle<SpringConfiguration> {
 
     private static final Logger log = LoggerFactory.getLogger(SpringBundle.class);
 
@@ -86,7 +86,7 @@ public final class SpringBundle implements ConfiguredBundle<Configuration> {
     }
 
     @Override
-    public void run(final Configuration configuration, final Environment environment) throws Exception {
+    public void run(final SpringConfiguration configuration, final Environment environment) throws Exception {
         log.info("_____spring scanning________*******************");
         initializeSpring(configuration, environment);
         // Do the dropwizard registrations
@@ -96,7 +96,7 @@ public final class SpringBundle implements ConfiguredBundle<Configuration> {
         addManaged(environment);
     }
 
-    private void initializeSpring(Configuration configuration, Environment environment) {
+    private void initializeSpring(SpringConfiguration configuration, Environment environment) {
         if (applicationContext == null) {
             applicationContext = new AnnotationConfigApplicationContext();
             ConfigurableListableBeanFactory beanFactory = applicationContext.getBeanFactory();
@@ -105,7 +105,7 @@ public final class SpringBundle implements ConfiguredBundle<Configuration> {
             beanFactory.registerSingleton("dropwizard", configuration);
             beanFactory.registerSingleton("dropwizardEnvironment", environment);
 
-            initializeEventBus(((SpringConfiguration) configuration).getEventBusConfiguration(), beanFactory, environment);
+            initializeEventBus(configuration.getEventBusConfiguration(), beanFactory, environment);
 
             //Set the default profile
             if (this.profiles != null && this.profiles.length > 0) {

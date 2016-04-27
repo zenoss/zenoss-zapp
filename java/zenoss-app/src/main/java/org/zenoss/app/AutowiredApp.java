@@ -23,6 +23,7 @@ import io.dropwizard.setup.Environment;
 import org.glassfish.jersey.server.ResourceFinder;
 import org.glassfish.jersey.server.internal.scanning.AnnotationAcceptingListener;
 import org.glassfish.jersey.server.internal.scanning.PackageNamesScanner;
+import org.springframework.context.annotation.AnnotationConfigApplicationContext;
 import org.zenoss.app.ZenossCredentials.Builder;
 import org.zenoss.app.autobundle.BundleLoader;
 import org.zenoss.app.tasks.DebugToggleTask;
@@ -30,6 +31,8 @@ import org.zenoss.app.tasks.LoggerLevelTask;
 import org.zenoss.dropwizardspring.SpringBundle;
 
 import javax.websocket.server.ServerEndpoint;
+import javax.websocket.server.ServerEndpointConfig;
+import javax.websocket.server.ServerEndpointConfig.Configurator;
 import java.io.IOException;
 import java.io.InputStream;
 import java.lang.annotation.Annotation;
@@ -47,6 +50,7 @@ public abstract class AutowiredApp<T extends AppConfiguration> extends Applicati
     public static final String DEFAULT_SCAN = "org.zenoss.app";
     public static final String[] DEFAULT_ACTIVE_PROFILES = new String[]{"prod", "runtime"};
     private SpringBundle sb;
+
     private WebsocketBundle websocket = new WebsocketBundle();
 
 
@@ -76,6 +80,9 @@ public abstract class AutowiredApp<T extends AppConfiguration> extends Applicati
         return DEFAULT_ACTIVE_PROFILES;
     }
 
+    WebsocketBundle getWebsocket() {
+        return websocket;
+    }
 
     /**
      * {@inheritDoc}
@@ -100,8 +107,7 @@ public abstract class AutowiredApp<T extends AppConfiguration> extends Applicati
         sb = new SpringBundle(getScanPackages());
         sb.setDefaultProfiles(this.getActivateProfiles());
         bootstrap.addBundle(sb);
-        websocket = new WebsocketBundle();
-        bootstrap.addBundle(websocket);
+        bootstrap.addBundle(getWebsocket());
 
         Class configType = getConfigType();
         try {
@@ -126,11 +132,31 @@ public abstract class AutowiredApp<T extends AppConfiguration> extends Applicati
         environment.admin().addTask(new LoggerLevelTask());
         environment.admin().addTask(new DebugToggleTask());
         environment.getObjectMapper().enable(SerializationFeature.INDENT_OUTPUT);
-        //find websockets and register them.
-        //TODO: find websockets via spring as well
-        Set<Class<?>> websockets = findWS(ServerEndpoint.class, getScanPackages());
-        for (Class ws : websockets) {
-            websocket.addEndpoint(ws);
+        final AnnotationConfigApplicationContext ctx = sb.getApplicationContext();
+
+        //find classes with ServerEndPoint annotation
+        Set<Class<?>> serverEndpoints = findWS(ServerEndpoint.class, getScanPackages());
+
+        //find spring beans with ServerEndpoint annotation
+        String[] names = ctx.getBeanNamesForAnnotation(ServerEndpoint.class);
+        for (final String name : names) {
+            final Class<?> clazz = ctx.getType(name);
+            //remove spring ServerEndpoint from set of all endpoints
+            serverEndpoints.remove(clazz);
+            ServerEndpoint se = clazz.getAnnotation(ServerEndpoint.class);
+            ServerEndpointConfig endpointConfig = ServerEndpointConfig.Builder.
+                    create(clazz, se.value()).
+                    configurator(new Configurator() {
+                        @Override
+                        public <T> T getEndpointInstance(Class<T> endpointClass) throws InstantiationException {
+                            return ctx.getBean(name, endpointClass);
+                        }
+                    }).build();
+            getWebsocket().addEndpoint(endpointConfig);
+        }
+        //register any remaining endpoints that were not springified
+        for (Class ws : serverEndpoints) {
+            getWebsocket().addEndpoint(ws);
         }
 
     }

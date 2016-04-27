@@ -16,6 +16,9 @@ package org.zenoss.app.example.api.RandomGenerator.remote;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.common.base.Optional;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.config.ConfigurableBeanFactory;
+import org.springframework.context.annotation.Scope;
+import org.springframework.stereotype.Component;
 import org.zenoss.app.example.api.RandomGenerator.RandomGeneratorAPI;
 import org.zenoss.app.example.api.RandomGenerator.RandomResponse;
 
@@ -23,6 +26,8 @@ import javax.websocket.OnMessage;
 import javax.websocket.Session;
 import javax.websocket.server.ServerEndpoint;
 
+@Component("exampleWS")
+@Scope(ConfigurableBeanFactory.SCOPE_PROTOTYPE)
 @ServerEndpoint("/ws/random")
 public class RandomGeneratorWebSocket {
 
@@ -36,7 +41,7 @@ public class RandomGeneratorWebSocket {
     }
 
     @OnMessage
-    public void handleTextMessage( String data, Session session) throws Exception {
+    public void handleTextMessage(String data, Session session) throws Exception {
         RandomRequest request = mapper.readValue(data, RandomRequest.class);
 
         RandomResponse x = api.random(Optional.fromNullable(request.getMin()), Optional.fromNullable(request.getMax()));

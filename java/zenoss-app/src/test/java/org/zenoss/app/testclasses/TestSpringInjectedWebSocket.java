@@ -12,18 +12,16 @@
 // limitations under the License.
 
 
-package org.zenoss.dropwizardspring.websockets.annotations;
+package org.zenoss.app.testclasses;
+
 
 import org.springframework.stereotype.Component;
 
-import java.lang.annotation.Retention;
-import java.lang.annotation.RetentionPolicy;
+import javax.websocket.server.ServerEndpoint;
 
-/**
- * This annotation marks a class to be loaded by  spring and registered as a websocket listener.
- */
-//@Component
-@Retention(RetentionPolicy.RUNTIME)
-public @interface WebSocketListener {
-	String name();
+
+@Component
+@ServerEndpoint("/test")
+public class TestSpringInjectedWebSocket {
+
 }

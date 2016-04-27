@@ -59,7 +59,7 @@ public class SpringBundleTest {
 
     @Test
     public void scanTest() throws Exception {
-        Configuration config = new TestConfiguration();
+        SpringConfiguration config = new TestConfiguration();
         Environment environment = mock(Environment.class, RETURNS_MOCKS);
         Bootstrap bootStrap = mock(Bootstrap.class);
         LifecycleEnvironment lifecycleEnvironment = mock(LifecycleEnvironment.class, RETURNS_MOCKS);
@@ -84,7 +84,7 @@ public class SpringBundleTest {
     @Test
     public void testSetDevProfile() throws Exception {
         sb.setDefaultProfiles("dev");
-        Configuration config = new TestConfiguration();
+        SpringConfiguration config = new TestConfiguration();
         Environment environment = mock(Environment.class, RETURNS_MOCKS);
         sb.run(config, environment);
         Assert.assertTrue(sb.applicationContext.containsBean("devProfile"));
@@ -95,7 +95,7 @@ public class SpringBundleTest {
     @Test
     public void testSetTestProfiles() throws Exception {
         sb.setDefaultProfiles("dev");
-        Configuration config = new TestConfiguration();
+        SpringConfiguration config = new TestConfiguration();
         Environment environment = mock(Environment.class, RETURNS_MOCKS);
         sb.run(config, environment);
         Assert.assertTrue(sb.applicationContext.containsBean("devProfile"));
@@ -105,7 +105,7 @@ public class SpringBundleTest {
     @Test
     public void testSetTwoProfiles() throws Exception {
         sb.setDefaultProfiles("dev", "test");
-        Configuration config = new TestConfiguration();
+        SpringConfiguration config = new TestConfiguration();
         Environment environment = mock(Environment.class, RETURNS_MOCKS);
         sb.run(config, environment);
         Assert.assertTrue(sb.applicationContext.containsBean("devProfile"));
@@ -115,26 +115,17 @@ public class SpringBundleTest {
     @Test
     public void testSetNoProfiles() throws Exception {
         sb.setDefaultProfiles(new String[]{});
-        Configuration config = new TestConfiguration();
+        SpringConfiguration config = new TestConfiguration();
         Environment environment = mock(Environment.class, RETURNS_MOCKS);
         sb.run(config, environment);
         Assert.assertFalse(sb.applicationContext.containsBean("devProfile"));
         Assert.assertFalse(sb.applicationContext.containsBean("testProfile"));
     }
 
-//    @Test(expected = Exception.class)
-//    public void testNoPathWebSocket() throws Exception {
-//        //TODO this test should be for configurer
-//        sb.setDefaultProfiles("broken");
-//        Configuration config = new TestConfiguration();
-//        Environment environment = mock(Environment.class, RETURNS_MOCKS);
-//        sb.run(config, environment);
-//    }
-
     @Test
     public void testEventBus() throws Exception {
         sb.setDefaultProfiles();
-        Configuration config = new TestConfiguration();
+        SpringConfiguration config = new TestConfiguration();
         Environment environment = mock(Environment.class, RETURNS_MOCKS);
         sb.run(config, environment);
 
