@@ -68,27 +68,27 @@ The implementation of the websocket needs to use the `javax.websocket.OnMessage`
 websocket should follow regular `javax.websocket` conventions.
 
 #### WebSocket Example
-
-package org.zenoss.app.example.api.RandomGenerator.remote;
-
-import com.fasterxml.jackson.databind.ObjectMapper;
-import com.google.common.base.Optional;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.beans.factory.config.ConfigurableBeanFactory;
-import org.springframework.context.annotation.Scope;
-import org.springframework.stereotype.Component;
-import org.zenoss.app.example.api.RandomGenerator.RandomGeneratorAPI;
-import org.zenoss.app.example.api.RandomGenerator.RandomResponse;
-
-import javax.websocket.OnMessage;
-import javax.websocket.Session;
-import javax.websocket.server.ServerEndpoint;
-
-@Component("exampleWS")
-@Scope(ConfigurableBeanFactory.SCOPE_PROTOTYPE)
-@ServerEndpoint("/ws/random")
-public class RandomGeneratorWebSocket {
-
+    
+    package org.zenoss.app.example.api.RandomGenerator.remote;
+    
+    import com.fasterxml.jackson.databind.ObjectMapper;
+    import com.google.common.base.Optional;
+    import org.springframework.beans.factory.annotation.Autowired;
+    import org.springframework.beans.factory.config.ConfigurableBeanFactory;
+    import org.springframework.context.annotation.Scope;
+    import org.springframework.stereotype.Component;
+    import org.zenoss.app.example.api.RandomGenerator.RandomGeneratorAPI;
+    import org.zenoss.app.example.api.RandomGenerator.RandomResponse;
+    
+    import javax.websocket.OnMessage;
+    import javax.websocket.Session;
+    import javax.websocket.server.ServerEndpoint;
+    
+    @Component("exampleWS")
+    @Scope(ConfigurableBeanFactory.SCOPE_PROTOTYPE)
+    @ServerEndpoint("/ws/random")
+    public class RandomGeneratorWebSocket {
+    
     @Autowired
     private RandomGeneratorAPI api;
 
@@ -128,6 +128,7 @@ indexing of the files if you perform an HTTP GET on the directory.
 
 It should be noted that for each dropwizard bundle you wish to register you will be required to create a new Java class that is annotated with `@Bundle` and implements the `AutoBundle` interface. Also note
 that the package for the AutoBundle must start with org.zenoss.app
+
     package org.zenoss.app.myservice;
     import org.zenoss.app.annotations.Bundle;
     import org.zenoss.app.autobundle.AutoBundle;
