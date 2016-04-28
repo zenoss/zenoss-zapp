@@ -38,6 +38,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
+import java.util.Map.Entry;
 import java.util.concurrent.ExecutorService;
 
 
@@ -87,7 +88,6 @@ public final class SpringBundle implements ConfiguredBundle<SpringConfiguration>
 
     @Override
     public void run(final SpringConfiguration configuration, final Environment environment) throws Exception {
-        log.info("_____spring scanning________*******************");
         initializeSpring(configuration, environment);
         // Do the dropwizard registrations
         addResources(environment);
@@ -146,8 +146,8 @@ public final class SpringBundle implements ConfiguredBundle<SpringConfiguration>
 
     private void addHealthChecks(Environment environment) {
         final Map<String, HealthCheck> healthChecks = applicationContext.getBeansOfType(HealthCheck.class);
-        for (final HealthCheck healthCheck : healthChecks.values()) {
-            environment.healthChecks().register(healthCheck.getClass().toString(), healthCheck);
+        for (final Entry<String, HealthCheck> healthCheck : healthChecks.entrySet()) {
+            environment.healthChecks().register(healthCheck.getKey(), healthCheck.getValue());
         }
     }
 

@@ -16,7 +16,6 @@ package org.zenoss.dropwizardspring.annotations;
 
 import org.springframework.stereotype.Component;
 
-//TODO add name attribute to annotation
 @Component
 public @interface HealthCheck {
 }

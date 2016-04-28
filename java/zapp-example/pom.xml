@@ -12,7 +12,6 @@
         <ssl.cert.dir>target/cert</ssl.cert.dir>
         <assembly.skipAssembly>true</assembly.skipAssembly>
     </properties>
-
     <artifactId>zapp-example</artifactId>
     <dependencies>
         <dependency>

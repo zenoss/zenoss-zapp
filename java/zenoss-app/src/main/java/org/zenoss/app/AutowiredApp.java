@@ -27,7 +27,6 @@ import org.springframework.context.annotation.AnnotationConfigApplicationContext
 import org.zenoss.app.ZenossCredentials.Builder;
 import org.zenoss.app.autobundle.BundleLoader;
 import org.zenoss.app.tasks.DebugToggleTask;
-import org.zenoss.app.tasks.LoggerLevelTask;
 import org.zenoss.dropwizardspring.SpringBundle;
 
 import javax.websocket.server.ServerEndpoint;
@@ -129,7 +128,6 @@ public abstract class AutowiredApp<T extends AppConfiguration> extends Applicati
      */
     @Override
     public final void run(T configuration, Environment environment) throws Exception {
-        environment.admin().addTask(new LoggerLevelTask());
         environment.admin().addTask(new DebugToggleTask());
         environment.getObjectMapper().enable(SerializationFeature.INDENT_OUTPUT);
         final AnnotationConfigApplicationContext ctx = sb.getApplicationContext();

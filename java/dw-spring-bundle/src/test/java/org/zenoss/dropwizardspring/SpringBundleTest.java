@@ -77,7 +77,7 @@ public class SpringBundleTest {
         verify(adminEnvironment, times(1)).addTask(sb.applicationContext.getBean("fakeTask", Task.class));
         verify(lifecycleEnvironment, times(1)).manage(sb.applicationContext.getBean("fakeManaged", Managed.class));
         HealthCheck hc = sb.applicationContext.getBean("fakeHealthCheck", HealthCheck.class);
-        verify(healthCheckRegistry, times(1)).register(hc.getClass().toString(), hc);
+        verify(healthCheckRegistry, times(1)).register("fakeHealthCheck", hc);
 
     }
 
