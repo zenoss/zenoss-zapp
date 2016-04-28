@@ -14,42 +14,35 @@
 package org.zenoss.app.tasks;
 
 import ch.qos.logback.classic.Level;
-import com.yammer.dropwizard.config.LoggingConfiguration;
-import com.yammer.dropwizard.config.LoggingFactory;
+import ch.qos.logback.classic.Logger;
 import org.junit.Test;
-import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.PrintWriter;
 import java.io.StringWriter;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertFalse;
-import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.*;
 
 public class DebugToggleTaskTest {
 
     @Test
     public void testExectue() throws Exception {
 
+        Logger logger = (Logger) LoggerFactory.getLogger(org.slf4j.Logger.ROOT_LOGGER_NAME);
+        logger.setLevel(Level.WARN);
 
-        LoggingConfiguration config = new LoggingConfiguration();
-        config.setLevel(Level.INFO);
-        new LoggingFactory(config, "blam").configure();
+        assertFalse(logger.isDebugEnabled());
 
-
-        Logger log = LoggerFactory.getLogger("ROOT");
-        assertFalse(log.isDebugEnabled());
-
-        DebugToggleTask task = new DebugToggleTask("blam", config);
+        DebugToggleTask task = new DebugToggleTask();
         StringWriter sw = new StringWriter();
         task.execute(null, new PrintWriter(sw));
         assertEquals("Set logs to debug", sw.toString());
+        org.slf4j.Logger log = LoggerFactory.getLogger(org.slf4j.Logger.ROOT_LOGGER_NAME);
         assertTrue(log.isDebugEnabled());
 
         sw = new StringWriter();
         task.execute(null, new PrintWriter(sw));
-        assertEquals("Set logs to default", sw.toString());
+        assertEquals("Set logs to default WARN", sw.toString());
         assertFalse(log.isDebugEnabled());
 
     }

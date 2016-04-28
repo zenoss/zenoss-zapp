@@ -14,20 +14,28 @@
 
 package org.zenoss.app;
 
+import be.tomcools.dropwizard.websocket.WebsocketBundle;
 import com.fasterxml.jackson.databind.SerializationFeature;
-import com.yammer.dropwizard.ConfiguredBundle;
-import com.yammer.dropwizard.Service;
-import com.yammer.dropwizard.config.Bootstrap;
-import com.yammer.dropwizard.config.Environment;
-import com.yammer.metrics.reporting.HealthCheckServlet;
-import com.yammer.metrics.reporting.MetricsServlet;
+import io.dropwizard.Application;
+import io.dropwizard.ConfiguredBundle;
+import io.dropwizard.setup.Bootstrap;
+import io.dropwizard.setup.Environment;
+import org.glassfish.jersey.server.ResourceFinder;
+import org.glassfish.jersey.server.internal.scanning.AnnotationAcceptingListener;
+import org.glassfish.jersey.server.internal.scanning.PackageNamesScanner;
+import org.springframework.context.annotation.AnnotationConfigApplicationContext;
 import org.zenoss.app.ZenossCredentials.Builder;
 import org.zenoss.app.autobundle.BundleLoader;
 import org.zenoss.app.tasks.DebugToggleTask;
-import org.zenoss.app.tasks.LoggerLevelTask;
 import org.zenoss.dropwizardspring.SpringBundle;
 
-import javax.servlet.Servlet;
+import javax.websocket.server.ServerEndpoint;
+import javax.websocket.server.ServerEndpointConfig;
+import javax.websocket.server.ServerEndpointConfig.Configurator;
+import java.io.IOException;
+import java.io.InputStream;
+import java.lang.annotation.Annotation;
+import java.util.Set;
 
 /**
  * Creates an App that uses Spring to scan and autowire objects. By default will scan for the Spring components with
@@ -36,10 +44,14 @@ import javax.servlet.Servlet;
  *
  * @param <T>
  */
-public abstract class AutowiredApp<T extends AppConfiguration> extends Service<T> {
+public abstract class AutowiredApp<T extends AppConfiguration> extends Application<T> {
 
     public static final String DEFAULT_SCAN = "org.zenoss.app";
     public static final String[] DEFAULT_ACTIVE_PROFILES = new String[]{"prod", "runtime"};
+    private SpringBundle sb;
+
+    private WebsocketBundle websocket = new WebsocketBundle();
+
 
     /**
      * The app name
@@ -67,6 +79,9 @@ public abstract class AutowiredApp<T extends AppConfiguration> extends Service<T
         return DEFAULT_ACTIVE_PROFILES;
     }
 
+    WebsocketBundle getWebsocket() {
+        return websocket;
+    }
 
     /**
      * {@inheritDoc}
@@ -88,10 +103,11 @@ public abstract class AutowiredApp<T extends AppConfiguration> extends Service<T
             }
         };
         bootstrap.addBundle(cb);
-        bootstrap.setName(this.getAppName());
-        SpringBundle sb = new SpringBundle(getScanPackages());
+        sb = new SpringBundle(getScanPackages());
         sb.setDefaultProfiles(this.getActivateProfiles());
         bootstrap.addBundle(sb);
+        bootstrap.addBundle(getWebsocket());
+
         Class configType = getConfigType();
         try {
             new BundleLoader().loadBundles(bootstrap, configType, getScanPackages());
@@ -102,6 +118,7 @@ public abstract class AutowiredApp<T extends AppConfiguration> extends Service<T
 
     /**
      * return the generic type of this class.
+     *
      * @return Class of parametrized type
      */
     protected abstract Class<T> getConfigType();
@@ -111,12 +128,48 @@ public abstract class AutowiredApp<T extends AppConfiguration> extends Service<T
      */
     @Override
     public final void run(T configuration, Environment environment) throws Exception {
-        Servlet metrics = new MetricsServlet();
-        Servlet healthcheck = new HealthCheckServlet();
-        environment.addServlet(metrics, "/metrics");
-        environment.addServlet(healthcheck, "/healthcheck");
-        environment.addTask(new LoggerLevelTask());
-        environment.addTask(new DebugToggleTask(this.getAppName(), configuration.getLoggingConfiguration()));
-        environment.getObjectMapperFactory().enable(SerializationFeature.INDENT_OUTPUT);
+        environment.admin().addTask(new DebugToggleTask());
+        environment.getObjectMapper().enable(SerializationFeature.INDENT_OUTPUT);
+        final AnnotationConfigApplicationContext ctx = sb.getApplicationContext();
+
+        //find classes with ServerEndPoint annotation
+        Set<Class<?>> serverEndpoints = findWS(ServerEndpoint.class, getScanPackages());
+
+        //find spring beans with ServerEndpoint annotation
+        String[] names = ctx.getBeanNamesForAnnotation(ServerEndpoint.class);
+        for (final String name : names) {
+            final Class<?> clazz = ctx.getType(name);
+            //remove spring ServerEndpoint from set of all endpoints
+            serverEndpoints.remove(clazz);
+            ServerEndpoint se = clazz.getAnnotation(ServerEndpoint.class);
+            ServerEndpointConfig endpointConfig = ServerEndpointConfig.Builder.
+                    create(clazz, se.value()).
+                    configurator(new Configurator() {
+                        @Override
+                        public <T> T getEndpointInstance(Class<T> endpointClass) throws InstantiationException {
+                            return ctx.getBean(name, endpointClass);
+                        }
+                    }).build();
+            getWebsocket().addEndpoint(endpointConfig);
+        }
+        //register any remaining endpoints that were not springified
+        for (Class ws : serverEndpoints) {
+            getWebsocket().addEndpoint(ws);
+        }
+
+    }
+
+    Set<Class<?>> findWS(final Class<? extends Annotation> klazz, String... packages) throws IOException {
+        final AnnotationAcceptingListener aal = new AnnotationAcceptingListener(klazz);
+        ResourceFinder rf = new PackageNamesScanner(packages, true);
+        while (rf.hasNext()) {
+            final String next = rf.next();
+            if (aal.accept(next)) {
+                final InputStream in = rf.open();
+                aal.process(next, in);
+                in.close();
+            }
+        }
+        return aal.getAnnotatedClasses();
     }
 }

@@ -87,7 +87,7 @@ public class ZenossCredentials {
             try {
                 props.load(new FileInputStream(fileName));
             } catch (IOException e) {
-                log.error("Unable to read properties from " + fileName, e);
+                log.warn("Unable to read properties from " + fileName, e);
             }
             return props;
         }

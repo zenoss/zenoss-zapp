@@ -14,7 +14,7 @@
 
 package org.zenoss.dropwizardspring.testclasses;
 
-import com.yammer.dropwizard.lifecycle.Managed;
+import io.dropwizard.lifecycle.Managed;
 
 @org.zenoss.dropwizardspring.annotations.Managed
 public class FakeManaged implements Managed {

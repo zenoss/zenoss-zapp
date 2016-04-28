@@ -15,13 +15,15 @@
 package org.zenoss.app.autobundle;
 
 import com.google.common.base.Optional;
-import com.sun.jersey.core.spi.scanning.PackageNamesScanner;
-import com.sun.jersey.spi.scanning.AnnotationScannerListener;
-import com.yammer.dropwizard.ConfiguredBundle;
-import com.yammer.dropwizard.config.Bootstrap;
+import io.dropwizard.ConfiguredBundle;
+import io.dropwizard.setup.Bootstrap;
+import org.glassfish.jersey.server.ResourceFinder;
+import org.glassfish.jersey.server.internal.scanning.AnnotationAcceptingListener;
+import org.glassfish.jersey.server.internal.scanning.PackageNamesScanner;
 import org.zenoss.app.annotations.Bundle;
 
 import java.io.IOException;
+import java.io.InputStream;
 import java.util.Set;
 
 
@@ -38,10 +40,17 @@ public final class BundleLoader {
     }
 
     Set<Class<?>> findBundles(String... packages) throws IOException {
-        PackageNamesScanner scanner = new PackageNamesScanner(packages);
-        AnnotationScannerListener listener = new AnnotationScannerListener(Bundle.class);
-        scanner.scan(listener);
-        return listener.getAnnotatedClasses();
+        final AnnotationAcceptingListener aal = new AnnotationAcceptingListener(Bundle.class);
+        ResourceFinder rf = new PackageNamesScanner(packages, true);
+        while (rf.hasNext()) {
+            final String next = rf.next();
+            if (aal.accept(next)) {
+                final InputStream in = rf.open();
+                aal.process(next, in);
+                in.close();
+            }
+        }
+        return aal.getAnnotatedClasses();
     }
 
     void registerBundle(Object o, Bootstrap bootstrap, Class c) {
@@ -57,8 +66,8 @@ public final class BundleLoader {
 
         } else if (o instanceof ConfiguredBundle) {
             bootstrap.addBundle((ConfiguredBundle) o);
-        } else if (o instanceof com.yammer.dropwizard.Bundle) {
-            bootstrap.addBundle((com.yammer.dropwizard.Bundle) o);
+        } else if (o instanceof io.dropwizard.Bundle) {
+            bootstrap.addBundle((io.dropwizard.Bundle) o);
         } else {
             throw new UnknownBundle("Unknown bundle type " + o.getClass().getName());
         }

@@ -5,14 +5,13 @@
     <parent>
         <artifactId>zapp-parent</artifactId>
         <groupId>org.zenoss.zapp</groupId>
-        <version>0.0.21-SNAPSHOT</version>
+        <version>0.1.0-SNAPSHOT</version>
     </parent>
     <modelVersion>4.0.0</modelVersion>
     <properties>
         <ssl.cert.dir>target/cert</ssl.cert.dir>
         <assembly.skipAssembly>true</assembly.skipAssembly>
     </properties>
-
     <artifactId>zapp-example</artifactId>
     <dependencies>
         <dependency>
@@ -26,13 +25,6 @@
             <artifactId>junit</artifactId>
             <version>${junit.version}</version>
             <scope>test</scope>
-        </dependency>
-        <!--runtime-->
-        <dependency>
-            <groupId>com.sun.jersey</groupId>
-            <artifactId>jersey-server</artifactId>
-            <version>1.15</version>
-            <scope>runtime</scope>
         </dependency>
     </dependencies>
     <build>
@@ -158,6 +150,18 @@
                         </goals>
                     </execution>
                 </executions>
+            </plugin>
+            <plugin>
+                <groupId>org.codehaus.mojo</groupId>
+                <artifactId>exec-maven-plugin</artifactId>
+                <version>1.2.1</version>
+                <configuration>
+                    <mainClass>org.zenoss.app.example.ExampleApp</mainClass>
+                    <arguments>
+                        <argument>server</argument>
+                        <argument>${project.build.directory}/etc/configuration.yaml</argument>
+                    </arguments>
+                </configuration>
             </plugin>
         </plugins>
     </build>
