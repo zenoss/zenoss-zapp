@@ -48,7 +48,7 @@ public abstract class AppConfiguration extends Configuration implements SpringCo
     private boolean authEnabled = true;
 
     @JsonProperty
-    private HttpClientConfiguration authHttpClientConfiguration;
+    private HttpClientConfiguration authHttpClientConfiguration = new HttpClientConfiguration();
 
     public ProxyConfiguration getProxyConfiguration() {
         return proxyConfiguration;
