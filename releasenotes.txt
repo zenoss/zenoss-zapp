@@ -1,3 +1,9 @@
+v0.0.21 - 2016/06/28
+    - Add default setting to timeout and remove idle auth sessions
+
+v0.0.19 - 2015/01/06
+    - Added support for DropWizard web socket listener @OnClose callback.
+
 v0.0.15 - 2014/04/15
     - improved security support with tenant and token shiro principles
 

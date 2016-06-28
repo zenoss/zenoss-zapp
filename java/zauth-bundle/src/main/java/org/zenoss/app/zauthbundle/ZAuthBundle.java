@@ -20,7 +20,6 @@ import com.yammer.dropwizard.config.Environment;
 import org.apache.shiro.web.env.EnvironmentLoaderListener;
 import org.apache.shiro.web.servlet.ShiroFilter;
 import org.eclipse.jetty.server.session.SessionHandler;
-
 import org.zenoss.app.AppConfiguration;
 import org.zenoss.app.annotations.Bundle;
 import org.zenoss.app.autobundle.AutoConfiguredBundle;
@@ -56,7 +55,9 @@ public class ZAuthBundle implements AutoConfiguredBundle<AppConfiguration> {
                 ProxyConfiguration proxyConfig = configuration.getProxyConfiguration();
 
                 if (environment.getSessionHandler() == null) {
-                    environment.setSessionHandler(new SessionHandler());
+                    SessionHandler sh = new SessionHandler();
+                    sh.getSessionManager().setMaxInactiveInterval(configuration.getAuthTimeoutSeconds());
+                    environment.setSessionHandler(sh);
                 }
 
                 // this allows individual zapps to specify a shiro.ini in their http section
