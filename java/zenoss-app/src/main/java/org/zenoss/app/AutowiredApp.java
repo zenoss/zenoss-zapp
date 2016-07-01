@@ -117,6 +117,5 @@ public abstract class AutowiredApp<T extends AppConfiguration> extends Service<T
         environment.addServlet(healthcheck, "/healthcheck");
         environment.addTask(new LoggerLevelTask());
         environment.addTask(new DebugToggleTask(this.getAppName(), configuration.getLoggingConfiguration()));
-        environment.getObjectMapperFactory().enable(SerializationFeature.INDENT_OUTPUT);
     }
 }

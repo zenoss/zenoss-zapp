@@ -55,11 +55,7 @@ public class TokenRealmTest {
         this.request = mock(HttpServletRequest.class);
         this.response = mock(HttpServletResponse.class);
         this.mockClient = mock(HttpClient.class);
-        HttpClientBuilder builder = mock(HttpClientBuilder.class);
-        ClientConnectionManager connectionManager = mock(ClientConnectionManager.class);
-        when(builder.build()).thenReturn(mockClient);
-        when(mockClient.getConnectionManager()).thenReturn(connectionManager);
-        this.realm = new TokenRealm(builder);
+        this.realm = new TokenRealm(this.mockClient);
         TokenRealm.setProxyConfiguration(new ProxyConfiguration());
     }
 
@@ -120,7 +116,7 @@ public class TokenRealmTest {
         response.addHeader(ZenossToken.ID_HTTP_HEADER, "id");
         response.addHeader(ZenossToken.EXPIRES_HTTP_HEADER, "0");
         when(this.mockClient.execute(any(HttpPost.class))).thenReturn(response);
-        AuthenticationToken token = new StringAuthenticationToken("test");
+        AuthenticationToken token = new StringAuthenticationToken("test", "");
         AuthenticationInfo results = realm.doGetAuthenticationInfo(token);
         assertEquals( "test", results.getCredentials());
     }
@@ -130,7 +126,7 @@ public class TokenRealmTest {
     public void testDoGetAuthorizationMissingTenantId() throws Exception {
         HttpResponse response = getOkResponse();
         when(this.mockClient.execute(any(HttpPost.class))).thenReturn(response);
-        AuthenticationToken token = new StringAuthenticationToken("test");
+        AuthenticationToken token = new StringAuthenticationToken("test", "");
         realm.doGetAuthenticationInfo(token);
         fail();
     }

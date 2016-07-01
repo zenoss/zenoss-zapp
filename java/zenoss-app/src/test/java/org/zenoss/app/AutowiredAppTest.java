@@ -14,17 +14,13 @@
 
 package org.zenoss.app;
 
-import com.fasterxml.jackson.databind.SerializationFeature;
 import com.yammer.dropwizard.config.Bootstrap;
 import com.yammer.dropwizard.config.Environment;
-import com.yammer.dropwizard.json.ObjectMapperFactory;
 import org.junit.Assert;
 import org.junit.Test;
 import org.zenoss.app.autobundle.FakeAppConfig;
 
 import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.verify;
-import static org.mockito.Mockito.when;
 
 public class AutowiredAppTest {
 
@@ -80,11 +76,8 @@ public class AutowiredAppTest {
     public void testRun() throws Exception {
         final Environment environment = mock(Environment.class);
 
-        ObjectMapperFactory omf = mock(ObjectMapperFactory.class);
-        when(environment.getObjectMapperFactory()).thenReturn(omf);
         TestApp ta = new TestApp();
         ta.run(new FakeAppConfig(), environment);
-        verify(omf).enable(SerializationFeature.INDENT_OUTPUT);
 
     }
 
@@ -92,9 +85,6 @@ public class AutowiredAppTest {
     public void testInitialize() throws Exception {
         final Environment environment = mock(Environment.class);
         Bootstrap bootstrap = mock(Bootstrap.class);
-
-        ObjectMapperFactory omf = mock(ObjectMapperFactory.class);
-        when(environment.getObjectMapperFactory()).thenReturn(omf);
         TestApp ta = new TestApp();
         ta.initialize(bootstrap);
 

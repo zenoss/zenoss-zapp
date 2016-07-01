@@ -18,6 +18,7 @@ import javax.servlet.ServletResponse;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
+import org.apache.http.HttpHeaders;
 import org.apache.http.HttpStatus;
 import org.apache.shiro.authc.AuthenticationException;
 import org.apache.shiro.authc.AuthenticationToken;
@@ -54,7 +55,8 @@ public class TokenFilter extends AuthenticatingFilter {
         if (token == null) {
             throw new InvalidTokenException(TOKEN_HEADER + " header is missing");
         }
-        return new StringAuthenticationToken(token);
+        String extra = httpRequest.getHeader(HttpHeaders.USER_AGENT);
+        return new StringAuthenticationToken(token, extra);
     }
 
     /**

@@ -18,12 +18,15 @@ import com.yammer.dropwizard.client.HttpClientBuilder;
 import com.yammer.dropwizard.client.HttpClientConfiguration;
 import com.yammer.dropwizard.util.Duration;
 import org.apache.http.Header;
+import org.apache.http.HttpEntity;
+import org.apache.http.HttpHeaders;
 import org.apache.http.HttpResponse;
 import org.apache.http.HttpStatus;
 import org.apache.http.client.HttpClient;
 import org.apache.http.client.entity.UrlEncodedFormEntity;
 import org.apache.http.client.methods.HttpPost;
 import org.apache.http.message.BasicNameValuePair;
+import org.apache.http.util.EntityUtils;
 import org.apache.shiro.authc.AuthenticationException;
 import org.apache.shiro.authc.AuthenticationInfo;
 import org.apache.shiro.authc.AuthenticationToken;
@@ -56,9 +59,14 @@ public class TokenRealm extends AuthenticatingRealm {
      * This is static so we can set it when building our bundle and it is available for all instances.
      */
     private static ProxyConfiguration proxyConfig;
+    private static String appName = "zapp-auth";
 
     static void setProxyConfiguration(ProxyConfiguration config) {
         proxyConfig = config;
+    }
+
+    static void setAppName(String appName) {
+        TokenRealm.appName = appName;
     }
 
     private static String getValidateUrl() {
@@ -69,7 +77,7 @@ public class TokenRealm extends AuthenticatingRealm {
         return "http://" + hostname + ":" + port + VALIDATE_URL;
     }
 
-    private final HttpClientBuilder httpClientBuilder;
+    private final HttpClient httpClient;
 
     // Default constructor for Shiro reflection
     public TokenRealm() {
@@ -77,12 +85,16 @@ public class TokenRealm extends AuthenticatingRealm {
         HttpClientConfiguration config = new HttpClientConfiguration();
         config.setConnectionTimeout(Duration.seconds(10));
         config.setTimeout(Duration.seconds(10));
-        this.httpClientBuilder = new HttpClientBuilder().using(config);
+        config.setKeepAlive(Duration.seconds(10));
+        //prevent unlimited connections to zauth
+        config.setMaxConnectionsPerRoute(100);
+        //reuse the http client
+        this.httpClient = new HttpClientBuilder().using(config).build();
     }
 
     // Constructor when HttpClient configuration is desired.
-    public TokenRealm(HttpClientBuilder httpClientBuilder) {
-        this.httpClientBuilder = httpClientBuilder;
+    public TokenRealm(HttpClient httpClient) {
+        this.httpClient = httpClient;
     }
 
     /**
@@ -107,23 +119,32 @@ public class TokenRealm extends AuthenticatingRealm {
     protected AuthenticationInfo doGetAuthenticationInfo(AuthenticationToken token) throws AuthenticationException {
         log.debug("authenticating token - aka token validation");
         // get our principal from the token
-        String zenossToken = (String) token.getPrincipal();
+        StringAuthenticationToken strToken = (StringAuthenticationToken) token;
+        String zenossToken = (String) strToken.getPrincipal();
 
         // submit a request to zauthbundle service to find out if the token is valid
-        HttpClient client = httpClientBuilder.build();
+        HttpEntity entity = null;
+        HttpPost post = null;
+        long start = System.currentTimeMillis();
         try {
-            HttpPost method = getPostMethod(zenossToken);
-            HttpResponse response = client.execute(method);
-
+            post = getPostMethod(zenossToken);
+            //add app name and user-agent of incoming request for better tracking
+            post.setHeader(HttpHeaders.USER_AGENT, String.format("%s:%s", appName, strToken.extra));
+            HttpResponse response = httpClient.execute(post);
+            entity = response.getEntity();
             return handleResponse(zenossToken, response);
         } catch (IOException e) {
             log.error("IOException from ZAuthServer {} {}", e.getMessage(), e);
             throw new AuthenticationException(e);
         } finally {
-            // When HttpClient instance is no longer needed,
-            // shut down the connection manager to ensure
-            // immediate deallocation of all system resources
-            client.getConnectionManager().shutdown();
+            //make sure stream is consumed
+            if (entity != null) {
+                EntityUtils.consumeQuietly(entity);
+            }
+            if (post != null) {
+                post.reset();
+            }
+            log.debug("auth took {}ms", System.currentTimeMillis() - start);
         }
     }
 
