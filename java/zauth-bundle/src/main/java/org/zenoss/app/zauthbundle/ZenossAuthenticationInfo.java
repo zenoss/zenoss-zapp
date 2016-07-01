@@ -37,7 +37,7 @@ public class ZenossAuthenticationInfo implements AuthenticationInfo {
     }
 
     public void addTenant( String id, String realm) {
-        Object principle = new ZenossTenant(id);
+        Object principle = ZenossTenant.get(id);
         this.principles.add( principle, realm);
     }
 

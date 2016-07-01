@@ -73,7 +73,7 @@ public class TokenFilterTest {
 
     @Test
     public void testOnLoginFailure() throws Exception{
-        AuthenticationToken token = new StringAuthenticationToken("test");
+        AuthenticationToken token = new StringAuthenticationToken("test", "");
         AuthenticationException e = new AuthenticationException("This is an authentication exception");
 
         boolean result = filt.onLoginFailure(token, e, request, response);

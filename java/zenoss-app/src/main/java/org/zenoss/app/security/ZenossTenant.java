@@ -14,15 +14,23 @@
 package org.zenoss.app.security;
 
 import com.google.common.base.Preconditions;
+import com.google.common.collect.Interner;
+import com.google.common.collect.Interners;
 
 /**
  * ZenossTenant Id, identified through authentication.
  */
 public class ZenossTenant {
 
-    public static final String ID_HTTP_HEADER =  "X-ZAuth-TenantId";
+    public static final String ID_HTTP_HEADER = "X-ZAuth-TenantId";
+    private static final Interner<ZenossTenant> interner = Interners.newWeakInterner();
 
-    public ZenossTenant( String id) {
+    public static final ZenossTenant get(String id) {
+        ZenossTenant tenant = new ZenossTenant(id);
+        return interner.intern(tenant);
+    }
+
+    private ZenossTenant(String id) {
         Preconditions.checkNotNull(id);
         this.id = id;
     }

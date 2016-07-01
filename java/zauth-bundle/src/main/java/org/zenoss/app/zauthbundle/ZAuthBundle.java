@@ -19,12 +19,15 @@ import com.yammer.dropwizard.config.Bootstrap;
 import com.yammer.dropwizard.config.Environment;
 import org.apache.shiro.web.env.EnvironmentLoaderListener;
 import org.apache.shiro.web.servlet.ShiroFilter;
+import org.eclipse.jetty.server.session.HashSessionManager;
 import org.eclipse.jetty.server.session.SessionHandler;
-
 import org.zenoss.app.AppConfiguration;
 import org.zenoss.app.annotations.Bundle;
 import org.zenoss.app.autobundle.AutoConfiguredBundle;
 import org.zenoss.app.config.ProxyConfiguration;
+
+import java.util.Map;
+import java.util.Random;
 
 /**
  * Configured bundle that sets up shiro authentication for the zapp http requests.
@@ -34,7 +37,7 @@ public class ZAuthBundle implements AutoConfiguredBundle<AppConfiguration> {
 
     @Override
     public ConfiguredBundle getBundle(Bootstrap bootstrap) {
-        return new ZAuthShiroBundle();
+        return new ZAuthShiroBundle(bootstrap.getName());
     }
 
     @Override
@@ -48,6 +51,11 @@ public class ZAuthBundle implements AutoConfiguredBundle<AppConfiguration> {
     static class ZAuthShiroBundle implements ConfiguredBundle<AppConfiguration> {
 
         private static final String URL_PATTERN = "/*";
+        private final String name;
+
+        public ZAuthShiroBundle(String name) {
+            this.name = name.replace(" ","").toLowerCase();
+        }
 
         @Override
         public void run(AppConfiguration configuration, Environment environment) throws Exception {
@@ -56,7 +64,19 @@ public class ZAuthBundle implements AutoConfiguredBundle<AppConfiguration> {
                 ProxyConfiguration proxyConfig = configuration.getProxyConfiguration();
 
                 if (environment.getSessionHandler() == null) {
-                    environment.setSessionHandler(new SessionHandler());
+                    HashSessionManager sm = new HashSessionManager();
+                    Map<String, String> env = System.getenv();
+                    String id = env.get("CONTROLPLANE_INSTANCE_ID");
+                    if (id == null) {
+                        Random r = new Random();
+                        id = String.valueOf(r.nextInt(65536));
+                    }
+                    //scope jsessionid cookie to have app name and instance id.
+                    //prevents session cookies being invalidated as they balance across instances
+                    sm.setSessionCookie(String.format("%s_%s_%s", sm.getSessionCookie(), this.name, id));
+                    SessionHandler sh = new SessionHandler(sm);
+                    sh.getSessionManager().setMaxInactiveInterval(configuration.getAuthTimeoutSeconds());
+                    environment.setSessionHandler(sh);
                 }
 
                 // this allows individual zapps to specify a shiro.ini in their http section
@@ -65,6 +85,7 @@ public class ZAuthBundle implements AutoConfiguredBundle<AppConfiguration> {
                 environment.addServletListeners(new EnvironmentLoaderListener());
                 environment.addFilter(new ShiroFilter(), URL_PATTERN).setName("shiro-filter");
                 TokenRealm.setProxyConfiguration(proxyConfig);
+                TokenRealm.setAppName(this.name);
             }
         }
 

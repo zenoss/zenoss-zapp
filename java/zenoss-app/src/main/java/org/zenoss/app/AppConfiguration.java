@@ -14,13 +14,12 @@
 
 package org.zenoss.app;
 
+import com.fasterxml.jackson.annotation.JsonProperty;
+import com.yammer.dropwizard.config.Configuration;
 import org.zenoss.app.config.ProxyConfiguration;
 import org.zenoss.dropwizardspring.SpringConfiguration;
 import org.zenoss.dropwizardspring.eventbus.EventBusConfiguration;
 import org.zenoss.dropwizardspring.websockets.WebSocketConfiguration;
-
-import com.fasterxml.jackson.annotation.JsonProperty;
-import com.yammer.dropwizard.config.Configuration;
 
 
 /**
@@ -43,6 +42,9 @@ public abstract class AppConfiguration extends Configuration implements SpringCo
 
     @JsonProperty
     private boolean authEnabled = true;
+
+    @JsonProperty
+    private int authTimeoutSeconds = 60;
 
     public ProxyConfiguration getProxyConfiguration() {
         return proxyConfiguration;
@@ -82,5 +84,13 @@ public abstract class AppConfiguration extends Configuration implements SpringCo
 
     public void setAuthEnabled(boolean authEnabled) {
         this.authEnabled = authEnabled;
+    }
+
+    public int getAuthTimeoutSeconds() {
+        return this.authTimeoutSeconds;
+    }
+
+    public void setAuthTimeoutSeconds(int seconds) {
+        this.authTimeoutSeconds = seconds;
     }
 }

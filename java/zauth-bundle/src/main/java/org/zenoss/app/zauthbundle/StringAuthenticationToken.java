@@ -22,13 +22,15 @@ import org.apache.shiro.authc.AuthenticationToken;
 public final class StringAuthenticationToken implements AuthenticationToken {
 
     private final String zenossToken;
+    public final String extra;
 
     /**
      * The ZAuthToken that identifies this subject.
      * @param zenossToken String our zauthbundle token.
      */
-    public StringAuthenticationToken(String zenossToken) {
+    public StringAuthenticationToken(String zenossToken, String extra) {
         this.zenossToken = zenossToken;
+        this.extra = extra;
     }
 
     /**
