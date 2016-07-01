@@ -74,7 +74,6 @@ public class ZAuthBundle implements AutoConfiguredBundle<AppConfiguration> {
                     //scope jsessionid cookie to have app name and instance id.
                     //prevents session cookies being invalidated as they balance across instances
                     sm.setSessionCookie(String.format("%s_%s_%s", sm.getSessionCookie(), this.name, id));
-                    sm.setNodeIdInSessionId(true);
                     SessionHandler sh = new SessionHandler(sm);
                     sh.getSessionManager().setMaxInactiveInterval(configuration.getAuthTimeoutSeconds());
                     environment.setSessionHandler(sh);
