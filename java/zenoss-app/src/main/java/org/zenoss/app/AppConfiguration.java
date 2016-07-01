@@ -14,15 +14,14 @@
 
 package org.zenoss.app;
 
+import com.fasterxml.jackson.annotation.JsonProperty;
 import io.dropwizard.Configuration;
 import io.dropwizard.client.HttpClientConfiguration;
+import io.dropwizard.util.Duration;
 import org.zenoss.app.config.ProxyConfiguration;
 import org.zenoss.dropwizardspring.SpringConfiguration;
 import org.zenoss.dropwizardspring.eventbus.EventBusConfiguration;
 import org.zenoss.dropwizardspring.websockets.WebSocketConfiguration;
-
-import com.fasterxml.jackson.annotation.JsonProperty;
-
 
 
 /**
@@ -31,6 +30,20 @@ import com.fasterxml.jackson.annotation.JsonProperty;
  */
 
 public abstract class AppConfiguration extends Configuration implements SpringConfiguration {
+
+    private static final HttpClientConfiguration authHttpClientConfig = getAuthHttpClientConfig();
+
+    private static HttpClientConfiguration getAuthHttpClientConfig() {
+        HttpClientConfiguration config = new HttpClientConfiguration();
+        config.setConnectionRequestTimeout(Duration.seconds(10));
+        config.setConnectionTimeout(Duration.seconds(10));
+        config.setTimeout(Duration.seconds(10));
+        config.setKeepAlive(Duration.seconds(10));
+        config.setMaxConnectionsPerRoute(100);
+        return config;
+    }
+
+
     @JsonProperty
     private ProxyConfiguration proxyConfiguration = new ProxyConfiguration();
 
@@ -48,7 +61,10 @@ public abstract class AppConfiguration extends Configuration implements SpringCo
     private boolean authEnabled = true;
 
     @JsonProperty
-    private HttpClientConfiguration authHttpClientConfiguration = new HttpClientConfiguration();
+    private HttpClientConfiguration authHttpClientConfiguration = authHttpClientConfig;
+
+    @JsonProperty
+    private int authTimeoutSeconds = 60;
 
     public ProxyConfiguration getProxyConfiguration() {
         return proxyConfiguration;
@@ -90,7 +106,17 @@ public abstract class AppConfiguration extends Configuration implements SpringCo
         this.authEnabled = authEnabled;
     }
 
+    public int getAuthTimeoutSeconds() {
+        return this.authTimeoutSeconds;
+    }
+
+    public void setAuthTimeoutSeconds(int seconds) {
+        this.authTimeoutSeconds = seconds;
+    }
+
     public HttpClientConfiguration getAuthHttpClientConfiguration() {
         return authHttpClientConfiguration;
     }
+
+
 }

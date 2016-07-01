@@ -134,7 +134,7 @@ public class TokenRealmTest {
         CloseableHttpResponse  response = getOkResponse();
 
         when(this.mockClient.execute(any(HttpPost.class))).thenReturn(response);
-        AuthenticationToken token = new StringAuthenticationToken("test");
+        AuthenticationToken token = new StringAuthenticationToken("test", "");
         AuthenticationInfo results = realm.doGetAuthenticationInfo(token);
         assertEquals("test", results.getCredentials());
     }
@@ -144,7 +144,7 @@ public class TokenRealmTest {
     public void testDoGetAuthorizationMissingTenantId() throws Exception {
         CloseableHttpResponse  response = getOkResponseNoHeaders();
         when(this.mockClient.execute(any(HttpPost.class))).thenReturn(response);
-        AuthenticationToken token = new StringAuthenticationToken("test");
+        AuthenticationToken token = new StringAuthenticationToken("test", "");
         realm.doGetAuthenticationInfo(token);
         fail();
     }

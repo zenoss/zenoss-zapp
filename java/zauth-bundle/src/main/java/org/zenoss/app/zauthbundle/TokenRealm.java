@@ -15,6 +15,8 @@ package org.zenoss.app.zauthbundle;
 
 import com.google.common.base.Preconditions;
 import org.apache.http.Header;
+import org.apache.http.HttpEntity;
+import org.apache.http.HttpHeaders;
 import org.apache.http.HttpResponse;
 import org.apache.http.HttpStatus;
 import org.apache.http.client.entity.UrlEncodedFormEntity;
@@ -22,6 +24,7 @@ import org.apache.http.client.methods.CloseableHttpResponse;
 import org.apache.http.client.methods.HttpPost;
 import org.apache.http.impl.client.CloseableHttpClient;
 import org.apache.http.message.BasicNameValuePair;
+import org.apache.http.util.EntityUtils;
 import org.apache.shiro.authc.AuthenticationException;
 import org.apache.shiro.authc.AuthenticationInfo;
 import org.apache.shiro.authc.AuthenticationToken;
@@ -54,11 +57,16 @@ public class TokenRealm extends AuthenticatingRealm {
      * This is static so we can set it when building our bundle and it is available for all instances.
      */
     private static ProxyConfiguration proxyConfig;
+    private static String appName = "zapp-auth";
     private static CloseableHttpClient httpClient;
 
     static void init(ProxyConfiguration config, CloseableHttpClient httpClient) {
         proxyConfig = config;
         TokenRealm.httpClient = httpClient;
+    }
+
+    static void setAppName(String appName) {
+        TokenRealm.appName = appName;
     }
 
     private static String getValidateUrl() {
@@ -95,17 +103,22 @@ public class TokenRealm extends AuthenticatingRealm {
     protected AuthenticationInfo doGetAuthenticationInfo(AuthenticationToken token) throws AuthenticationException {
         log.debug("authenticating token - aka token validation");
         // get our principal from the token
-        String zenossToken = (String) token.getPrincipal();
+        StringAuthenticationToken strToken = (StringAuthenticationToken) token;
+        String zenossToken = (String) strToken.getPrincipal();
 
         // submit a request to zauthbundle service to find out if the token is valid
+        long start = System.currentTimeMillis();
         try {
             HttpPost method = getPostMethod(zenossToken);
             CloseableHttpResponse response = httpClient.execute(method);
-
+            //add app name and user-agent of incoming request for better tracking
+            method.setHeader(HttpHeaders.USER_AGENT, String.format("%s:%s", appName, strToken.extra));
             return handleResponse(zenossToken, response);
         } catch (IOException e) {
             log.error("IOException from ZAuthServer {} {}", e.getMessage(), e);
             throw new AuthenticationException(e);
+        } finally {
+            log.debug("auth took {}ms", System.currentTimeMillis() - start);
         }
     }
 
@@ -118,7 +131,9 @@ public class TokenRealm extends AuthenticatingRealm {
      * @throws AuthenticationException if the token wasn't valid
      */
     AuthenticationInfo handleResponse(String token, CloseableHttpResponse response) throws IOException, AuthenticationException {
+        HttpEntity entity = null;
         try {
+            entity = response.getEntity();
             int statusCode = response.getStatusLine().getStatusCode();
             // If debug is enabled, log the response body
             if (log.isDebugEnabled()) {
@@ -153,6 +168,10 @@ public class TokenRealm extends AuthenticatingRealm {
                 throw new AuthenticationException("Unable to validate token");
             }
         } finally {
+            //make sure stream is consumed
+            if (entity != null) {
+                EntityUtils.consumeQuietly(entity);
+            }
             response.close();
         }
     }

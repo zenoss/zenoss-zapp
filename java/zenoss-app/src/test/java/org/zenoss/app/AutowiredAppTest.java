@@ -15,10 +15,7 @@
 package org.zenoss.app;
 
 import be.tomcools.dropwizard.websocket.WebsocketBundle;
-import com.fasterxml.jackson.databind.ObjectMapper;
 import io.dropwizard.Application;
-import io.dropwizard.setup.Bootstrap;
-import io.dropwizard.setup.Environment;
 import io.dropwizard.testing.ConfigOverride;
 import io.dropwizard.testing.DropwizardTestSupport;
 import org.junit.Assert;
