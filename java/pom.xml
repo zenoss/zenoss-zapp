@@ -5,7 +5,7 @@
 
     <groupId>org.zenoss.zapp</groupId>
     <artifactId>zapp-parent</artifactId>
-    <version>0.0.21</version>
+    <version>0.0.22</version>
     <packaging>pom</packaging>
     <name>zapp-parent</name>
     <description/>
@@ -16,7 +16,7 @@
         <mockito.version>1.9.5</mockito.version>
         <junit.version>4.11</junit.version>
         <!--<guava.version>14.0.1</guava.version>-->
-        <spring.version>3.2.1.RELEASE</spring.version>
+        <spring.version>3.2.17.RELEASE</spring.version>
         <dropwizard.version>0.6.2</dropwizard.version>
         <!--<jackson.version>2.1.4</jackson.version>-->
         <jetty.version>8.1.10.v20130312</jetty.version>

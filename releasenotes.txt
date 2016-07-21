@@ -1,3 +1,6 @@
+v0.0.22 - 2016/07/21
+    - Upgrade spring to version 3.2.17.RELEASE to enable apps to work with Java 8.
+
 v0.0.21 - 2016/06/28
     - fixes ZEN-23803 Add default setting to timeout and remove idle auth sessions, fixes a memory leak
     - fixes ZEN-23844 Use unique session cookie names per application to prevent session cookie deleting/thrashing
