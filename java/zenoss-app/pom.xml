@@ -7,8 +7,13 @@
         <groupId>org.zenoss.zapp</groupId>
         <version>0.1.0-SNAPSHOT</version>
     </parent>
+
     <artifactId>zenoss-app</artifactId>
 
+    <properties>
+        <dropwizard.version>1.0.2</dropwizard.version>
+        <dropwizard-websocket-jee7-bundle.version>1.0.0</dropwizard-websocket-jee7-bundle.version>
+    </properties>
     <dependencies>
         <dependency>
             <groupId>io.dropwizard</groupId>
@@ -35,7 +40,7 @@
         <dependency>
           <groupId>be.tomcools</groupId>
           <artifactId>dropwizard-websocket-jee7-bundle</artifactId>
-          <version>1.0.0</version>
+          <version>${dropwizard-websocket-jee7-bundle.version}</version>
         </dependency>
         <!--test dependencies-->
         <dependency>
