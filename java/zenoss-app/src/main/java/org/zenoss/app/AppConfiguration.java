@@ -18,6 +18,7 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 import io.dropwizard.Configuration;
 import io.dropwizard.client.HttpClientConfiguration;
 import io.dropwizard.util.Duration;
+import io.federecio.dropwizard.swagger.SwaggerBundleConfiguration;
 import org.zenoss.app.config.ProxyConfiguration;
 import org.zenoss.dropwizardspring.SpringConfiguration;
 import org.zenoss.dropwizardspring.eventbus.EventBusConfiguration;
@@ -56,7 +57,6 @@ public abstract class AppConfiguration extends Configuration implements SpringCo
     @JsonProperty
     private ZenossCredentials zenossCredentials;
 
-
     @JsonProperty
     private boolean authEnabled = true;
 
@@ -65,6 +65,9 @@ public abstract class AppConfiguration extends Configuration implements SpringCo
 
     @JsonProperty
     private int authTimeoutSeconds = 900;
+
+    @JsonProperty("swagger")
+    private SwaggerBundleConfiguration swaggerBundleConfiguration;
 
     public ProxyConfiguration getProxyConfiguration() {
         return proxyConfiguration;
@@ -118,5 +121,7 @@ public abstract class AppConfiguration extends Configuration implements SpringCo
         return authHttpClientConfiguration;
     }
 
-
+    public SwaggerBundleConfiguration getSwaggerBundleConfiguration() {
+        return swaggerBundleConfiguration;
+    }
 }
