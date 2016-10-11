@@ -64,7 +64,7 @@ public abstract class AppConfiguration extends Configuration implements SpringCo
     private HttpClientConfiguration authHttpClientConfiguration = authHttpClientConfig;
 
     @JsonProperty
-    private int authTimeoutSeconds = 60;
+    private int authTimeoutSeconds = 900;
 
     public ProxyConfiguration getProxyConfiguration() {
         return proxyConfiguration;
