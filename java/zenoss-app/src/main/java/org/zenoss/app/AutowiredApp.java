@@ -20,6 +20,8 @@ import io.dropwizard.Application;
 import io.dropwizard.ConfiguredBundle;
 import io.dropwizard.setup.Bootstrap;
 import io.dropwizard.setup.Environment;
+import io.federecio.dropwizard.swagger.SwaggerBundle;
+import io.federecio.dropwizard.swagger.SwaggerBundleConfiguration;
 import org.glassfish.jersey.server.ResourceFinder;
 import org.glassfish.jersey.server.internal.scanning.AnnotationAcceptingListener;
 import org.glassfish.jersey.server.internal.scanning.PackageNamesScanner;
@@ -49,9 +51,8 @@ public abstract class AutowiredApp<T extends AppConfiguration> extends Applicati
     public static final String DEFAULT_SCAN = "org.zenoss.app";
     public static final String[] DEFAULT_ACTIVE_PROFILES = new String[]{"prod", "runtime"};
     private SpringBundle sb;
-
+    private boolean loadSwagger = false;
     private WebsocketBundle websocket = new WebsocketBundle();
-
 
     /**
      * The app name
@@ -69,7 +70,6 @@ public abstract class AutowiredApp<T extends AppConfiguration> extends Applicati
         return new String[]{DEFAULT_SCAN};
     }
 
-
     /**
      * The Spring profile activated by default.
      *
@@ -77,6 +77,15 @@ public abstract class AutowiredApp<T extends AppConfiguration> extends Applicati
      */
     protected String[] getActivateProfiles() {
         return DEFAULT_ACTIVE_PROFILES;
+    }
+
+    /**
+     * Flag to determine if the swagger configuration bundle must be loaded.
+     *
+     * @return true if the swagger configuration bundle should be loaded.
+     */
+    public boolean isLoadSwagger() {
+        return loadSwagger;
     }
 
     WebsocketBundle getWebsocket() {
@@ -103,6 +112,16 @@ public abstract class AutowiredApp<T extends AppConfiguration> extends Applicati
             }
         };
         bootstrap.addBundle(cb);
+
+        if(isLoadSwagger()){
+            bootstrap.addBundle(new SwaggerBundle<AppConfiguration>() {
+                @Override
+                protected SwaggerBundleConfiguration getSwaggerBundleConfiguration(AppConfiguration configuration) {
+                    return configuration.getSwaggerBundleConfiguration();
+                }
+            });
+        }
+
         sb = new SpringBundle(getScanPackages());
         sb.setDefaultProfiles(this.getActivateProfiles());
         bootstrap.addBundle(sb);

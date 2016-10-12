@@ -13,6 +13,11 @@
     <properties>
         <dropwizard.version>1.0.2</dropwizard.version>
         <dropwizard-websocket-jee7-bundle.version>1.0.0</dropwizard-websocket-jee7-bundle.version>
+        <dropwizard-swagger.version>1.0.0-1</dropwizard-swagger.version>
+        <swagger-core.version>1.5.10</swagger-core.version>
+        <jackson-core.version>2.8.3</jackson-core.version>
+        <jackson-databind.version>2.8.3</jackson-databind.version>
+        <jackson-annotations.version>2.8.3</jackson-annotations.version>
     </properties>
     <dependencies>
         <dependency>
@@ -24,6 +29,31 @@
             <groupId>io.dropwizard</groupId>
             <artifactId>dropwizard-client</artifactId>
             <version>${dropwizard.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>io.swagger</groupId>
+            <artifactId>swagger-core</artifactId>
+            <version>${swagger-core.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>com.fasterxml.jackson.core</groupId>
+            <artifactId>jackson-core</artifactId>
+            <version>${jackson-core.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>com.fasterxml.jackson.core</groupId>
+            <artifactId>jackson-databind</artifactId>
+            <version>${jackson-databind.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>com.fasterxml.jackson.core</groupId>
+            <artifactId>jackson-annotations</artifactId>
+            <version>${jackson-annotations.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>com.smoketurner</groupId>
+            <artifactId>dropwizard-swagger</artifactId>
+            <version>${dropwizard-swagger.version}</version>
         </dependency>
         <dependency>
             <groupId>org.zenoss.zapp</groupId>
