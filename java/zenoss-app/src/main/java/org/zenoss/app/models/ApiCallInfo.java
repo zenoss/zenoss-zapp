@@ -13,9 +13,8 @@
 
 package org.zenoss.app.models;
 
-import com.google.common.base.MoreObjects;
-import org.apache.commons.lang3.builder.EqualsBuilder;
-import org.apache.commons.lang3.builder.HashCodeBuilder;
+import com.google.common.base.*;
+import java.util.Collection;
 
 /**
  * An object that encapsulates information to be returned from a Zenoss
@@ -23,22 +22,24 @@ import org.apache.commons.lang3.builder.HashCodeBuilder;
  * consistent information when errors occur.
  *
  * @param httpStatusCode   The actual http status code that is returned by the endpoint.
- * @param errorString      A string describing the problem that ocurred.
- * @param zenossStatusCode A code, possibly different from the http code, that provides the
- *                         caller more information as to what might have ocurred.
+ * @param message          A summary of the result of the call.
+ * @param details          A list of messages with further details on errors that occurred.
+ * @param zenossErrorCode  A code that provides the caller more information as to what might have ocurred.
  * @param zenossHelpLink   A URL that will point the caller to documentation describing what might
- *                         have ocurred and how to resolve any problems.
+ *                         have occurred and how to resolve any problems.
  */
 public class ApiCallInfo {
     private final int httpStatusCode;
-    private final String errorString;
-    private final long zenossStatusCode;
+    private final String message;
+    private final Collection<String> details;
+    private final long zenossErrorCode;
     private final String zenossHelpLink;
 
     private ApiCallInfo(Builder builder) {
         httpStatusCode = builder.httpStatusCode;
-        errorString = builder.errorString;
-        zenossStatusCode = builder.zenossStatusCode;
+        message = builder.message;
+        details = builder.details;
+        zenossErrorCode = builder.zenossErrorCode;
         zenossHelpLink = builder.zenossHelpLink;
     }
 
@@ -46,11 +47,12 @@ public class ApiCallInfo {
         return new Builder();
     }
 
-    public static Builder newBuilder(org.zenoss.app.models.ApiCallInfo copy) {
+    public static Builder newBuilder(ApiCallInfo copy) {
         Builder builder = new Builder();
         builder.httpStatusCode = copy.httpStatusCode;
-        builder.errorString = copy.errorString;
-        builder.zenossStatusCode = copy.zenossStatusCode;
+        builder.message = copy.message;
+        builder.details = copy.details;
+        builder.zenossErrorCode = copy.zenossErrorCode;
         builder.zenossHelpLink = copy.zenossHelpLink;
         return builder;
     }
@@ -59,57 +61,66 @@ public class ApiCallInfo {
         return httpStatusCode;
     }
 
-    public String getErrorString() {
-        return errorString;
+    public String getMessage() {
+        return message;
     }
 
-    public long getZenossStatusCode() {
-        return zenossStatusCode;
+    public Collection<String> getDetails() {
+        return details;
+    }
+
+    public long getZenossErrorCode() {
+        return zenossErrorCode;
     }
 
     public String getZenossHelpLink() {
         return zenossHelpLink;
     }
 
-    public boolean equals(Object object) {
-        if (this == object) return true;
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
 
-        if (object == null || getClass() != object.getClass()) return false;
+        if (o == null || getClass() != o.getClass()) return false;
 
-        ApiCallInfo that = (ApiCallInfo) object;
-        return new EqualsBuilder()
-            .appendSuper(super.equals(object))
+        ApiCallInfo that = (ApiCallInfo) o;
+
+        return new org.apache.commons.lang3.builder.EqualsBuilder()
             .append(httpStatusCode, that.httpStatusCode)
-            .append(zenossStatusCode, that.zenossStatusCode)
-            .append(errorString, that.errorString)
+            .append(zenossErrorCode, that.zenossErrorCode)
+            .append(message, that.message)
+            .append(details, that.details)
             .append(zenossHelpLink, that.zenossHelpLink)
             .isEquals();
     }
 
+    @Override
     public int hashCode() {
-        return new HashCodeBuilder(17, 37)
-            .appendSuper(super.hashCode())
+        return new org.apache.commons.lang3.builder.HashCodeBuilder(17, 37)
             .append(httpStatusCode)
-            .append(errorString)
-            .append(zenossStatusCode)
+            .append(message)
+            .append(details)
+            .append(zenossErrorCode)
             .append(zenossHelpLink)
             .toHashCode();
     }
 
-    @java.lang.Override
+    @Override
     public String toString() {
         return MoreObjects.toStringHelper(this)
             .add("httpStatusCode", httpStatusCode)
-            .add("errorString", errorString)
-            .add("zenossStatusCode", zenossStatusCode)
+            .add("message", message)
+            .add("details", details)
+            .add("zenossErrorCode", zenossErrorCode)
             .add("zenossHelpLink", zenossHelpLink)
             .toString();
     }
 
     public static final class Builder {
         private int httpStatusCode;
-        private String errorString;
-        private long zenossStatusCode;
+        private String message;
+        private Collection<String> details;
+        private long zenossErrorCode;
         private String zenossHelpLink;
 
         private Builder() {
@@ -120,13 +131,18 @@ public class ApiCallInfo {
             return this;
         }
 
-        public Builder withErrorString(String errorString) {
-            this.errorString = errorString;
+        public Builder withMessage(String message) {
+            this.message = message;
             return this;
         }
 
-        public Builder withZenossStatusCode(long zenossStatusCode) {
-            this.zenossStatusCode = zenossStatusCode;
+        public Builder withDetails(Collection<String> details) {
+            this.details = details;
+            return this;
+        }
+
+        public Builder withZenossErrorCode(long zenossErrorCode) {
+            this.zenossErrorCode = zenossErrorCode;
             return this;
         }
 
@@ -135,7 +151,7 @@ public class ApiCallInfo {
             return this;
         }
 
-        public org.zenoss.app.models.ApiCallInfo build() {
+        public ApiCallInfo build() {
             return new ApiCallInfo(this);
         }
     }
