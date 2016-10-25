@@ -24,8 +24,8 @@ import java.util.Collection;
  * @param httpStatusCode   The actual http status code that is returned by the endpoint.
  * @param message          A summary of the result of the call.
  * @param details          A list of messages with further details on errors that occurred.
- * @param zenossErrorCode  A code that provides the caller more information as to what might have ocurred.
- * @param zenossHelpLink   A URL that will point the caller to documentation describing what might
+ * @param zenossErrorCode  A code that provides the caller more information as to what might have occurred.
+ * @param zenossHelpLink   A URL that will point the caller to Zenoss documentation describing what might
  *                         have occurred and how to resolve any problems.
  */
 public class ApiCallInfo {

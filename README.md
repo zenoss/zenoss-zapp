@@ -5,8 +5,8 @@ Base project for creating zenoss REST applications.
 Intro
 ----
 A zapp is a standalone java application that provides REST webservices. A zapp is built on the
-[Dropwizard][1] framework and adds integration with [Spring][2] to enable
-auto configuration and registration of objects in [Dropwizard][1]. A zapp is deployed and run as a self contained jar
+[Dropwizard][1] framework and adds integration with [Spring][2] to enable auto configuration and 
+registration of objects in [Dropwizard][1]. A zapp is deployed and run as a self contained jar
 with all dependencies and given an optional configuration file.
 
 There is also an zapp-example that demonstrates how to create a zapp project.
@@ -247,6 +247,20 @@ configuration below.
     }
 
 Read more about Guava [EventBus](http://code.google.com/p/guava-libraries/wiki/EventBusExplained)
+
+
+API Call Information
+--------------------
+The model object `ApiCallInfo` (`org.zenoss.app.models.ApiCallInfo`) can be used in an API endpoint response to provide callers 
+with consistently formatted information regarding the call and any summary and detailed error information that might be applicable.  
+This object provides the following fields:
+
+ * **httpStatusCode** - the actual http status code that is returned by the endpoint
+ * **message** - a summary of the result of the call
+ * **details** - a list of messages with further details on errors that occurred
+ * **zenossErrorCode** - a code that provides the caller more information as to what might have occurred
+ * **zenossHelpLink** - a URL that points the caller to Zenoss documentation describing what might have occurred and how to resolve any problems
+
 
 Writing unit tests
 ---
