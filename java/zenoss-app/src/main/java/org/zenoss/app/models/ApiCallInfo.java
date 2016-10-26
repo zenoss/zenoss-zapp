@@ -29,10 +29,10 @@ import java.util.Collection;
  *                         have occurred and how to resolve any problems.
  */
 public class ApiCallInfo {
-    private final int httpStatusCode;
+    private final Integer httpStatusCode;
     private final String message;
     private final Collection<String> details;
-    private final long zenossErrorCode;
+    private final Long zenossErrorCode;
     private final String zenossHelpLink;
 
     private ApiCallInfo(Builder builder) {
