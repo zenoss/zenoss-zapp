@@ -19,6 +19,7 @@ import io.dropwizard.Configuration;
 import io.dropwizard.client.HttpClientConfiguration;
 import io.dropwizard.util.Duration;
 import io.federecio.dropwizard.swagger.SwaggerBundleConfiguration;
+import org.zenoss.app.config.CorsConfiguration;
 import org.zenoss.app.config.ProxyConfiguration;
 import org.zenoss.dropwizardspring.SpringConfiguration;
 import org.zenoss.dropwizardspring.eventbus.EventBusConfiguration;
@@ -44,7 +45,6 @@ public abstract class AppConfiguration extends Configuration implements SpringCo
         return config;
     }
 
-
     @JsonProperty
     private ProxyConfiguration proxyConfiguration = new ProxyConfiguration();
 
@@ -68,6 +68,9 @@ public abstract class AppConfiguration extends Configuration implements SpringCo
 
     @JsonProperty("swagger")
     private SwaggerBundleConfiguration swaggerBundleConfiguration;
+
+    @JsonProperty("cors")
+    private CorsConfiguration corsConfiguration = new CorsConfiguration();
 
     public ProxyConfiguration getProxyConfiguration() {
         return proxyConfiguration;
@@ -123,5 +126,9 @@ public abstract class AppConfiguration extends Configuration implements SpringCo
 
     public SwaggerBundleConfiguration getSwaggerBundleConfiguration() {
         return swaggerBundleConfiguration;
+    }
+
+    public CorsConfiguration getCorsConfiguration() {
+        return corsConfiguration;
     }
 }

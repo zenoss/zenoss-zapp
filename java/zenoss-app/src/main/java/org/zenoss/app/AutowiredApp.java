@@ -22,6 +22,17 @@ import io.dropwizard.setup.Bootstrap;
 import io.dropwizard.setup.Environment;
 import io.federecio.dropwizard.swagger.SwaggerBundle;
 import io.federecio.dropwizard.swagger.SwaggerBundleConfiguration;
+import java.io.IOException;
+import java.io.InputStream;
+import java.lang.annotation.Annotation;
+import java.util.EnumSet;
+import java.util.Set;
+import javax.servlet.DispatcherType;
+import javax.servlet.FilterRegistration;
+import javax.websocket.server.ServerEndpoint;
+import javax.websocket.server.ServerEndpointConfig;
+import javax.websocket.server.ServerEndpointConfig.Configurator;
+import org.eclipse.jetty.servlets.CrossOriginFilter;
 import org.glassfish.jersey.server.ResourceFinder;
 import org.glassfish.jersey.server.internal.scanning.AnnotationAcceptingListener;
 import org.glassfish.jersey.server.internal.scanning.PackageNamesScanner;
@@ -30,14 +41,6 @@ import org.zenoss.app.ZenossCredentials.Builder;
 import org.zenoss.app.autobundle.BundleLoader;
 import org.zenoss.app.tasks.DebugToggleTask;
 import org.zenoss.dropwizardspring.SpringBundle;
-
-import javax.websocket.server.ServerEndpoint;
-import javax.websocket.server.ServerEndpointConfig;
-import javax.websocket.server.ServerEndpointConfig.Configurator;
-import java.io.IOException;
-import java.io.InputStream;
-import java.lang.annotation.Annotation;
-import java.util.Set;
 
 /**
  * Creates an App that uses Spring to scan and autowire objects. By default will scan for the Spring components with
@@ -52,6 +55,7 @@ public abstract class AutowiredApp<T extends AppConfiguration> extends Applicati
     public static final String[] DEFAULT_ACTIVE_PROFILES = new String[]{"prod", "runtime"};
     private SpringBundle sb;
     private boolean loadSwagger = false;
+    private boolean enableCors = false;
     private WebsocketBundle websocket = new WebsocketBundle();
 
     /**
@@ -86,6 +90,19 @@ public abstract class AutowiredApp<T extends AppConfiguration> extends Applicati
      */
     public boolean isLoadSwagger() {
         return loadSwagger;
+    }
+
+    /**
+     * Flag that specifies that CORS should be enabled.  When CORS is enabled several configuration
+     * parameters are leveraged that specify the methods, origins and headers to use (refer to
+     * {@link org.zenoss.app.config.CorsConfiguration}).
+     *
+     * CORS is disabled by default.
+     *
+     * @return true if CORS is enabled.
+     */
+    public boolean isEnableCors() {
+        return enableCors;
     }
 
     WebsocketBundle getWebsocket() {
@@ -176,6 +193,13 @@ public abstract class AutowiredApp<T extends AppConfiguration> extends Applicati
             getWebsocket().addEndpoint(ws);
         }
 
+        if (isEnableCors()) {
+            FilterRegistration.Dynamic corsFilter = environment.servlets().addFilter("CORS", CrossOriginFilter.class);
+            corsFilter.setInitParameter(CrossOriginFilter.ALLOWED_METHODS_PARAM, configuration.getCorsConfiguration().getMethods());
+            corsFilter.setInitParameter(CrossOriginFilter.ALLOWED_ORIGINS_PARAM, configuration.getCorsConfiguration().getOrigins());
+            corsFilter.setInitParameter(CrossOriginFilter.ALLOWED_HEADERS_PARAM, configuration.getCorsConfiguration().getHeaders());
+            corsFilter.addMappingForUrlPatterns(EnumSet.allOf(DispatcherType.class), true, configuration.getCorsConfiguration().getUrlMapping());
+        }
     }
 
     Set<Class<?>> findWS(final Class<? extends Annotation> klazz, String... packages) throws IOException {
