@@ -23,7 +23,10 @@ import org.springframework.stereotype.Component;
 @Component
 public class ZappSecurity {
 
-    /** return the thread-local shiro subject */
+    /**
+     * Gets the thread-local shiro subject.
+     * @return A {@link Subject}.
+     */
     public Subject getSubject() {
         return SecurityUtils.getSubject();
     }

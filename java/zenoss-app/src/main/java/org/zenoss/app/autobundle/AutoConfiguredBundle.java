@@ -25,9 +25,11 @@ import org.zenoss.app.AppConfiguration;
 public interface AutoConfiguredBundle<T extends AppConfiguration> {
 
     /**
-     * Get the initializedbundle to be loaded.
+     * Get the initialized bundle to be loaded.
      *
-     * @return ConfiguredBundle to be added
+     * @param bootstrap The {@link Bootstrap} instance from which the bundle
+     *                  is retrieved.
+     * @return ConfiguredBundle to be added.
      */
     ConfiguredBundle getBundle(Bootstrap bootstrap);
 
