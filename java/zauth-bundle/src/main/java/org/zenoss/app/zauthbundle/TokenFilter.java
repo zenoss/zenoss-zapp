@@ -123,7 +123,7 @@ public class TokenFilter extends AuthenticatingFilter {
      * @param request ServletRequest
      * @param response Http response back to the user
      * @return true, let the filter chain continue on
-     * @throws Exception
+     * @throws Exception - todo is this necessary?
      */
     @Override
     protected boolean onLoginSuccess(AuthenticationToken token, Subject subject,

@@ -18,22 +18,41 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.common.base.Preconditions;
 
 /**
- * WebSocketBroadcast creates messages for broadcasting across websockets.  Two kinds of messages are supports
- * String and binary (byte[]).  This class also supports creating json messages.
+ * WebSocketBroadcast creates messages for broadcasting across web sockets.  This class supports two
+ * types of messages: String and binary (byte[]).  This class also supports creating json messages.
  */
 public final class WebSocketBroadcast {
 
-    /** Create a string broadcast message*/
+    /**
+     * Create a string broadcast message.
+     *
+     * @param webSocketEndPoint The endpoint that receives the message.
+     * @param message           The string message to send.
+     * @return A {@link Message} instance that wraps the endpoint and message.
+     */
     public static Message newMessage(Class<?> webSocketEndPoint, String message) {
         return new Message(webSocketEndPoint, message);
     }
 
-    /** Create a binary broadcast message*/
+    /**
+     * Create a binary broadcast message.
+     *
+     * @param webSocketEndPoint The endpoint that receives the message.
+     * @param message           The binary message to send.
+     * @return A {@link Message} instance that wraps the endpoint and message.
+     */
     public static Message newMessage(Class<?> webSocketEndPoint, byte[] message) {
         return new Message(webSocketEndPoint, message);
     }
 
-    /** Create a json message using pojo */
+    /**
+     * Create a json message.
+     *
+     * @param webSocketEndPoint The endpoint that receives the message .
+     * @param pojo              An object that is converted to JSON to use as the message.
+     * @return A {@link Message} instance that wraps the endpoint and message
+     * @throws JsonProcessingException
+     */
     public static Message newMessage(Class<?> webSocketEndPoint, Object pojo) throws JsonProcessingException {
         String message = mapper.writeValueAsString(pojo);
         return newMessage(webSocketEndPoint, message);
@@ -70,9 +89,9 @@ public final class WebSocketBroadcast {
         @Override
         public String toString() {
             return "Message{" +
-                    "message=" + message +
-                    ", webSocketEndPoint=" + webSocketEndPoint +
-                    '}';
+                "message=" + message +
+                ", webSocketEndPoint=" + webSocketEndPoint +
+                '}';
         }
 
         @Override

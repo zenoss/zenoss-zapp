@@ -45,11 +45,11 @@ import java.util.concurrent.ExecutorService;
 /**
  * Dropwizard bundle for configuring Spring using auto wired dependency injection by scanning for Spring components in
  * the configured packages.
- * <p/>
+ * <p>
  * Automatically adds Dropwizard HealthChecks, Managed and Task objects that have annotations found in
  * {@link org.zenoss.dropwizardspring.annotations}. Also adds Jersey resources that have been annotated with
  * {@link org.zenoss.dropwizardspring.annotations.Resource}.
- * <p/>
+ * <p>
  * Instantiate this class and register as a bundle in the initialize method in your Dropwizard main class.
  */
 

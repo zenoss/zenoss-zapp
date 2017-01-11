@@ -26,7 +26,8 @@ public final class StringAuthenticationToken implements AuthenticationToken {
 
     /**
      * The ZAuthToken that identifies this subject.
-     * @param zenossToken String our zauthbundle token.
+     * @param zenossToken String our zauth bundle token.
+     * @param extra Extra information stored with this class. ???
      */
     public StringAuthenticationToken(String zenossToken, String extra) {
         this.zenossToken = zenossToken;

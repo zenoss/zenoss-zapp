@@ -47,7 +47,7 @@ public class ExampleApp extends AutowiredApp<ExampleAppConfiguration> {
      * <p>
      * Once the above is added to the configuration file and this method is enabled
      * the application's resource classes can be decorated with the proper @Api and
-     * @ApiOperation annotations.
+     * {@code @ApiOperation} annotations.
      * </p>
      * <ul>
      * <li>For an example of swagger being used, see

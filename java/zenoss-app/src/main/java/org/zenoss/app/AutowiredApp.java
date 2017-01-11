@@ -47,7 +47,7 @@ import org.zenoss.dropwizardspring.SpringBundle;
  * profiles "prod" and "runtime".  The runtime profile should be used for classes that only need to be active during the
  * running of the zapp i.e. not during tests.
  *
- * @param <T>
+ * @param <T> The configuration class derived from {@link AppConfiguration} to be used for this web app.
  */
 public abstract class AutowiredApp<T extends AppConfiguration> extends Application<T> {
 
