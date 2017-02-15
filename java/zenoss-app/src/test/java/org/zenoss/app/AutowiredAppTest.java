@@ -14,7 +14,6 @@
 
 package org.zenoss.app;
 
-import be.tomcools.dropwizard.websocket.WebsocketBundle;
 import io.dropwizard.Application;
 import io.dropwizard.testing.ConfigOverride;
 import io.dropwizard.testing.DropwizardTestSupport;
@@ -31,8 +30,6 @@ public class AutowiredAppTest {
 
     public static final class TestApp extends AutowiredApp<FakeAppConfig> {
 
-        WebsocketBundle websocketBundle = mock(WebsocketBundle.class);
-
         @Override
         public String getAppName() {
             return "Test App";
@@ -46,11 +43,6 @@ public class AutowiredAppTest {
         @Override
         protected String[] getActivateProfiles() {
             return new String[]{"test"};
-        }
-
-        @Override
-        WebsocketBundle getWebsocket() {
-            return websocketBundle;
         }
     }
 
@@ -95,10 +87,6 @@ public class AutowiredAppTest {
                 };
         app.before();
         app.after();
-
-        verify(testApp.websocketBundle, times(1)).addEndpoint(isA(ServerEndpointConfig.class));
-        verify(testApp.websocketBundle, times(1)).addEndpoint(TestWebSocket.class);
-
     }
 
 

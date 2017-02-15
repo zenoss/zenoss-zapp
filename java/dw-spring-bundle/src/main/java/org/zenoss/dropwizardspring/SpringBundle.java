@@ -17,7 +17,6 @@ package org.zenoss.dropwizardspring;
 import com.codahale.metrics.health.HealthCheck;
 import com.google.common.eventbus.AsyncEventBus;
 import com.google.common.eventbus.EventBus;
-import io.dropwizard.Configuration;
 import io.dropwizard.ConfiguredBundle;
 import io.dropwizard.lifecycle.Managed;
 import io.dropwizard.servlets.tasks.Task;
@@ -30,10 +29,7 @@ import org.springframework.beans.factory.config.ConfigurableListableBeanFactory;
 import org.springframework.context.annotation.AnnotationConfigApplicationContext;
 import org.zenoss.dropwizardspring.annotations.Resource;
 import org.zenoss.dropwizardspring.eventbus.EventBusConfiguration;
-import org.zenoss.dropwizardspring.websockets.WebSocketConfiguration;
 
-import java.lang.reflect.InvocationTargetException;
-import java.lang.reflect.Method;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;

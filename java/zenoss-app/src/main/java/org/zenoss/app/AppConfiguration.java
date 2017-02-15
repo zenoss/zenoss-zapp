@@ -21,9 +21,9 @@ import io.dropwizard.util.Duration;
 import io.federecio.dropwizard.swagger.SwaggerBundleConfiguration;
 import org.zenoss.app.config.CorsConfiguration;
 import org.zenoss.app.config.ProxyConfiguration;
+import org.zenoss.app.config.WebsocketConfiguration;
 import org.zenoss.dropwizardspring.SpringConfiguration;
 import org.zenoss.dropwizardspring.eventbus.EventBusConfiguration;
-import org.zenoss.dropwizardspring.websockets.WebSocketConfiguration;
 
 
 /**
@@ -48,8 +48,9 @@ public abstract class AppConfiguration extends Configuration implements SpringCo
     @JsonProperty
     private ProxyConfiguration proxyConfiguration = new ProxyConfiguration();
 
+
     @JsonProperty
-    private WebSocketConfiguration webSocketConfiguration = new WebSocketConfiguration();
+    private WebsocketConfiguration websocketConfiguration = new WebsocketConfiguration();
 
     @JsonProperty
     private EventBusConfiguration eventBusConfiguration = new EventBusConfiguration();
@@ -76,8 +77,8 @@ public abstract class AppConfiguration extends Configuration implements SpringCo
         return proxyConfiguration;
     }
 
-    public WebSocketConfiguration getWebSocketConfiguration() {
-        return webSocketConfiguration;
+    public WebsocketConfiguration getWebsocketConfiguration() {
+        return websocketConfiguration;
     }
 
     public EventBusConfiguration getEventBusConfiguration() {
@@ -88,8 +89,8 @@ public abstract class AppConfiguration extends Configuration implements SpringCo
         this.proxyConfiguration = proxyConfiguration;
     }
 
-    public void setWebSocketConfiguration(WebSocketConfiguration webSocketConfiguration) {
-        this.webSocketConfiguration = webSocketConfiguration;
+    public void setWebsocketConfiguration(WebsocketConfiguration websocketConfiguration) {
+        this.websocketConfiguration = websocketConfiguration;
     }
 
     public void setEventBusConfiguration(EventBusConfiguration eventBusConfiguration) {

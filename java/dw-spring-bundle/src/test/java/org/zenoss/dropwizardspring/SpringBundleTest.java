@@ -30,7 +30,6 @@ import org.junit.Before;
 import org.junit.Test;
 import org.zenoss.dropwizardspring.eventbus.EventBusConfiguration;
 import org.zenoss.dropwizardspring.testclasses.TestEventBus;
-import org.zenoss.dropwizardspring.websockets.WebSocketConfiguration;
 
 import static org.hamcrest.CoreMatchers.not;
 import static org.hamcrest.MatcherAssert.assertThat;
@@ -41,10 +40,6 @@ import static org.mockito.Mockito.*;
 public class SpringBundleTest {
 
     public class TestConfiguration extends Configuration implements SpringConfiguration {
-        public WebSocketConfiguration getWebSocketConfiguration() {
-            return new WebSocketConfiguration();
-        }
-
         public EventBusConfiguration getEventBusConfiguration() {
             return new EventBusConfiguration();
         }

@@ -14,10 +14,10 @@
 
 package org.zenoss.app;
 
-import be.tomcools.dropwizard.websocket.WebsocketBundle;
 import com.fasterxml.jackson.databind.SerializationFeature;
 import io.dropwizard.Application;
 import io.dropwizard.ConfiguredBundle;
+import io.dropwizard.server.ServerFactory;
 import io.dropwizard.setup.Bootstrap;
 import io.dropwizard.setup.Environment;
 import io.federecio.dropwizard.swagger.SwaggerBundle;
@@ -32,6 +32,8 @@ import javax.servlet.FilterRegistration;
 import javax.websocket.server.ServerEndpoint;
 import javax.websocket.server.ServerEndpointConfig;
 import javax.websocket.server.ServerEndpointConfig.Configurator;
+
+import org.eclipse.jetty.server.Server;
 import org.eclipse.jetty.servlets.CrossOriginFilter;
 import org.glassfish.jersey.server.ResourceFinder;
 import org.glassfish.jersey.server.internal.scanning.AnnotationAcceptingListener;
@@ -41,6 +43,10 @@ import org.zenoss.app.ZenossCredentials.Builder;
 import org.zenoss.app.autobundle.BundleLoader;
 import org.zenoss.app.tasks.DebugToggleTask;
 import org.zenoss.dropwizardspring.SpringBundle;
+
+import javax.websocket.server.ServerContainer;
+import org.eclipse.jetty.websocket.jsr356.server.deploy.WebSocketServerContainerInitializer;
+
 
 /**
  * Creates an App that uses Spring to scan and autowire objects. By default will scan for the Spring components with
@@ -56,7 +62,6 @@ public abstract class AutowiredApp<T extends AppConfiguration> extends Applicati
     private SpringBundle sb;
     private boolean loadSwagger = false;
     private boolean enableCors = false;
-    private WebsocketBundle websocket = new WebsocketBundle();
 
     /**
      * The app name
@@ -105,10 +110,6 @@ public abstract class AutowiredApp<T extends AppConfiguration> extends Applicati
         return enableCors;
     }
 
-    WebsocketBundle getWebsocket() {
-        return websocket;
-    }
-
     /**
      * {@inheritDoc}
      */
@@ -142,7 +143,6 @@ public abstract class AutowiredApp<T extends AppConfiguration> extends Applicati
         sb = new SpringBundle(getScanPackages());
         sb.setDefaultProfiles(this.getActivateProfiles());
         bootstrap.addBundle(sb);
-        bootstrap.addBundle(getWebsocket());
 
         Class configType = getConfigType();
         try {
@@ -171,6 +171,11 @@ public abstract class AutowiredApp<T extends AppConfiguration> extends Applicati
         //find classes with ServerEndPoint annotation
         Set<Class<?>> serverEndpoints = findWS(ServerEndpoint.class, getScanPackages());
 
+        ServerFactoryWithEndpoints sf = new ServerFactoryWithEndpoints(
+                configuration.getServerFactory(),
+                configuration.getWebsocketConfiguration());
+        configuration.setServerFactory(sf);
+
         //find spring beans with ServerEndpoint annotation
         String[] names = ctx.getBeanNamesForAnnotation(ServerEndpoint.class);
         for (final String name : names) {
@@ -186,11 +191,11 @@ public abstract class AutowiredApp<T extends AppConfiguration> extends Applicati
                             return ctx.getBean(name, endpointClass);
                         }
                     }).build();
-            getWebsocket().addEndpoint(endpointConfig);
+            sf.addEndpoint(endpointConfig);
         }
         //register any remaining endpoints that were not springified
         for (Class ws : serverEndpoints) {
-            getWebsocket().addEndpoint(ws);
+            sf.addEndpoint(ws);
         }
 
         if (isEnableCors()) {
