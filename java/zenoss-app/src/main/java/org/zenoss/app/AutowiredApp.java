@@ -14,32 +14,49 @@
 
 package org.zenoss.app;
 
+import be.tomcools.dropwizard.websocket.WebsocketBundle;
 import com.fasterxml.jackson.databind.SerializationFeature;
-import com.yammer.dropwizard.ConfiguredBundle;
-import com.yammer.dropwizard.Service;
-import com.yammer.dropwizard.config.Bootstrap;
-import com.yammer.dropwizard.config.Environment;
-import com.yammer.metrics.reporting.HealthCheckServlet;
-import com.yammer.metrics.reporting.MetricsServlet;
+import io.dropwizard.Application;
+import io.dropwizard.ConfiguredBundle;
+import io.dropwizard.setup.Bootstrap;
+import io.dropwizard.setup.Environment;
+import io.federecio.dropwizard.swagger.SwaggerBundle;
+import io.federecio.dropwizard.swagger.SwaggerBundleConfiguration;
+import java.io.IOException;
+import java.io.InputStream;
+import java.lang.annotation.Annotation;
+import java.util.EnumSet;
+import java.util.Set;
+import javax.servlet.DispatcherType;
+import javax.servlet.FilterRegistration;
+import javax.websocket.server.ServerEndpoint;
+import javax.websocket.server.ServerEndpointConfig;
+import javax.websocket.server.ServerEndpointConfig.Configurator;
+import org.eclipse.jetty.servlets.CrossOriginFilter;
+import org.glassfish.jersey.server.ResourceFinder;
+import org.glassfish.jersey.server.internal.scanning.AnnotationAcceptingListener;
+import org.glassfish.jersey.server.internal.scanning.PackageNamesScanner;
+import org.springframework.context.annotation.AnnotationConfigApplicationContext;
 import org.zenoss.app.ZenossCredentials.Builder;
 import org.zenoss.app.autobundle.BundleLoader;
 import org.zenoss.app.tasks.DebugToggleTask;
-import org.zenoss.app.tasks.LoggerLevelTask;
 import org.zenoss.dropwizardspring.SpringBundle;
-
-import javax.servlet.Servlet;
 
 /**
  * Creates an App that uses Spring to scan and autowire objects. By default will scan for the Spring components with
  * profiles "prod" and "runtime".  The runtime profile should be used for classes that only need to be active during the
  * running of the zapp i.e. not during tests.
  *
- * @param <T>
+ * @param <T> The configuration class derived from {@link AppConfiguration} to be used for this web app.
  */
-public abstract class AutowiredApp<T extends AppConfiguration> extends Service<T> {
+public abstract class AutowiredApp<T extends AppConfiguration> extends Application<T> {
 
     public static final String DEFAULT_SCAN = "org.zenoss.app";
     public static final String[] DEFAULT_ACTIVE_PROFILES = new String[]{"prod", "runtime"};
+    private SpringBundle sb;
+    private boolean loadSwagger = false;
+    private boolean enableCors = false;
+    private WebsocketBundle websocket = new WebsocketBundle();
 
     /**
      * The app name
@@ -57,7 +74,6 @@ public abstract class AutowiredApp<T extends AppConfiguration> extends Service<T
         return new String[]{DEFAULT_SCAN};
     }
 
-
     /**
      * The Spring profile activated by default.
      *
@@ -67,6 +83,31 @@ public abstract class AutowiredApp<T extends AppConfiguration> extends Service<T
         return DEFAULT_ACTIVE_PROFILES;
     }
 
+    /**
+     * Flag to determine if the swagger configuration bundle must be loaded.
+     *
+     * @return true if the swagger configuration bundle should be loaded.
+     */
+    public boolean isLoadSwagger() {
+        return loadSwagger;
+    }
+
+    /**
+     * Flag that specifies that CORS should be enabled.  When CORS is enabled several configuration
+     * parameters are leveraged that specify the methods, origins and headers to use (refer to
+     * {@link org.zenoss.app.config.CorsConfiguration}).
+     *
+     * CORS is disabled by default.
+     *
+     * @return true if CORS is enabled.
+     */
+    public boolean isEnableCors() {
+        return enableCors;
+    }
+
+    WebsocketBundle getWebsocket() {
+        return websocket;
+    }
 
     /**
      * {@inheritDoc}
@@ -88,10 +129,21 @@ public abstract class AutowiredApp<T extends AppConfiguration> extends Service<T
             }
         };
         bootstrap.addBundle(cb);
-        bootstrap.setName(this.getAppName());
-        SpringBundle sb = new SpringBundle(getScanPackages());
+
+        if(isLoadSwagger()){
+            bootstrap.addBundle(new SwaggerBundle<AppConfiguration>() {
+                @Override
+                protected SwaggerBundleConfiguration getSwaggerBundleConfiguration(AppConfiguration configuration) {
+                    return configuration.getSwaggerBundleConfiguration();
+                }
+            });
+        }
+
+        sb = new SpringBundle(getScanPackages());
         sb.setDefaultProfiles(this.getActivateProfiles());
         bootstrap.addBundle(sb);
+        bootstrap.addBundle(getWebsocket());
+
         Class configType = getConfigType();
         try {
             new BundleLoader().loadBundles(bootstrap, configType, getScanPackages());
@@ -102,6 +154,7 @@ public abstract class AutowiredApp<T extends AppConfiguration> extends Service<T
 
     /**
      * return the generic type of this class.
+     *
      * @return Class of parametrized type
      */
     protected abstract Class<T> getConfigType();
@@ -111,11 +164,55 @@ public abstract class AutowiredApp<T extends AppConfiguration> extends Service<T
      */
     @Override
     public final void run(T configuration, Environment environment) throws Exception {
-        Servlet metrics = new MetricsServlet();
-        Servlet healthcheck = new HealthCheckServlet();
-        environment.addServlet(metrics, "/metrics");
-        environment.addServlet(healthcheck, "/healthcheck");
-        environment.addTask(new LoggerLevelTask());
-        environment.addTask(new DebugToggleTask(this.getAppName(), configuration.getLoggingConfiguration()));
+        environment.admin().addTask(new DebugToggleTask());
+        environment.getObjectMapper().enable(SerializationFeature.INDENT_OUTPUT);
+        final AnnotationConfigApplicationContext ctx = sb.getApplicationContext();
+
+        //find classes with ServerEndPoint annotation
+        Set<Class<?>> serverEndpoints = findWS(ServerEndpoint.class, getScanPackages());
+
+        //find spring beans with ServerEndpoint annotation
+        String[] names = ctx.getBeanNamesForAnnotation(ServerEndpoint.class);
+        for (final String name : names) {
+            final Class<?> clazz = ctx.getType(name);
+            //remove spring ServerEndpoint from set of all endpoints
+            serverEndpoints.remove(clazz);
+            ServerEndpoint se = clazz.getAnnotation(ServerEndpoint.class);
+            ServerEndpointConfig endpointConfig = ServerEndpointConfig.Builder.
+                    create(clazz, se.value()).
+                    configurator(new Configurator() {
+                        @Override
+                        public <T> T getEndpointInstance(Class<T> endpointClass) throws InstantiationException {
+                            return ctx.getBean(name, endpointClass);
+                        }
+                    }).build();
+            getWebsocket().addEndpoint(endpointConfig);
+        }
+        //register any remaining endpoints that were not springified
+        for (Class ws : serverEndpoints) {
+            getWebsocket().addEndpoint(ws);
+        }
+
+        if (isEnableCors()) {
+            FilterRegistration.Dynamic corsFilter = environment.servlets().addFilter("CORS", CrossOriginFilter.class);
+            corsFilter.setInitParameter(CrossOriginFilter.ALLOWED_METHODS_PARAM, configuration.getCorsConfiguration().getMethods());
+            corsFilter.setInitParameter(CrossOriginFilter.ALLOWED_ORIGINS_PARAM, configuration.getCorsConfiguration().getOrigins());
+            corsFilter.setInitParameter(CrossOriginFilter.ALLOWED_HEADERS_PARAM, configuration.getCorsConfiguration().getHeaders());
+            corsFilter.addMappingForUrlPatterns(EnumSet.allOf(DispatcherType.class), true, configuration.getCorsConfiguration().getUrlMapping());
+        }
+    }
+
+    Set<Class<?>> findWS(final Class<? extends Annotation> klazz, String... packages) throws IOException {
+        final AnnotationAcceptingListener aal = new AnnotationAcceptingListener(klazz);
+        ResourceFinder rf = new PackageNamesScanner(packages, true);
+        while (rf.hasNext()) {
+            final String next = rf.next();
+            if (aal.accept(next)) {
+                final InputStream in = rf.open();
+                aal.process(next, in);
+                in.close();
+            }
+        }
+        return aal.getAnnotatedClasses();
     }
 }

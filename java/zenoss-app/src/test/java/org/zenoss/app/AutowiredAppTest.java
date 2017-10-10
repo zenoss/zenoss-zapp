@@ -14,17 +14,24 @@
 
 package org.zenoss.app;
 
-import com.yammer.dropwizard.config.Bootstrap;
-import com.yammer.dropwizard.config.Environment;
+import be.tomcools.dropwizard.websocket.WebsocketBundle;
+import io.dropwizard.Application;
+import io.dropwizard.testing.ConfigOverride;
+import io.dropwizard.testing.DropwizardTestSupport;
 import org.junit.Assert;
 import org.junit.Test;
 import org.zenoss.app.autobundle.FakeAppConfig;
+import org.zenoss.app.testclasses.TestWebSocket;
 
-import static org.mockito.Mockito.mock;
+import javax.websocket.server.ServerEndpointConfig;
+
+import static org.mockito.Mockito.*;
 
 public class AutowiredAppTest {
 
-    private static final class TestApp extends AutowiredApp<FakeAppConfig>{
+    public static final class TestApp extends AutowiredApp<FakeAppConfig> {
+
+        WebsocketBundle websocketBundle = mock(WebsocketBundle.class);
 
         @Override
         public String getAppName() {
@@ -41,20 +48,25 @@ public class AutowiredAppTest {
             return new String[]{"test"};
         }
 
+        @Override
+        WebsocketBundle getWebsocket() {
+            return websocketBundle;
+        }
     }
 
+
     @Test
-    public void getTypeTest(){
+    public void getTypeTest() {
         TestApp ta = new TestApp();
         Assert.assertEquals(FakeAppConfig.class, ta.getConfigType());
     }
 
     @Test
-    public void testGetActivateProfiles(){
+    public void testGetActivateProfiles() {
         TestApp ta = new TestApp();
         Assert.assertArrayEquals(new String[]{"test"}, ta.getActivateProfiles());
 
-        AutowiredApp test = new AutowiredApp<AppConfiguration>(){
+        AutowiredApp test = new AutowiredApp<AppConfiguration>() {
             @Override
             public String getAppName() {
                 return "test";
@@ -69,25 +81,25 @@ public class AutowiredAppTest {
 
         Assert.assertArrayEquals(AutowiredApp.DEFAULT_ACTIVE_PROFILES, test.getActivateProfiles());
 
-
     }
 
     @Test
-    public void testRun() throws Exception {
-        final Environment environment = mock(Environment.class);
+    public void testInit() throws Exception {
+        final TestApp testApp = new TestApp();
+        final DropwizardTestSupport app =
+                new DropwizardTestSupport(TestApp.class, null, new ConfigOverride[]{}) {
+                    @Override
+                    public Application newApplication() {
+                        return testApp;
+                    }
+                };
+        app.before();
+        app.after();
 
-        TestApp ta = new TestApp();
-        ta.run(new FakeAppConfig(), environment);
+        verify(testApp.websocketBundle, times(1)).addEndpoint(isA(ServerEndpointConfig.class));
+        verify(testApp.websocketBundle, times(1)).addEndpoint(TestWebSocket.class);
 
     }
 
-    @Test
-    public void testInitialize() throws Exception {
-        final Environment environment = mock(Environment.class);
-        Bootstrap bootstrap = mock(Bootstrap.class);
-        TestApp ta = new TestApp();
-        ta.initialize(bootstrap);
-
-    }
 
 }

@@ -5,14 +5,17 @@
     <parent>
         <artifactId>zapp-parent</artifactId>
         <groupId>org.zenoss.zapp</groupId>
-        <version>0.0.23</version>
+        <version>0.1.0</version>
     </parent>
     <modelVersion>4.0.0</modelVersion>
     <properties>
         <ssl.cert.dir>target/cert</ssl.cert.dir>
         <assembly.skipAssembly>true</assembly.skipAssembly>
+        <exec-maven-plugin.version>1.2.1</exec-maven-plugin.version>
+        <maven-shade-plugin.version>2.1</maven-shade-plugin.version>
+        <keytool-maven-plugin.version>1.0</keytool-maven-plugin.version>
+        <maven-assembly-plugin.version>2.4</maven-assembly-plugin.version>
     </properties>
-
     <artifactId>zapp-example</artifactId>
     <dependencies>
         <dependency>
@@ -26,13 +29,6 @@
             <artifactId>junit</artifactId>
             <version>${junit.version}</version>
             <scope>test</scope>
-        </dependency>
-        <!--runtime-->
-        <dependency>
-            <groupId>com.sun.jersey</groupId>
-            <artifactId>jersey-server</artifactId>
-            <version>1.15</version>
-            <scope>runtime</scope>
         </dependency>
     </dependencies>
     <build>
@@ -56,7 +52,7 @@
             <plugin>
                 <groupId>org.codehaus.mojo</groupId>
                 <artifactId>exec-maven-plugin</artifactId>
-                <version>1.2.1</version>
+                <version>${exec-maven-plugin.version}</version>
                 <configuration>
                     <mainClass>org.zenoss.app.example.ExampleApp</mainClass>
                     <arguments>
@@ -68,7 +64,7 @@
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-shade-plugin</artifactId>
-                <version>2.1</version>
+                <version>${maven-shade-plugin.version}</version>
                 <configuration>
                     <createDependencyReducedPom>false</createDependencyReducedPom>
                     <filters>
@@ -112,7 +108,7 @@
             <plugin>
                 <groupId>org.codehaus.mojo</groupId>
                 <artifactId>keytool-maven-plugin</artifactId>
-                <version>1.0</version>
+                <version>${keytool-maven-plugin.version}</version>
                 <executions>
                     <execution>
                         <phase>generate-resources</phase>
@@ -141,7 +137,7 @@
             </plugin>
             <plugin>
                 <artifactId>maven-assembly-plugin</artifactId>
-                <version>2.4</version>
+                <version>${maven-assembly-plugin.version}</version>
                 <configuration>
                     <descriptors>
                         <descriptor>src/main/assembly/zapp.xml</descriptor>

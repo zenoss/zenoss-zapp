@@ -10,7 +10,7 @@
     <parent>
         <groupId>org.zenoss.zapp.archetypes</groupId>
         <artifactId>zapp-archetypes</artifactId>
-        <version>0.0.23</version>
+        <version>0.1.0</version>
     </parent>
 
     <groupId>org.zenoss.zapp.archetypes</groupId>

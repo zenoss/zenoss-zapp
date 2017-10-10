@@ -13,15 +13,15 @@
 
 package org.zenoss.app.zauthbundle;
 
-import com.yammer.dropwizard.client.HttpClientBuilder;
-import org.apache.http.HttpResponse;
+import io.dropwizard.client.HttpClientBuilder;
+import org.apache.http.Header;
 import org.apache.http.HttpVersion;
 import org.apache.http.StatusLine;
-import org.apache.http.client.HttpClient;
 import org.apache.http.client.entity.UrlEncodedFormEntity;
+import org.apache.http.client.methods.CloseableHttpResponse;
 import org.apache.http.client.methods.HttpPost;
-import org.apache.http.conn.ClientConnectionManager;
-import org.apache.http.message.BasicHttpResponse;
+import org.apache.http.impl.client.CloseableHttpClient;
+import org.apache.http.message.BasicHeader;
 import org.apache.http.message.BasicStatusLine;
 import org.apache.shiro.authc.AuthenticationException;
 import org.apache.shiro.authc.AuthenticationInfo;
@@ -33,7 +33,6 @@ import org.zenoss.app.security.ZenossTenant;
 import org.zenoss.app.security.ZenossToken;
 
 import javax.servlet.http.HttpServletRequest;
-import javax.servlet.http.HttpServletResponse;
 import java.io.ByteArrayOutputStream;
 import java.nio.charset.StandardCharsets;
 
@@ -46,17 +45,19 @@ public class TokenRealmTest {
 
 
     HttpServletRequest request;
-    HttpServletResponse response;
+    CloseableHttpResponse response;
     TokenRealm realm;
-    HttpClient mockClient;
+    CloseableHttpClient mockClient;
 
     @Before
     public void setup() {
         this.request = mock(HttpServletRequest.class);
-        this.response = mock(HttpServletResponse.class);
-        this.mockClient = mock(HttpClient.class);
-        this.realm = new TokenRealm(this.mockClient);
-        TokenRealm.setProxyConfiguration(new ProxyConfiguration());
+        this.response = mock(CloseableHttpResponse.class);
+        this.mockClient = mock(CloseableHttpClient.class);
+        HttpClientBuilder builder = mock(HttpClientBuilder.class);
+        when(builder.build("auth-client")).thenReturn(mockClient);
+        TokenRealm.init(new ProxyConfiguration(), this.mockClient);
+        this.realm = new TokenRealm();
     }
 
     @Test
@@ -78,7 +79,7 @@ public class TokenRealmTest {
 
     @Test
     public void testSuccessfulResponse() throws Exception {
-        HttpResponse response = getOkResponse();
+        CloseableHttpResponse response = getOkResponse();
         response.addHeader(ZenossTenant.ID_HTTP_HEADER, "id");
         response.addHeader(ZenossToken.ID_HTTP_HEADER, "id");
         response.addHeader(ZenossToken.EXPIRES_HTTP_HEADER, "0");
@@ -96,35 +97,52 @@ public class TokenRealmTest {
         assertEquals("token", info.getCredentials());
     }
 
-    private HttpResponse getOkResponse() {
+    private CloseableHttpResponse getOkResponse() {
         StatusLine status = new BasicStatusLine(HttpVersion.HTTP_1_1, 200, "OK");
-        BasicHttpResponse response = new BasicHttpResponse(status);
+
+        CloseableHttpResponse response = mock(CloseableHttpResponse.class);
+        when(response.getStatusLine()).thenReturn(status);
+
+        when(response.getHeaders(ZenossTenant.ID_HTTP_HEADER)).
+                thenReturn(new Header[]{new BasicHeader(ZenossTenant.ID_HTTP_HEADER, "id")});
+        when(response.getHeaders(ZenossToken.ID_HTTP_HEADER)).
+                thenReturn(new Header[]{new BasicHeader(ZenossToken.ID_HTTP_HEADER, "id")});
+        when(response.getHeaders(ZenossToken.EXPIRES_HTTP_HEADER)).
+                thenReturn(new Header[]{new BasicHeader(ZenossToken.EXPIRES_HTTP_HEADER, "0")});
+
+        return response;
+    }
+
+    private CloseableHttpResponse getOkResponseNoHeaders() {
+        StatusLine status = new BasicStatusLine(HttpVersion.HTTP_1_1, 200, "OK");
+
+        CloseableHttpResponse response = mock(CloseableHttpResponse.class);
+        when(response.getStatusLine()).thenReturn(status);
         return response;
     }
 
     @Test(expected = AuthenticationException.class)
     public void testHandleBadResponse() throws Exception {
         StatusLine status = new BasicStatusLine(HttpVersion.HTTP_1_1, 401, "Unauthorized");
-        HttpResponse response = new BasicHttpResponse(status);
+        CloseableHttpResponse response = mock(CloseableHttpResponse.class);
+        when(response.getStatusLine()).thenReturn(status);
         AuthenticationInfo info = realm.handleResponse("test", response);
     }
 
     @Test
     public void testDoGetAuthorization() throws Exception {
-        HttpResponse response = getOkResponse();
-        response.addHeader(ZenossTenant.ID_HTTP_HEADER, "id");
-        response.addHeader(ZenossToken.ID_HTTP_HEADER, "id");
-        response.addHeader(ZenossToken.EXPIRES_HTTP_HEADER, "0");
+        CloseableHttpResponse  response = getOkResponse();
+
         when(this.mockClient.execute(any(HttpPost.class))).thenReturn(response);
         AuthenticationToken token = new StringAuthenticationToken("test", "");
         AuthenticationInfo results = realm.doGetAuthenticationInfo(token);
-        assertEquals( "test", results.getCredentials());
+        assertEquals("test", results.getCredentials());
     }
 
 
     @Test(expected = AuthenticationException.class)
     public void testDoGetAuthorizationMissingTenantId() throws Exception {
-        HttpResponse response = getOkResponse();
+        CloseableHttpResponse  response = getOkResponseNoHeaders();
         when(this.mockClient.execute(any(HttpPost.class))).thenReturn(response);
         AuthenticationToken token = new StringAuthenticationToken("test", "");
         realm.doGetAuthenticationInfo(token);

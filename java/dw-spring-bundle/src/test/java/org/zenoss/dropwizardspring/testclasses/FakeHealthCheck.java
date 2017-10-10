@@ -14,13 +14,11 @@
 
 package org.zenoss.dropwizardspring.testclasses;
 
-import com.yammer.metrics.core.HealthCheck;
+
+import com.codahale.metrics.health.HealthCheck;
 
 @org.zenoss.dropwizardspring.annotations.HealthCheck
 public class FakeHealthCheck extends HealthCheck {
-    public FakeHealthCheck() {
-        super("fake health check");
-    }
 
     @Override
     protected Result check() throws Exception {

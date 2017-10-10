@@ -13,16 +13,13 @@
 
 package org.zenoss.app;
 
+import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.dataformat.yaml.YAMLFactory;
-import org.junit.Test;
 import org.junit.Assert;
-import org.mockito.Spy;
+import org.junit.Test;
 
-import java.io.File;
 import java.io.InputStream;
-import java.net.URISyntaxException;
-import java.net.URL;
 import java.util.Properties;
 
 import static org.mockito.Matchers.anyString;
@@ -30,37 +27,38 @@ import static org.mockito.Mockito.spy;
 import static org.mockito.Mockito.when;
 
 
-class MyApplicationConfiguration extends AppConfiguration {
+class MyApplicationConfiguration {
+    @JsonProperty
+    private ZenossCredentials zenossCredentials;
 
+    public ZenossCredentials getZenossCredentials() {
+        return zenossCredentials;
+    }
+
+    public void setZenossCredentials(ZenossCredentials zenossCredentials) {
+        this.zenossCredentials = zenossCredentials;
+    }
 }
 
 public class TestZenossCredentials {
 
     @Test
-    public void testGetFromGlobalConf() {
+    public void testGetFromGlobalConf() throws Exception {
         ZenossCredentials creds = new ZenossCredentials.Builder().getFromGlobalConf();
         Assert.assertNotNull(creds.getUsername());
         Assert.assertNotNull(creds.getPassword());
     }
 
     @Test
-    public void testLoadPropertiesFile() throws Exception{
-        File globalConf = new File(ClassLoader.getSystemResource("global.conf").toURI());
-        Properties props = new ZenossCredentials.Builder().getPropertiesFromFile(globalConf.toString());
-        Assert.assertEquals("MYPASSWORD", props.get("zauth-password"));
-        Assert.assertEquals("MYUSER", props.get("zauth-username"));
-    }
-
-    @Test
-    public void testInvalidPropertiesFile() {
+    public void testInvalidPropertiesFile() throws Exception {
         Properties props = new ZenossCredentials.Builder().getPropertiesFromFile("foo.bar");
         Assert.assertNull(props.get("zauth-password"));
     }
 
     @Test
-    public void testZenossCredentialsYamlFile() throws Exception{
+    public void testZenossCredentialsYamlFile() throws Exception {
         InputStream is = ClassLoader.getSystemResourceAsStream("testConfig.yaml");
-        ObjectMapper objectMapper = new ObjectMapper( new YAMLFactory());
+        ObjectMapper objectMapper = new ObjectMapper(new YAMLFactory());
         MyApplicationConfiguration config = objectMapper.readValue(is, MyApplicationConfiguration.class);
         ZenossCredentials creds = config.getZenossCredentials();
         Assert.assertEquals("myusername", creds.getUsername());
@@ -69,7 +67,7 @@ public class TestZenossCredentials {
 
 
     @Test
-    public void testDefaults() throws Exception{
+    public void testDefaults() throws Exception {
         ZenossCredentials.Builder b = spy(new ZenossCredentials.Builder());
         when(b.getPropertiesFromFile(anyString())).thenReturn(new Properties());
 

@@ -5,15 +5,55 @@
     <parent>
         <artifactId>zapp-parent</artifactId>
         <groupId>org.zenoss.zapp</groupId>
-        <version>0.0.23</version>
+        <version>0.1.0</version>
     </parent>
+
     <artifactId>zenoss-app</artifactId>
 
+    <properties>
+        <dropwizard.version>1.0.2</dropwizard.version>
+        <dropwizard-websocket-jee7-bundle.version>1.0.0</dropwizard-websocket-jee7-bundle.version>
+        <dropwizard-swagger.version>1.0.0-1</dropwizard-swagger.version>
+        <swagger-core.version>1.5.10</swagger-core.version>
+        <jackson-core.version>2.8.3</jackson-core.version>
+        <jackson-databind.version>2.8.3</jackson-databind.version>
+        <jackson-annotations.version>2.8.3</jackson-annotations.version>
+    </properties>
     <dependencies>
         <dependency>
-            <groupId>com.yammer.dropwizard</groupId>
+            <groupId>io.dropwizard</groupId>
             <artifactId>dropwizard-core</artifactId>
             <version>${dropwizard.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>io.dropwizard</groupId>
+            <artifactId>dropwizard-client</artifactId>
+            <version>${dropwizard.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>io.swagger</groupId>
+            <artifactId>swagger-core</artifactId>
+            <version>${swagger-core.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>com.fasterxml.jackson.core</groupId>
+            <artifactId>jackson-core</artifactId>
+            <version>${jackson-core.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>com.fasterxml.jackson.core</groupId>
+            <artifactId>jackson-databind</artifactId>
+            <version>${jackson-databind.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>com.fasterxml.jackson.core</groupId>
+            <artifactId>jackson-annotations</artifactId>
+            <version>${jackson-annotations.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>com.smoketurner</groupId>
+            <artifactId>dropwizard-swagger</artifactId>
+            <version>${dropwizard-swagger.version}</version>
         </dependency>
         <dependency>
             <groupId>org.zenoss.zapp</groupId>
@@ -21,12 +61,17 @@
             <version>${project.version}</version>
         </dependency>
         <dependency>
-		    <groupId>redis.clients</groupId>
-		    <artifactId>jedis</artifactId>
-		    <version>${jedis.version}</version>
-		    <type>jar</type>
-		    <scope>compile</scope>
-		</dependency>
+            <groupId>redis.clients</groupId>
+            <artifactId>jedis</artifactId>
+            <version>${jedis.version}</version>
+            <type>jar</type>
+            <scope>compile</scope>
+        </dependency>
+        <dependency>
+          <groupId>be.tomcools</groupId>
+          <artifactId>dropwizard-websocket-jee7-bundle</artifactId>
+          <version>${dropwizard-websocket-jee7-bundle.version}</version>
+        </dependency>
         <!--test dependencies-->
         <dependency>
             <groupId>junit</groupId>
@@ -41,16 +86,16 @@
             <scope>test</scope>
         </dependency>
         <dependency>
-        	<groupId>com.yammer.dropwizard</groupId>
-        	<artifactId>dropwizard-testing</artifactId>
-        	<version>${dropwizard.version}</version>
-        	<scope>test</scope>
+            <groupId>io.dropwizard</groupId>
+            <artifactId>dropwizard-testing</artifactId>
+            <version>${dropwizard.version}</version>
+            <scope>test</scope>
         </dependency>
         <dependency>
-        	<groupId>org.springframework</groupId>
-        	<artifactId>spring-test</artifactId>
-        	<version>${spring.version}</version>
-        	<scope>test</scope>
+            <groupId>org.springframework</groupId>
+            <artifactId>spring-test</artifactId>
+            <version>${spring.version}</version>
+            <scope>test</scope>
         </dependency>
     </dependencies>
 </project>

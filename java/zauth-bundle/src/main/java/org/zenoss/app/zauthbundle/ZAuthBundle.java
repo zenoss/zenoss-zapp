@@ -14,9 +14,11 @@
 package org.zenoss.app.zauthbundle;
 
 import com.google.common.base.Optional;
-import com.yammer.dropwizard.ConfiguredBundle;
-import com.yammer.dropwizard.config.Bootstrap;
-import com.yammer.dropwizard.config.Environment;
+import io.dropwizard.ConfiguredBundle;
+import io.dropwizard.client.HttpClientBuilder;
+import io.dropwizard.setup.Bootstrap;
+import io.dropwizard.setup.Environment;
+import org.apache.http.impl.client.CloseableHttpClient;
 import org.apache.shiro.web.env.EnvironmentLoaderListener;
 import org.apache.shiro.web.servlet.ShiroFilter;
 import org.eclipse.jetty.server.session.HashSessionManager;
@@ -37,7 +39,7 @@ public class ZAuthBundle implements AutoConfiguredBundle<AppConfiguration> {
 
     @Override
     public ConfiguredBundle getBundle(Bootstrap bootstrap) {
-        return new ZAuthShiroBundle(bootstrap.getName());
+        return new ZAuthShiroBundle(bootstrap.getApplication().getName());
     }
 
     @Override
@@ -63,28 +65,30 @@ public class ZAuthBundle implements AutoConfiguredBundle<AppConfiguration> {
             if (configuration.isAuthEnabled()) {
                 ProxyConfiguration proxyConfig = configuration.getProxyConfiguration();
 
-                if (environment.getSessionHandler() == null) {
-                    HashSessionManager sm = new HashSessionManager();
-                    Map<String, String> env = System.getenv();
-                    String id = env.get("CONTROLPLANE_INSTANCE_ID");
-                    if (id == null) {
-                        Random r = new Random();
-                        id = String.valueOf(r.nextInt(65536));
-                    }
-                    //scope jsessionid cookie to have app name and instance id.
-                    //prevents session cookies being invalidated as they balance across instances
-                    sm.setSessionCookie(String.format("%s_%s_%s", sm.getSessionCookie(), this.name, id));
-                    SessionHandler sh = new SessionHandler(sm);
-                    sh.getSessionManager().setMaxInactiveInterval(configuration.getAuthTimeoutSeconds());
-                    environment.setSessionHandler(sh);
+                HashSessionManager sm = new HashSessionManager();
+                Map<String, String> env = System.getenv();
+                String id = env.get("CONTROLPLANE_INSTANCE_ID");
+                if (id == null) {
+                    Random r = new Random();
+                    id = String.valueOf(r.nextInt(65536));
                 }
+                //scope jsessionid cookie to have app name and instance id.
+                //prevents session cookies being invalidated as they balance across instances
+                sm.setSessionCookie(String.format("%s_%s_%s", sm.getSessionCookie(), this.name, id));
+                SessionHandler sh = new SessionHandler(sm);
+                sh.getSessionManager().setMaxInactiveInterval(configuration.getAuthTimeoutSeconds());
+                environment.servlets().setSessionHandler(sh);
+
 
                 // this allows individual zapps to specify a shiro.ini in their http section
                 // i.e. http -> ContextParameter -> shiroConfigListeners
                 // otherwise the default zauthbundle bundle shiro.ini is used.
-                environment.addServletListeners(new EnvironmentLoaderListener());
-                environment.addFilter(new ShiroFilter(), URL_PATTERN).setName("shiro-filter");
-                TokenRealm.setProxyConfiguration(proxyConfig);
+                environment.servlets().addServletListeners(new EnvironmentLoaderListener());
+                environment.servlets().addFilter("shiro-filter", new ShiroFilter()).
+                        addMappingForUrlPatterns(null, false, URL_PATTERN);
+                CloseableHttpClient httpClient = new HttpClientBuilder(environment).
+                        using(configuration.getAuthHttpClientConfiguration()).build("auth-client");
+                TokenRealm.init(proxyConfig, httpClient);
                 TokenRealm.setAppName(this.name);
             }
         }
