@@ -56,7 +56,7 @@
         <repository>
             <id>zenoss-nexus</id>
             <name>Internal Zenoss Nexus</name>
-            <url>http://cmrepo.zenoss.loc/nexus/content/groups/public</url>
+            <url>http://nexus.zenoss.eng:8081/nexus/content/groups/public</url>
             <snapshots>
                 <updatePolicy>always</updatePolicy>
             </snapshots>
